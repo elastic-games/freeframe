@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 import uuid
 import secrets
 from datetime import datetime, timedelta, timezone
@@ -28,8 +29,25 @@ from ..models.user import User, UserStatus
 from ..models.instance_branding import InstanceBranding
 from ..middleware.auth import get_current_user
 from ..middleware.rate_limit import rate_limit
+from ..config import settings
+from ..services.studio_sso import exchange_studio_ticket
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+def _require_native_auth():
+    if settings.studio_sso_enabled:
+        raise HTTPException(status_code=404, detail="Use your Elastic Labs Studio account")
+
+
+class StudioTicketRequest(BaseModel):
+    ticket: str
+
+
+@router.post("/studio-sso", response_model=TokenResponse, dependencies=[Depends(rate_limit("studio_sso", 20, 60))])
+def studio_sso(body: StudioTicketRequest, db: Session = Depends(get_db)):
+    return TokenResponse(access_token=exchange_studio_ticket(body.ticket, db),
+                         refresh_token="", needs_password=False)
 
 # One message for every magic-code failure. Reporting "too many attempts"
 # separately would tell a caller which addresses are registered (only a real
@@ -48,7 +66,7 @@ def _generate_invite_token() -> str:
     return secrets.token_urlsafe(48)
 
 
-@router.post("/send-magic-code", response_model=SendMagicCodeResponse, dependencies=[Depends(rate_limit("send_magic_code", 5, 600))])
+@router.post("/send-magic-code", response_model=SendMagicCodeResponse, dependencies=[Depends(_require_native_auth), Depends(rate_limit("send_magic_code", 5, 600))])
 def send_magic_code(body: SendMagicCodeRequest, db: Session = Depends(get_db)):
     """
     Send magic code to an existing user's email, for login.
@@ -84,7 +102,7 @@ def send_magic_code(body: SendMagicCodeRequest, db: Session = Depends(get_db)):
     )
 
 
-@router.post("/verify-magic-code", response_model=TokenResponse, dependencies=[Depends(rate_limit("verify_magic_code", 10, 600))])
+@router.post("/verify-magic-code", response_model=TokenResponse, dependencies=[Depends(_require_native_auth), Depends(rate_limit("verify_magic_code", 10, 600))])
 def verify_magic_code(body: VerifyMagicCodeRequest, db: Session = Depends(get_db)):
     """
     Verify magic code and return tokens.
@@ -121,7 +139,7 @@ def verify_magic_code(body: VerifyMagicCodeRequest, db: Session = Depends(get_db
     )
 
 
-@router.post("/set-password", response_model=UserResponse)
+@router.post("/set-password", response_model=UserResponse, dependencies=[Depends(_require_native_auth)])
 def set_password(
     body: SetPasswordRequest,
     current_user: User = Depends(get_current_user),
@@ -134,7 +152,7 @@ def set_password(
     return current_user
 
 
-@router.get("/invite/{token}", response_model=InviteInfoResponse)
+@router.get("/invite/{token}", response_model=InviteInfoResponse, dependencies=[Depends(_require_native_auth)])
 def get_invite_info(token: str, db: Session = Depends(get_db)):
     """Get info about an invite token (for the set-password screen)."""
     user = db.query(User).filter(
@@ -154,7 +172,7 @@ def get_invite_info(token: str, db: Session = Depends(get_db)):
     )
 
 
-@router.post("/accept-invite", response_model=TokenResponse)
+@router.post("/accept-invite", response_model=TokenResponse, dependencies=[Depends(_require_native_auth)])
 def accept_invite(body: AcceptInviteRequest, db: Session = Depends(get_db)):
     """Accept invite and set password. Email is already verified via invite."""
     user = db.query(User).filter(
@@ -187,7 +205,7 @@ def accept_invite(body: AcceptInviteRequest, db: Session = Depends(get_db)):
     )
 
 
-@router.post("/login", response_model=TokenResponse, dependencies=[Depends(rate_limit("login", 10, 600))])
+@router.post("/login", response_model=TokenResponse, dependencies=[Depends(_require_native_auth), Depends(rate_limit("login", 10, 600))])
 def login(body: LoginRequest, db: Session = Depends(get_db)):
     """Login with email + password."""
     user = get_user_by_email(db, body.email)
@@ -205,7 +223,7 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
     )
 
 
-@router.post("/refresh", response_model=TokenResponse, dependencies=[Depends(rate_limit("refresh_token", 30, 60))])
+@router.post("/refresh", response_model=TokenResponse, dependencies=[Depends(_require_native_auth), Depends(rate_limit("refresh_token", 30, 60))])
 def refresh_token(body: RefreshRequest, db: Session = Depends(get_db)):
     payload = decode_token(body.refresh_token)
     if not payload or payload.get("type") != "refresh":
@@ -247,7 +265,7 @@ def update_preferences(
     db.refresh(current_user)
     return current_user
 
-@router.patch("/change-password", response_model=TokenResponse, status_code=status.HTTP_200_OK)
+@router.patch("/change-password", response_model=TokenResponse, status_code=status.HTTP_200_OK, dependencies=[Depends(_require_native_auth)])
 def change_password(
     body: ChangePasswordRequest,
     db: Session = Depends(get_db),

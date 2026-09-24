@@ -46,6 +46,8 @@ class Settings(BaseSettings):
     s3_region: str = "us-east-1"
     s3_public_endpoint: str | None = None  # External URL for presigned URLs (e.g. http://localhost:9000 when S3_ENDPOINT is http://minio:9000)
     jwt_secret: str
+    studio_sso_enabled: bool = False
+    studio_sso_secret: str | None = None
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7
@@ -130,6 +132,8 @@ class Settings(BaseSettings):
         untouched default and any `*.amazonaws.com` endpoint are harmless and
         allowed; a custom non-AWS endpoint is a misconfiguration.
         """
+        if self.studio_sso_enabled and (not self.studio_sso_secret or len(self.studio_sso_secret) < 32):
+            raise ValueError("STUDIO_SSO_SECRET must be at least 32 characters when Studio SSO is enabled")
         if self.s3_storage.lower() == "s3":
             endpoint = (self.s3_endpoint or "").strip()
             if endpoint and endpoint != DEFAULT_S3_ENDPOINT and not _is_aws_endpoint(endpoint):

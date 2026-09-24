@@ -125,6 +125,8 @@ services:
       args:
         NEXT_PUBLIC_API_URL: /api
         NEXT_PUBLIC_UPLOAD_CONCURRENCY: ${NEXT_PUBLIC_UPLOAD_CONCURRENCY:-3}
+        NEXT_PUBLIC_STUDIO_SSO_ENABLED: ${STUDIO_SSO_ENABLED:-false}
+        NEXT_PUBLIC_STUDIO_TICKET_URL: https://app.elasticlabs.site/api/reviews/sso-ticket
     env_file: ../../.env.prod
     environment:
       API_INTERNAL_URL: http://api:8000

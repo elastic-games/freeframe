@@ -11,6 +11,7 @@ from ..models.user import User, UserStatus
 from ..services.auth_service import hash_password, create_access_token, create_refresh_token
 from ..schemas.auth import NewPassword, TokenResponse
 from ..middleware.rate_limit import rate_limit
+from ..config import settings
 
 router = APIRouter(prefix="/setup", tags=["setup"])
 
@@ -64,6 +65,8 @@ def create_superadmin(body: CreateSuperAdminRequest, db: Session = Depends(get_d
     Create the first superadmin user.
     This endpoint is only available when no superadmin exists.
     """
+    if settings.studio_sso_enabled:
+        raise HTTPException(status_code=404, detail="Studio SSO provisions administrators")
     # Check if superadmin already exists
     if _has_superadmin(db):
         raise HTTPException(
