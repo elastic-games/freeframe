@@ -1,8 +1,29 @@
 # Elastic Labs native Reviews integration
 
-This is a review candidate, not an applied production cutover. It accompanies
+The native pair was deployed as an owner-only preview on 2026-09-26. It accompanies
 Studio's native library/viewer and `/api/studio/reviews` boundary. Existing media,
 asset/version/comment UUIDs and guest share records are preserved.
+
+## Member login entry
+
+In the native-only Elastic deployment, `https://reviews.elasticlabs.site/` opens
+`https://app.elasticlabs.site/apps/reviews`. Studio's existing session and sign-in
+form own member authentication. The standalone `/studio` page still implements
+the legacy ticket exchange, which native-only mode intentionally disables; do
+not send members through that page or re-enable the exchange to fix login.
+
+Copy the exact root/login/setup/studio/projects redirect locations from
+`nginx.http.conf` into the review-domain HTTPS server after Certbot setup. Old
+standalone project bookmarks open the native project chooser; their FreeFrame
+UUIDs are not Studio project keys. Redirects use a fixed destination and do not
+forward arbitrary callback queries. Leave `/share/`, `/api/`, `/stream/hls/`,
+frontend assets and the separate media-domain proxy intact.
+
+Back up the active nginx file, run `nginx -t`, reload nginx, then run
+`python3 deploy/elastic-labs/check-native-entry.py`. Check an anonymous browser
+reaches Studio's sign-in form and an existing owner session reaches the native
+project chooser. This routing change needs no application rebuild or database
+mutation. Upstream standalone installs do not use this Elastic nginx template.
 
 ## Required configuration
 

@@ -11,8 +11,10 @@ Host nginx remains the only owner of ports 80 and 443.
    can be expensive; set the worker count according to measured capacity.
 2. Point `reviews.elasticlabs.site` and `review-media.elasticlabs.site` at the
    portal VPS. Both names require TLS certificates before browsers upload media.
-3. Follow `STUDIO_SSO.md` to enable Studio account sign in. SMTP is still used
-   for notifications, while Studio handles member authentication.
+3. For the current native-only Elastic deployment, follow `NATIVE_REVIEWS.md`.
+   Studio handles member authentication and the review-domain entry redirects
+   to its native workspace. `STUDIO_SSO.md` describes the earlier embedded
+   pairing; its ticket exchange is disabled in native-only mode.
 4. Create `.env.prod` from `env.prod.example` at the FreeFrame repository root.
    Replace every placeholder with a distinct secret where appropriate; keep the
    file outside Git and restrict it to the deployment operator.
@@ -33,8 +35,10 @@ sudo nginx -t
 
 Install the nginx server blocks, obtain certificates for both new names, and
 verify HTTPS, Studio sign in, upload, timestamped comments, drawings, playback,
-and `GET /api/assets/{asset_id}/comments` with an authorized account. Portal
-`/reviews` embeds FreeFrame after the Studio ticket exchange. Give Codex a
+and comments through the native portal `/apps/reviews` with an authorized
+account. Install the member-entry redirects in the final HTTPS review-domain
+server as well as the bootstrap HTTP template, then run
+`python3 deploy/elastic-labs/check-native-entry.py`. Give Codex a
 scoped review account or a permitted share link when hosted access is ready.
 Do not place FreeFrame access tokens in the portal frontend or repository.
 
