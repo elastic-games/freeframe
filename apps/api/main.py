@@ -13,6 +13,7 @@ from .middleware.setup_guard import SetupGuardMiddleware
 from .services.safe_access_log import SafeAccessFilter
 
 logging.getLogger("uvicorn.access").addFilter(SafeAccessFilter())
+from .routers import studio_review
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -104,6 +105,7 @@ app.include_router(hls_proxy.router)
 app.include_router(instance_settings.router)
 app.include_router(instance_branding.router)
 app.include_router(review_workers.router)
+app.include_router(studio_review.router)
 
 @app.get("/health")
 def health():

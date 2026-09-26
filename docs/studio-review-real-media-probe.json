@@ -1,0 +1,23 @@
+{
+  "schema": "studio-review-real-media-probe/v1",
+  "sourceFile": "010_Idle_03_RedChain_Idle_01_Breathing_v01_Seedance25.mp4",
+  "sizeBytes": 8601431,
+  "sha256": "4db1f2025b264c7deb855292f5dd5437f53f736083a97ab813b42d552864a1f8",
+  "runtimeFfprobe": "/opt/homebrew/bin/ffprobe",
+  "observed": {
+    "timeBase": "1/90000",
+    "presentationOriginPts": 0,
+    "duration": "145/24",
+    "width": 1920,
+    "height": 1080,
+    "observedFps": "24/1"
+  },
+  "frameCount": 145,
+  "firstPts": 0,
+  "lastPts": 540000,
+  "ptsSha256": "3565d0b2943057af3a92d406bc79266dd611940d1aaa8501331e8f362f562fdb",
+  "strictlyIncreasing": true,
+  "limitations": [
+    "local source bytes only; no provider upload, source Blender frame calibration or animation quality acceptance"
+  ]
+}

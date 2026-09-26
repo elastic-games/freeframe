@@ -50,6 +50,8 @@ class Settings(BaseSettings):
     studio_sso_secret: str | None = None
     studio_native_secret: str | None = None
     studio_native_only: bool = False
+    # Absolute deployment path; no request-controlled executable selection.
+    studio_review_ffprobe_path: str = "/usr/bin/ffprobe"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7

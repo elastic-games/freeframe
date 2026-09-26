@@ -259,3 +259,11 @@ migrated database. They are created by the initial migration and were never drop
 have no ORM model and no route behind them. Ignore them.
 
 **ORM:** SQLAlchemy 2.0 with Alembic for migrations.
+
+## Studio read-only review bridge
+
+`POST /studio/review-read` accepts a 45-second, one-use HMAC actor assertion with the distinct `elastic-freeframe-review-read-v1` audience and exact project/asset/version/operation scope. It requires an active SSO-mapped user and current project membership, including for Studio owners or FreeFrame superadmins. Redis replay-protection failure denies the read. Replies under hidden parents are excluded. Responses are private and uncached.
+
+`authorize` returns current visible comment identities and hashes. `snapshot` additionally hashes original/upload and the single reviewed downloadable MP4 in bounded temporary storage, then probes exact presentation timestamps using the configured absolute `STUDIO_REVIEW_FFPROBE_PATH` (default `/usr/bin/ffprobe`; macOS Homebrew `/opt/homebrew/bin/ffprobe`). Membership and visibility are checked again after download/probe. No users, memberships, comments or media are created by this bridge.
+
+The bridge bounds assertions to 4096 bytes, media to 512 MB, each probe to 60 seconds, JSON evidence to 8 MB and video presentation frames to 100,000. It fails closed when original bytes, ready version, single review MP4, strict PTS timing or current access are unavailable. `studio_sso_enabled` and a server-only secret of at least 32 characters are required. The local real-preview probe receipt is `docs/studio-review-real-media-probe.json`; it proves local SHA/PTS extraction, not upload or authored-frame calibration.
