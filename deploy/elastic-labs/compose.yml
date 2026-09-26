@@ -34,10 +34,7 @@ services:
     environment:
       MINIO_ROOT_USER: ${S3_ACCESS_KEY}
       MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY}
-      MINIO_CORS_ALLOW_ORIGIN: ${FRONTEND_URL}
-      MINIO_CORS_ALLOW_METHODS: GET,PUT,POST,DELETE,HEAD
-      MINIO_CORS_ALLOW_HEADERS: "*"
-      MINIO_CORS_EXPOSE_HEADERS: ETag,Content-Length,x-amz-request-id
+      MINIO_API_CORS_ALLOW_ORIGIN: ${MINIO_CORS_ALLOWED_ORIGINS:-https://reviews.elasticlabs.site,https://app.elasticlabs.site}
     volumes:
       - miniodata:/data
     ports:

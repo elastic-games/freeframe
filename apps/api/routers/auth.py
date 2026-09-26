@@ -46,6 +46,8 @@ class StudioTicketRequest(BaseModel):
 
 @router.post("/studio-sso", response_model=TokenResponse, dependencies=[Depends(rate_limit("studio_sso", 20, 60))])
 def studio_sso(body: StudioTicketRequest, db: Session = Depends(get_db)):
+    if settings.studio_native_only:
+        raise HTTPException(status_code=404, detail="Use Studio Reviews")
     return TokenResponse(access_token=exchange_studio_ticket(body.ticket, db),
                          refresh_token="", needs_password=False)
 

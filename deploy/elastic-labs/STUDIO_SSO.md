@@ -1,3 +1,8 @@
+> Historical iframe configuration. The native Reviews candidate uses
+> [NATIVE_REVIEWS.md](NATIVE_REVIEWS.md). With `STUDIO_NATIVE_ONLY=true`,
+> ticket exchange and preexisting standalone sessions for Studio-linked users
+> are rejected; the old admin mapping below does not authorize native access.
+
 # Elastic Labs Studio sign in and portal embed
 
 Studio is the identity authority for this deployment. A member signs in at

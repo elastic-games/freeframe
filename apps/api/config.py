@@ -48,6 +48,8 @@ class Settings(BaseSettings):
     jwt_secret: str
     studio_sso_enabled: bool = False
     studio_sso_secret: str | None = None
+    studio_native_secret: str | None = None
+    studio_native_only: bool = False
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7
