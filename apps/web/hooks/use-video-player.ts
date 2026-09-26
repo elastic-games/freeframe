@@ -195,7 +195,7 @@ export function useVideoPlayer(
       }
     }
 
-    const onPlay = () => { setIsPlaying(true); if (!detached) setActiveAnnotation(null) }
+    const onPlay = () => { setError(null); setIsPlaying(true); if (!detached) setActiveAnnotation(null) }
     const onPause = () => setIsPlaying(false)
     const onWaiting = () => setIsLoading(true)
     const onCanPlay = () => setIsLoading(false)
@@ -292,16 +292,24 @@ export function useVideoPlayer(
 
   // ─── Controls ───────────────────────────────────────────────────────────────
 
-  const play = useCallback(() => {
-    videoRef.current?.play().catch(() => {
-      // Autoplay may be blocked; ignore
-    })
+  const reportPlayFailure = useCallback((failure: unknown) => {
+    // Do not expose browser error messages: they may contain signed media URLs.
+    const name = (failure instanceof Error || failure instanceof DOMException) && /^[a-z]+$/i.test(failure.name)
+      ? failure.name.slice(0, 40) : 'Error'
+    setIsLoading(false)
+    setError(name === 'NotAllowedError'
+      ? 'Playback was blocked by the browser. Click Play in the visible viewer.'
+      : `Unable to start playback (${name}).`)
   }, [])
+
+  const play = useCallback(() => {
+    videoRef.current?.play().catch(reportPlayFailure)
+  }, [reportPlayFailure])
 
   const pause = useCallback(() => {
     cancelPlayRetry()
     videoRef.current?.pause()
-  }, [cancelPlayRetry])
+  }, [cancelPlayRetry, reportPlayFailure])
 
   const togglePlay = useCallback(() => {
     const video = videoRef.current
@@ -320,7 +328,7 @@ export function useVideoPlayer(
         // data is available, otherwise mobile always needs a second tap.
         const onCanPlay = () => {
           playRetryRef.current = null
-          video.play().catch(() => {})
+          video.play().catch(reportPlayFailure)
         }
         playRetryRef.current = { video, onCanPlay }
         video.addEventListener('canplay', onCanPlay, { once: true })
@@ -329,7 +337,7 @@ export function useVideoPlayer(
     } else {
       video.pause()
     }
-  }, [cancelPlayRetry])
+  }, [cancelPlayRetry, reportPlayFailure])
 
   const seek = useCallback((time: number) => {
     const video = videoRef.current

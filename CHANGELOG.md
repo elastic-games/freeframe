@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Studio embedding now uses one compact review toolbar instead of a second sidebar, follows Studio appearance live, and omits the attribution badge inside the portal. Standalone FreeFrame keeps its original sidebar and saved appearance.
 
 - Route native Studio HLS requests directly to the FreeFrame API in the Elastic Labs nginx template.
+- Browser playback rejections now show a visible error instead of silently leaving the Play control paused; signed media URLs are excluded from the message.
 
 ### Added
 - Revocable per-node review-worker keys bound to one project and folder, with narrow asset, upload, and comment-reply operations and durable idempotency receipts.

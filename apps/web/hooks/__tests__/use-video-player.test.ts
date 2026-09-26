@@ -61,3 +61,25 @@ describe('useVideoPlayer — detached gates global-store writes', () => {
     }
   })
 })
+
+describe('visible playback failure', () => {
+  it('reports a browser activation rejection instead of leaving Play silently paused', async () => {
+    const { result } = renderHook(() => useVideoPlayer(SRC))
+    attach(result.current.videoRef, {
+      paused: true,
+      play: vi.fn().mockRejectedValue(new DOMException('Private media URL must not appear', 'NotAllowedError')),
+    })
+    await act(async () => result.current.togglePlay())
+    expect(result.current.error).toBe('Playback was blocked by the browser. Click Play in the visible viewer.')
+  })
+
+  it('reports a failed play control without including the error message or a signed URL', async () => {
+    const { result } = renderHook(() => useVideoPlayer(SRC))
+    attach(result.current.videoRef, {
+      play: vi.fn().mockRejectedValue(new DOMException('https://private.test/media?signature=secret', 'NotSupportedError')),
+    })
+    await act(async () => result.current.play())
+    expect(result.current.error).toBe('Unable to start playback (NotSupportedError).')
+    expect(result.current.error).not.toContain('signature')
+  })
+})
