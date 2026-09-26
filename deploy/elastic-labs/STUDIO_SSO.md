@@ -1,5 +1,6 @@
 > The deployed owner preview supports both the original FreeFrame dashboard on
-> `reviews.elasticlabs.site` and Studio's native Reviews workspace. See
+> `reviews.elasticlabs.site` and the same original UI inside Studio's Reviews
+> workspace. See
 > [NATIVE_REVIEWS.md](NATIVE_REVIEWS.md) for the dual-dashboard configuration.
 > Studio's current ticket endpoint is owner-only; the multi-member/admin mapping
 > described below is historical and does not authorize new member access.

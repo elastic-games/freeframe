@@ -1,16 +1,36 @@
 # Elastic Labs native Reviews integration
 
-The native pair was deployed as an owner-only preview on 2026-09-26. It accompanies
-Studio's native library/viewer and `/api/studio/reviews` boundary. Existing media,
+The native pair was deployed as an owner-only preview on 2026-09-26. Studio now
+reuses the original FreeFrame application inside its navigation shell, with the
+`/api/studio/reviews` delegation boundary retained for integrations. Existing media,
 asset/version/comment UUIDs and guest share records are preserved.
 
 ## Two dashboard entry points
 
 The owner requested the original FreeFrame dashboard at
-`https://reviews.elasticlabs.site/` alongside Studio's native workspace at
+`https://reviews.elasticlabs.site/` and inside Studio's workspace at
 `https://app.elasticlabs.site/apps/reviews`. Keep the review-domain root and
 member routes proxied to FreeFrame web; do not redirect them into the portal.
 Studio remains the identity authority for both dashboards.
+
+Studio mounts the complete FreeFrame UI in a borderless frame. Its bookmark
+adapter resolves configured Studio project keys to exact FreeFrame UUIDs and
+checks asset scope before returning a fixed-origin URL. FreeFrame retains its
+original internal rail, search, project, upload and review controls. Middleware
+and the Studio sign-in page preserve a validated local return path including
+version/comment queries; the viewer selects the linked version before applying
+the comment. No cross-origin theme or locale synchronization is implied.
+
+The reused workspace frontend was deployed on 2026-09-26: Studio source
+`c59f1da120c92c41ec3f138a6255b9c8cfc5e23d` and FreeFrame web image
+`eb158e03c72a7a5a7e3289b70186a0bf5446f59d`. API and workers retain image
+`016dd3c55468114d033eaf1c67295ec348c3d533`; the candidate API source matches
+that release. Use the explicit release override, not the current source SHA
+for every service image. The previous frontend pair and protected receipt are
+retained in `/var/backups/elastic-native-reviews/reused-workspace-20260926T224051Z`.
+Both inactive frontend builds, twelve public entry/auth checks and read-only
+native project/replay/scope/public HLS checks passed. Fresh signed-in combined
+layout verification remains pending; the active Safari video was not interrupted.
 
 For this dual-dashboard pairing, set `FREEFRAME_NATIVE_ONLY=false` in Studio's
 web environment and `STUDIO_NATIVE_ONLY=false` in FreeFrame, with
