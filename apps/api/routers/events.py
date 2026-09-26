@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..middleware.auth import get_current_user, get_optional_user
 from ..services.auth_service import decode_token, get_user_by_id
+from ..services.studio_native import delegated_studio_user
 from ..models.user import User, UserStatus
 from ..services.event_service import event_stream
 from ..services.permissions import get_project_member, is_public_project
@@ -22,10 +23,16 @@ async def stream_events(
 ):
     # EventSource can't send Authorization headers, so accept token as query param
     user = current_user
+    header = request.headers.get("authorization", "")
+    if not user and header.startswith("Bearer "):
+        user = await delegated_studio_user(request, header[7:], db)
     if not user and token:
         payload = decode_token(token)
         if payload and payload.get("type") == "access":
             user = get_user_by_id(db, uuid.UUID(payload["sub"]))
+    from ..config import settings
+    if settings.studio_native_only and user and (user.preferences or {}).get("studio_sso") and not getattr(user, "_studio_native", False):
+        raise HTTPException(status_code=403, detail="Use Studio Reviews")
     if not user or user.status == UserStatus.deactivated:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authenticated")
 

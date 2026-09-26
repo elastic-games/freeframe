@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { withBasePath } from './lib/base-path'
 
-const PUBLIC_ROUTES = ['/login', '/setup']
+const PUBLIC_ROUTES = ['/login', '/setup', '/studio']
 const PUBLIC_PREFIXES = ['/invite/', '/share/']
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -15,6 +15,11 @@ function isPublicRoute(pathname: string): boolean {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const studioSsoEnabled = process.env.NEXT_PUBLIC_STUDIO_SSO_ENABLED === 'true'
+
+  if (studioSsoEnabled && (pathname === '/login' || pathname === '/setup')) {
+    return NextResponse.redirect(new URL(withBasePath('/studio'), request.url))
+  }
 
   // Always allow public routes
   if (isPublicRoute(pathname)) {
@@ -24,7 +29,7 @@ export async function middleware(request: NextRequest) {
   // Check if setup is needed — redirect to /setup if no superadmin exists
   // Uses a cookie cache to avoid calling the API on every request
   const setupDone = request.cookies.get('ff_setup_done')?.value
-  if (!setupDone) {
+  if (!studioSsoEnabled && !setupDone) {
     try {
       const res = await fetch(`${API_URL}/setup/status`, {
         next: { revalidate: 60 }, // Cache for 60 seconds
@@ -49,7 +54,7 @@ export async function middleware(request: NextRequest) {
   const refreshToken = request.cookies.get('ff_refresh_token')?.value
 
   if (!accessToken && !refreshToken) {
-    const loginUrl = new URL(withBasePath('/login'), request.url)
+    const loginUrl = new URL(withBasePath(studioSsoEnabled ? '/studio' : '/login'), request.url)
     loginUrl.searchParams.set('from', pathname)
     return NextResponse.redirect(loginUrl)
   }
