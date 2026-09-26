@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { DM_Sans } from "next/font/google";
 import { ToastProvider } from "@/components/shared/toast";
 import { ThemeInitializer } from "@/components/shared/theme-initializer";
+import { StudioEmbedBridge } from "@/components/shared/studio-embed-bridge";
 import { BrandingHead } from "@/components/shared/branding-head";
 import { BrandingProvider } from "@/components/shared/branding-provider";
 import { getServerBranding } from "@/lib/branding-server";
@@ -82,6 +83,7 @@ export default async function RootLayout({
       </head>
       <body className={`${dmSans.variable} font-sans antialiased`}>
         <ThemeInitializer />
+        <StudioEmbedBridge />
         <BrandingProvider initial={branding}>
           {/* Renders nothing; it keeps the live document in step with branding
               after a change. It sits inside the provider rather than in <head>

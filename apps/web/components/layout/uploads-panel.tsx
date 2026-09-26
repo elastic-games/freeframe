@@ -22,6 +22,7 @@ import { cn, formatBytes, formatRelativeTime } from '@/lib/utils'
 import { useUploadStore, type UploadFile, type UploadStatus } from '@/stores/upload-store'
 import { carriesFiles } from '@/lib/drag'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { useThemeStore } from '@/stores/theme-store'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -407,6 +408,7 @@ export function UploadsPanel({
    *  opens against its right edge, so it has to know which. */
   railCollapsed?: boolean
 } = {}) {
+  const embedded = useThemeStore((s) => s.hostTheme !== null)
   const { files, panelOpen, setPanelOpen, clearCompleted, fetchHistory, fetchMoreHistory, historyHasMore, historyLoading } = useUploadStore()
   const [filter, setFilter] = React.useState<FilterTab>('active')
   const scrollRef = React.useRef<HTMLDivElement>(null)
@@ -490,9 +492,9 @@ export function UploadsPanel({
         // unreachable. The rail only expands by hand and does not persist, so
         // below `md` the panel stays where a collapsed rail puts it.
         className={cn(
-          'fixed left-safe top-0 z-50 h-dvh w-[380px]',
-          '[--ff-left:52px]',
-          !railCollapsed && 'md:[--ff-left:220px]',
+          'fixed left-safe z-50 w-[380px]',
+          embedded ? 'top-11 h-[calc(100dvh-44px)] max-w-full [--ff-left:0px]' : 'top-0 h-dvh [--ff-left:52px]',
+          !embedded && !railCollapsed && 'md:[--ff-left:220px]',
           'border-r border-border bg-bg-secondary shadow-2xl flex flex-col pb-safe animate-in slide-in-from-left-4 duration-150',
         )}
       >

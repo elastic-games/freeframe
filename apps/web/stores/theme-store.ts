@@ -5,6 +5,9 @@ export type Theme = 'dark' | 'light' | 'system'
 
 interface ThemeState {
   theme: Theme
+  /** Ephemeral Studio override; never saved as the standalone preference. */
+  hostTheme: 'dark' | 'light' | null
+  setHostTheme: (theme: 'dark' | 'light' | null) => void
   /** Apply theme locally only (no server save) — used by initializer */
   applyTheme: (theme: Theme) => void
   /** Set theme + save to server — used by settings page */
@@ -44,16 +47,25 @@ async function saveToServer(theme: Theme) {
 
 export const useThemeStore = create<ThemeState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       theme: 'dark',
+      hostTheme: null,
+      setHostTheme: (hostTheme) => {
+        set({ hostTheme })
+        if (typeof document !== 'undefined') {
+          if (hostTheme) document.documentElement.dataset.studioEmbed = 'true'
+          else delete document.documentElement.dataset.studioEmbed
+        }
+        applyToDOM(hostTheme ?? get().theme)
+      },
 
       applyTheme: (theme) => {
-        applyToDOM(theme)
+        applyToDOM(get().hostTheme ?? theme)
         set({ theme })
       },
 
       setTheme: (theme) => {
-        applyToDOM(theme)
+        applyToDOM(get().hostTheme ?? theme)
         set({ theme })
         saveToServer(theme)
       },
@@ -61,16 +73,17 @@ export const useThemeStore = create<ThemeState>()(
       syncFromServer: (preferences) => {
         const serverTheme = preferences?.theme as Theme | undefined
         if (serverTheme && ['dark', 'light', 'system'].includes(serverTheme)) {
-          applyToDOM(serverTheme)
+          applyToDOM(get().hostTheme ?? serverTheme)
           set({ theme: serverTheme })
         }
       },
     }),
     {
       name: 'ff-theme',
+      partialize: (state) => ({ theme: state.theme }),
       onRehydrateStorage: () => (state) => {
         // Apply theme as soon as localStorage is loaded (before React renders)
-        if (state) applyToDOM(state.theme)
+        if (state) applyToDOM(state.hostTheme ?? state.theme)
       },
     },
   ),

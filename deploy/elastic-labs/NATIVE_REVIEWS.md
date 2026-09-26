@@ -16,10 +16,15 @@ Studio remains the identity authority for both dashboards.
 Studio mounts the complete FreeFrame UI in a borderless frame. Its bookmark
 adapter resolves configured Studio project keys to exact FreeFrame UUIDs and
 checks asset scope before returning a fixed-origin URL. FreeFrame retains its
-original internal rail, search, project, upload and review controls. Middleware
+original search, project, upload and review controls. Embedded navigation uses
+a compact top bar instead of the standalone vertical rail. Middleware
 and the Studio sign-in page preserve a validated local return path including
 version/comment queries; the viewer selects the linked version before applying
-the comment. No cross-origin theme or locale synchronization is implied.
+the comment. A presentation-only bridge validates the exact origin and parent
+or frame window before synchronizing Studio's light/dark mode. The host override
+is ephemeral and does not replace the standalone saved preference. Navigation
+and appearance requests from the compact bar operate Studio's shared controls;
+embedded attribution is omitted. No locale synchronization is implied.
 
 The reused workspace frontend was deployed on 2026-09-26: Studio source
 `c59f1da120c92c41ec3f138a6255b9c8cfc5e23d` and FreeFrame web image

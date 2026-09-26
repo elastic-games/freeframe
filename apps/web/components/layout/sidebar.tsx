@@ -12,6 +12,9 @@ import {
   LogOut,
   User,
   ChevronsLeft,
+  PanelLeft,
+  Moon,
+  Sun,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
@@ -27,6 +30,8 @@ import useSWR from 'swr'
 import { api } from '@/lib/api'
 import { StorageUsage, StorageRing } from '@/components/shared/storage-usage'
 import type { InstanceSettings } from '@/types'
+import { useThemeStore } from '@/stores/theme-store'
+import { requestStudioControl } from '@/lib/studio-embed'
 
 interface NavItem {
   href: string
@@ -44,6 +49,10 @@ interface SidebarProps {
 }
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+  const hostTheme = useThemeStore((s) => s.hostTheme)
+  const embedded = hostTheme !== null
+  // The embedded toolbar never expands into a second sidebar.
+  const compact = embedded || collapsed
   const pathname = usePathname()
   const { user, logout, isSuperAdmin } = useAuthStore()
   const { files: uploadFiles, togglePanel, panelOpen } = useUploadStore()
@@ -72,14 +81,22 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <>
       <aside
+        aria-label={embedded ? 'Video Reviews controls' : 'FreeFrame navigation'}
         className={cn(
-          'fixed left-0 top-0 z-30 flex h-screen flex-col border-r border-border',
-          'bg-bg-secondary transition-[width] duration-200 overflow-hidden',
-          collapsed ? 'w-[52px]' : 'w-[220px]',
+          'z-30 flex border-border bg-bg-secondary overflow-hidden shrink-0',
+          embedded ? 'relative h-11 w-full flex-row items-center border-b px-2 gap-1' :
+            'fixed left-0 top-0 h-screen flex-col border-r transition-[width] duration-200',
+          !embedded && (collapsed ? 'w-[52px]' : 'w-[220px]'),
         )}
       >
         {/* Logo */}
-        <div
+        {embedded ? (
+          <button type="button" onClick={() => requestStudioControl('toggle-navigation')}
+            aria-label="Toggle Studio navigation" title="Toggle Studio navigation"
+            className="h-8 w-8 shrink-0 grid place-items-center rounded-md text-text-secondary hover:bg-bg-hover hover:text-text-primary">
+            <PanelLeft className="h-4 w-4" />
+          </button>
+        ) : <div
           className={cn(
             'flex h-12 items-center shrink-0 border-b border-border',
             collapsed ? 'justify-center px-0' : 'px-4 gap-2.5',
@@ -104,10 +121,10 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               {orgName}
             </span>
           )}
-        </div>
+        </div>}
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2 px-2 space-y-0.5">
+        <nav className={cn('flex-1 min-w-0', embedded ? 'flex items-center gap-1' : 'overflow-y-auto overflow-x-hidden py-2 px-2 space-y-0.5')}>
           {navItems.map((item) => {
             const isActive =
               item.href === '/'
@@ -121,18 +138,18 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 onClick={() => setNotifOpen(false)}
                 className={cn(
                   'group relative flex items-center rounded-md transition-colors duration-100',
-                  collapsed ? 'justify-center h-9 w-9 mx-auto' : 'gap-2.5 px-2.5 h-9',
+                  embedded ? 'gap-2 px-2 h-8' : collapsed ? 'justify-center h-9 w-9 mx-auto' : 'gap-2.5 px-2.5 h-9',
                   isActive
                     ? 'bg-bg-hover text-text-primary'
                     : 'text-text-secondary hover:bg-bg-hover/60 hover:text-text-primary',
                 )}
-                title={collapsed ? item.label : undefined}
+                title={compact ? item.label : undefined}
               >
                 <Icon
                   className="h-[18px] w-[18px] shrink-0"
                   strokeWidth={isActive ? 2 : 1.5}
                 />
-                {!collapsed && (
+                {(!collapsed || embedded) && (
                   <span
                     className={cn('text-[13px]', isActive && 'font-medium')}
                   >
@@ -147,13 +164,14 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           <button
             onClick={() => setNotifOpen((v) => !v)}
             className={cn(
-              'group relative flex w-full items-center rounded-md transition-colors duration-100',
-              collapsed ? 'justify-center h-9 w-9 mx-auto' : 'gap-2.5 px-2.5 h-9',
+              'group relative flex items-center rounded-md transition-colors duration-100',
+              embedded ? 'gap-2 h-8 px-2' : collapsed ? 'justify-center h-9 w-9 mx-auto' : 'w-full gap-2.5 px-2.5 h-9',
               notifOpen
                 ? 'bg-bg-hover text-text-primary'
                 : 'text-text-secondary hover:bg-bg-hover/60 hover:text-text-primary',
             )}
-            title={collapsed ? 'Notifications' : undefined}
+            aria-label="Notifications"
+            title={compact ? 'Notifications' : undefined}
           >
             <div className="relative shrink-0">
               <Bell
@@ -166,8 +184,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 </span>
               )}
             </div>
-            {!collapsed && (
-              <span className={cn('text-[13px]', notifOpen && 'font-medium')}>
+            {(!collapsed || embedded) && (
+              <span className={cn('text-[13px]', embedded && 'hidden sm:inline', notifOpen && 'font-medium')}>
                 Notifications
               </span>
             )}
@@ -177,13 +195,14 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           <button
             onClick={() => { setNotifOpen(false); togglePanel() }}
             className={cn(
-              'group relative flex w-full items-center rounded-md transition-colors duration-100',
-              collapsed ? 'justify-center h-9 w-9 mx-auto' : 'gap-2.5 px-2.5 h-9',
+              'group relative flex items-center rounded-md transition-colors duration-100',
+              embedded ? 'gap-2 h-8 px-2' : collapsed ? 'justify-center h-9 w-9 mx-auto' : 'w-full gap-2.5 px-2.5 h-9',
               panelOpen
                 ? 'bg-bg-hover text-text-primary'
                 : 'text-text-secondary hover:bg-bg-hover/60 hover:text-text-primary',
             )}
-            title={collapsed ? 'Uploads' : undefined}
+            aria-label="Uploads"
+            title={compact ? 'Uploads' : undefined}
           >
             <div className="relative shrink-0">
               <Upload className="h-[18px] w-[18px]" strokeWidth={panelOpen ? 2 : 1.5} />
@@ -193,8 +212,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 </span>
               )}
             </div>
-            {!collapsed && (
-              <span className={cn('text-[13px]', panelOpen && 'font-medium')}>
+            {(!collapsed || embedded) && (
+              <span className={cn('text-[13px]', embedded && 'hidden sm:inline', panelOpen && 'font-medium')}>
                 Uploads
               </span>
             )}
@@ -202,11 +221,18 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </nav>
 
       {/* Bottom section */}
-      <div className="border-t border-border p-2 space-y-1 shrink-0">
+      <div className={cn('shrink-0', embedded ? 'flex items-center gap-1' : 'border-t border-border p-2 space-y-1')}>
+        {embedded && <button type="button"
+          onClick={() => requestStudioControl('set-theme', hostTheme === 'dark' ? 'light' : 'dark')}
+          aria-label={hostTheme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+          title="Studio appearance"
+          className="h-8 w-8 grid place-items-center rounded-md text-text-secondary hover:bg-bg-hover hover:text-text-primary">
+          {hostTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </button>}
         {/* Instance storage indicator — ring when collapsed, used/limit bar when expanded */}
         {instance && (
-          <div className={cn(collapsed ? 'flex justify-center py-1' : 'px-2.5 py-1.5')}>
-            {collapsed ? (
+          <div className={cn(embedded ? 'hidden md:flex justify-center px-1' : collapsed ? 'flex justify-center py-1' : 'px-2.5 py-1.5')}>
+            {compact ? (
               <StorageRing
                 used={instance.storage_used_bytes}
                 limit={instance.storage_limit_bytes}
@@ -225,13 +251,14 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             <DropdownMenu.Trigger asChild>
               <button
                 className={cn(
-                  'flex w-full items-center rounded-md text-text-secondary hover:bg-bg-hover hover:text-text-primary transition-colors',
-                  collapsed ? 'justify-center h-9 w-9 mx-auto' : 'gap-2.5 px-2 py-1.5',
+                  'flex items-center rounded-md text-text-secondary hover:bg-bg-hover hover:text-text-primary transition-colors',
+                  embedded ? 'justify-center h-8 w-8' : collapsed ? 'justify-center h-9 w-9 mx-auto' : 'w-full gap-2.5 px-2 py-1.5',
                 )}
-                title={collapsed ? (user?.name ?? 'Account') : undefined}
+                aria-label={embedded ? 'FreeFrame settings and account' : undefined}
+                title={embedded ? 'FreeFrame settings and account' : collapsed ? (user?.name ?? 'Account') : undefined}
               >
-                <Avatar src={user?.avatar_url} name={user?.name} size="sm" />
-                {!collapsed && (
+                {embedded ? <Settings className="h-4 w-4" /> : <Avatar src={user?.avatar_url} name={user?.name} size="sm" />}
+                {!compact && (
                   <div className="flex flex-col items-start overflow-hidden min-w-0">
                     <span className="truncate text-[13px] font-medium text-text-primary leading-tight w-full text-left">
                       {user?.name ?? 'User'}
@@ -246,8 +273,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
             <DropdownMenu.Portal>
               <DropdownMenu.Content
-                side="top"
-                align={collapsed ? 'start' : 'end'}
+                side={embedded ? 'bottom' : 'top'}
+                align={embedded ? 'end' : collapsed ? 'start' : 'end'}
                 sideOffset={8}
                 className="z-50 min-w-[180px] rounded-lg border border-border bg-bg-elevated p-1 shadow-xl animate-slide-up"
               >
@@ -282,7 +309,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           </DropdownMenu.Root>
 
           {/* Collapse toggle */}
-          <button
+          {!embedded && <button
             onClick={onToggle}
             className={cn(
               'flex w-full items-center rounded-md text-text-tertiary hover:bg-bg-hover hover:text-text-secondary transition-colors',
@@ -297,7 +324,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               )}
             />
             {!collapsed && <span className="text-xs">Collapse</span>}
-          </button>
+          </button>}
         </div>
       </aside>
 

@@ -73,6 +73,20 @@
   --status-info: #2563eb;
 }
 
+/* Studio's shared dark surfaces apply only inside its workspace. */
+[data-studio-embed="true"][data-theme="dark"] {
+  --bg-primary: #1e1e1e;
+  --bg-secondary: #252526;
+  --bg-tertiary: #2d2d2d;
+  --bg-elevated: #2d2d2d;
+  --bg-hover: #343438;
+  --border-primary: #3c3c3c;
+  --border-secondary: #3c3c3c;
+  --text-primary: #d4d4d4;
+  --text-secondary: #b0b0b0;
+  --text-tertiary: #909090;
+}
+
 @layer base {
   * {
     border-color: var(--border-primary);

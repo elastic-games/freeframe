@@ -12,6 +12,7 @@ import { UploadSSEBridge } from "@/components/layout/upload-sse-bridge";
 import { PoweredByBadge } from "@/components/shared/powered-by-badge";
 import { refuseFileDrag } from "@/lib/drag";
 import { cn } from "@/lib/utils";
+import { useThemeStore } from "@/stores/theme-store";
 
 export default function DashboardLayout({
   children,
@@ -19,6 +20,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const embedded = useThemeStore((s) => s.hostTheme !== null);
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(true);
   const [commandOpen, setCommandOpen] = React.useState(false);
   const { fetchUser } = useAuthStore();
@@ -54,7 +56,7 @@ export default function DashboardLayout({
     // the asset area a project page offers as a drop target -- releasing a few
     // pixels off it used to load `file:///...` over the session.
     <div
-      className="flex h-dvh overflow-hidden bg-bg-primary pl-safe pr-safe"
+      className={cn("flex h-dvh overflow-hidden bg-bg-primary pl-safe pr-safe", embedded && "flex-col")}
       onDragOver={refuseFileDrag}
       onDrop={refuseFileDrag}
     >
@@ -67,7 +69,7 @@ export default function DashboardLayout({
       <main
         className={cn(
           "flex flex-1 flex-col overflow-hidden transition-[margin] duration-200 ease-spring",
-          sidebarCollapsed ? "ml-[52px]" : "ml-[220px]",
+          !embedded && (sidebarCollapsed ? "ml-[52px]" : "ml-[220px]"),
         )}
       >
         {!isAssetViewer && <Header onSearchOpen={() => setCommandOpen(true)} />}
