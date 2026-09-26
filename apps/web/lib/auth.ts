@@ -1,4 +1,5 @@
 import { withBasePath } from './base-path'
+import { studioFrontendOrigin } from './studio-development'
 
 const ACCESS_TOKEN_KEY = 'ff_access_token'
 const REFRESH_TOKEN_KEY = 'ff_refresh_token'
@@ -69,7 +70,10 @@ export async function signInWithStudio(): Promise<string | null> {
   if (STUDIO_MANAGED) return null
   if (!STUDIO_SSO_ENABLED || typeof window === 'undefined') return null
   try {
-    const ticketResponse = await fetch(STUDIO_TICKET_URL, {
+    const ticketUrl = process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_STUDIO_DEVELOPMENT_ORIGIN
+      ? `${studioFrontendOrigin(window.location.hostname)}/api/reviews/sso-ticket`
+      : STUDIO_TICKET_URL
+    const ticketResponse = await fetch(ticketUrl, {
       method: 'POST',
       credentials: 'include',
       cache: 'no-store',

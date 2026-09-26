@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { signInWithStudio } from '@/lib/auth'
+import { studioFrontendOrigin } from '@/lib/studio-development'
 import { studioReturnPath } from '@/lib/studio-return-path'
 
 const STUDIO_MANAGED = process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS === 'true'
@@ -41,7 +42,7 @@ export default function StudioSignInPage() {
       <h1 className="text-2xl font-semibold">Unable to open Video Reviews</h1>
       <div role="alert" className="space-y-4">
         <p>Sign in to Elastic Labs Studio, then reopen Video Reviews.</p>
-        <a className="underline" href="https://app.elasticlabs.site/sign-in" target="_top">Open Studio sign in</a>
+        <a className="underline" href={`${studioFrontendOrigin(window.location.hostname)}/sign-in`} target="_top">Open Studio sign in</a>
         <button className="underline" onClick={() => window.location.reload()}>Try again</button>
       </div>
     </main>
