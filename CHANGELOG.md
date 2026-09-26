@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Route native Studio HLS requests directly to the FreeFrame API in the Elastic Labs nginx template.
+
 ### Added
 - Project-scoped Studio delegation for native Video Reviews, with bounded media lifetimes.
+- Access log sanitization for signed media queries and share grants.
 - Elastic Labs VPS deployment template using the host's nginx, with isolated FreeFrame services and loopback-only app ports.
 
 ### Changed

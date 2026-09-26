@@ -21,7 +21,16 @@ Include only reviewed origins in `CORS_ALLOW_ORIGINS` and
 `https://reviews.elasticlabs.site`. Compose passes the latter to MinIO's supported
 `MINIO_API_CORS_ALLOW_ORIGIN`. Check real preflight, multipart PUT and ETag
 behavior; unsupported MinIO bucket CORS APIs are not proof of configuration.
-Keep API/MinIO service ports bound to loopback.
+Keep API/MinIO service ports bound to loopback. The included nginx safe access
+format drops query capabilities and masks share paths; apply it to the final
+HTTP/HTTPS review and media server blocks. Uvicorn access records are sanitized
+without removing method/status logging. Do not add raw request/referrer logging.
+
+Apply the explicit `/stream/hls/` proxy to the final review-domain HTTP/HTTPS
+servers as well as `/api/`. Native Studio resolves relative HLS paths on the
+review origin, so this route must reach the API unchanged, rather than the
+standalone web service. Run `nginx -t` before reloading; verify master, variant
+and segment requests from the public Studio origin, including CORS and expiry.
 
 ## Exact project provisioning
 
