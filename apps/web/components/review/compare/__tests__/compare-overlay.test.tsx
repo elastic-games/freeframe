@@ -348,7 +348,7 @@ describe('CompareOverlay version-switch offset reset (#182)', () => {
     expect(url.searchParams.get('compare')).toBe('v-2')
   })
 
-  it('switching the right version clears offA/offB and actually switches the version', () => {
+  it('switching the right version puts its ID in the URL and clears offA/offB', () => {
     searchParamsString = 'compare=v-1&offA=1.5&offB=-0.5'
     render(
       <CompareOverlay
@@ -365,10 +365,11 @@ describe('CompareOverlay version-switch offset reset (#182)', () => {
     const url = new URL(replace.mock.calls.at(-1)?.[0], 'http://x')
     expect(url.searchParams.get('offA')).toBeNull()
     expect(url.searchParams.get('offB')).toBeNull()
-    // Asserted on the store, not just the URL: the right pane's version is the
-    // one thing this handler does that never reaches the query string, so a URL
-    // assertion alone stays green even if the switch is dropped entirely.
-    expect(useReviewStore.getState().currentVersion?.id).toBe('v-2')
+    expect(url.searchParams.get('versionId')).toBe('v-2')
+    expect(url.searchParams.get('compare')).toBe('v-1')
+    // The page chooses the new version after navigation from its authenticated
+    // version list; this overlay must not write a competing store value.
+    expect(useReviewStore.getState().currentVersion).toBeNull()
   })
 
   it('re-picking the version already shown leaves calibrated offsets alone', () => {

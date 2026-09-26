@@ -42,7 +42,6 @@ export function CompareOverlay({ asset, versions, rightVersion, onClose, canComm
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const setCurrentVersion = useReviewStore((s) => s.setCurrentVersion)
   const setActiveAnnotation = useReviewStore((s) => s.setActiveAnnotation)
   const setFocusedCommentId = useReviewStore((s) => s.setFocusedCommentId)
   // Remount key for the per-pane AnnotationOverlays (page.tsx idiom) so a
@@ -308,14 +307,15 @@ export function CompareOverlay({ asset, versions, rightVersion, onClose, canComm
   )
   const handleSwitchRight = React.useCallback(
     (v: AssetVersion) => {
-      // The right pane's version lives in the store, its offsets in the URL.
-      // The store write is synchronous and router.replace is deferred, so
-      // updating them separately renders the NEW version with the OLD offset
-      // still applied for a commit or two. Batching them keeps the pair and
-      // its offsets consistent in every rendered frame.
+      // The review page resolves versionId from the authenticated version list.
+      // Keep the version and offsets in one URL transition so an old linked
+      // version cannot overwrite a new store selection before navigation lands.
       React.startTransition(() => {
-        writeParams((p) => { p.delete('offA'); p.delete('offB') })
-        setCurrentVersion(v)
+        writeParams((p) => {
+          p.set('versionId', v.id)
+          p.delete('commentId')
+          p.delete('offA'); p.delete('offB')
+        })
         setAnnotationB(null)
         if (lastAnnotationSide === 'b') {
           setLastAnnotationSide(null)
@@ -323,7 +323,7 @@ export function CompareOverlay({ asset, versions, rightVersion, onClose, canComm
         }
       })
     },
-    [writeParams, setCurrentVersion, lastAnnotationSide, setFocusedCommentId],
+    [writeParams, lastAnnotationSide, setFocusedCommentId],
   )
 
   // Shared zoom/pan for image modes

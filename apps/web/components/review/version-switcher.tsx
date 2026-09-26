@@ -36,9 +36,10 @@ export const versionStatusConfig: Record<
 interface VersionSwitcherProps {
   versions: AssetVersion[]
   className?: string
+  onVersionSelect?: (version: AssetVersion) => void
 }
 
-export function VersionSwitcher({ versions, className }: VersionSwitcherProps) {
+export function VersionSwitcher({ versions, className, onVersionSelect }: VersionSwitcherProps) {
   const currentVersion = useReviewStore((s) => s.currentVersion)
   const setCurrentVersion = useReviewStore((s) => s.setCurrentVersion)
 
@@ -90,12 +91,17 @@ export function VersionSwitcher({ versions, className }: VersionSwitcherProps) {
                 const statusCfg = versionStatusConfig[version.processing_status]
                 const isDisabled =
                   version.processing_status === 'uploading' ||
-                  version.processing_status === 'processing'
+                  version.processing_status === 'processing' ||
+                  (Boolean(onVersionSelect) && version.processing_status === 'failed')
                 return (
                   <DropdownMenu.Item
                     key={version.id}
                     disabled={isDisabled}
-                    onSelect={() => setCurrentVersion(version)}
+                    onSelect={() => {
+                      if (isActive) return
+                      if (onVersionSelect) onVersionSelect(version)
+                      else setCurrentVersion(version)
+                    }}
                     className={cn(
                       'flex items-center justify-between gap-3 mx-1 px-2.5 py-2 rounded-lg text-sm cursor-pointer outline-none transition-colors',
                       isActive

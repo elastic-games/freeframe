@@ -26,6 +26,7 @@ import { api } from '@/lib/api'
 import { useUploadStore } from '@/stores/upload-store'
 import { useBreadcrumbStore } from '@/stores/breadcrumb-store'
 import { canCompare } from '@/lib/compare-time'
+import { resolveReviewVersion, reviewVersionUrl } from '@/lib/review-version-link'
 import {
   ArrowLeft,
   ChevronLeft,
@@ -40,7 +41,6 @@ import Link from 'next/link'
 import { cn, formatTimecode } from '@/lib/utils'
 import { PoweredByBadge } from '@/components/shared/powered-by-badge'
 import { usePageTitle } from '@/hooks/use-page-title'
-import { useLinkedReviewVersion } from '@/hooks/use-linked-review-version'
 import type { Project, AssetResponse, ProjectMember, FolderTreeNode } from '@/types'
 
 const acceptByType: Record<string, string> = {
@@ -55,9 +55,7 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const { asset, versions, isLoading, error, errorStatus, retry, refetchComments, refetchVersions } = useReview()
-  const { currentVersion, isDrawingMode, focusedCommentId, playheadTime, seekTo, setFocusedCommentId, setActiveAnnotation } = useReviewStore()
-  const requestedVersion = searchParams.get('version')
-  useLinkedReviewVersion(asset?.id, versions, requestedVersion, isLoading)
+  const { currentVersion, setCurrentVersion, isDrawingMode, focusedCommentId, playheadTime, seekTo, setFocusedCommentId, setActiveAnnotation } = useReviewStore()
   const { user } = useAuthStore()
   const startVersionUpload = useUploadStore((s) => s.startVersionUpload)
   const versionFileInputRef = useRef<HTMLInputElement>(null)
@@ -121,7 +119,31 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
   }, [useSheet, sheetHeight])
 
 
-  const deepLinkApplied = useRef(false)
+  const deepLinkApplied = useRef<string | null>(null)
+
+  const requestedVersionId = searchParams.get('versionId') || searchParams.get('version')
+  const versionAliasConflict = Boolean(searchParams.get('versionId') && searchParams.get('version') && searchParams.get('versionId') !== searchParams.get('version'))
+  const linkedVersion = asset && !isLoading && !versionAliasConflict
+    ? resolveReviewVersion(asset.id, requestedVersionId, versions)
+    : null
+  const latestReadyVersion = asset
+    ? [...versions]
+      .filter((version) => version.asset_id === asset.id && version.deleted_at == null && version.processing_status === 'ready')
+      .sort((a, b) => b.version_number - a.version_number)[0]
+    : null
+  const versionLinkUnavailable = Boolean(versionAliasConflict || (requestedVersionId && asset && !isLoading && !linkedVersion))
+  const versionLinkPending = Boolean(linkedVersion && currentVersion?.id !== linkedVersion.id)
+
+  useEffect(() => {
+    if (linkedVersion && useReviewStore.getState().currentVersion?.id !== linkedVersion.id) {
+      setCurrentVersion(linkedVersion)
+    }
+  }, [linkedVersion, setCurrentVersion])
+
+  const selectVersion = useCallback((versionId: string | null) => {
+    if (!versionId && latestReadyVersion) setCurrentVersion(latestReadyVersion)
+    router.replace(reviewVersionUrl(pathname, searchParams.toString(), versionId), { scroll: false })
+  }, [latestReadyVersion, setCurrentVersion, router, pathname, searchParams])
 
   // Fetch folder tree to build the folder path for the breadcrumb
   const { data: folderTree } = useSWR<FolderTreeNode[]>(
@@ -226,12 +248,13 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
   // Deep-link to a specific comment from notification (?commentId=...)
   // Runs once after comments are loaded — seeks to timecode, focuses comment, shows annotation
   useEffect(() => {
-    if (requestedVersion && currentVersion?.id !== requestedVersion) return
     const commentId = searchParams.get('commentId')
-    if (!commentId || deepLinkApplied.current || comments.length === 0) return
+    if (!commentId || versionLinkUnavailable || versionLinkPending || comments.length === 0) return
+    const deepLinkKey = `${currentVersion?.id}:${commentId}`
+    if (deepLinkApplied.current === deepLinkKey) return
     const target = comments.find((c: any) => c.id === commentId)
     if (!target) return
-    deepLinkApplied.current = true
+    deepLinkApplied.current = deepLinkKey
     setFocusedCommentId(commentId)
     setActiveTab('comments')
     if ((target as any).timecode_start !== null && (target as any).timecode_start !== undefined) {
@@ -240,7 +263,7 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
     if ((target as any).annotation?.drawing_data) {
       setActiveAnnotation((target as any).annotation.drawing_data)
     }
-  }, [comments, searchParams, requestedVersion, currentVersion?.id, seekTo, setFocusedCommentId, setActiveAnnotation])
+  }, [comments, searchParams, currentVersion?.id, versionLinkUnavailable, versionLinkPending, seekTo, setFocusedCommentId, setActiveAnnotation])
 
   // Version-compare overlay: driven entirely by the ?compare= URL param so it
   // survives refresh/deep-link. closeCompare strips all four compare params.
@@ -625,7 +648,7 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
               setTimeout(() => refetchVersions(), 2500)
             }}
           />
-          <VersionSwitcher versions={versions} />
+          <VersionSwitcher versions={versions} onVersionSelect={(version) => selectVersion(version.id)} />
           {asset && canCompare(asset.asset_type, versions) && (
             <button
               onClick={() => {
@@ -678,7 +701,36 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
       </div>
 
       {/* ─── Main content: viewer + sidebar ────────────────────────────── */}
-      {compareOpen && asset && currentVersion && canCompare(asset.asset_type, versions) ? (
+      {versionLinkUnavailable || versionLinkPending ? (
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center" role={versionLinkUnavailable ? 'alert' : 'status'}>
+          <Info className="h-7 w-7 text-text-tertiary" />
+          <p className="text-sm font-medium text-text-primary">
+            {versionLinkUnavailable
+              ? error ? 'Could not verify this version' : 'This version is unavailable'
+              : 'Opening requested version...'}
+          </p>
+          {versionLinkUnavailable && (
+            <>
+              <p className="max-w-md text-xs text-text-tertiary">
+                {error
+                  ? 'The version list could not be loaded. Try reloading the page.'
+                  : 'The linked version does not belong to this asset, is no longer available, or is not ready for review.'}
+              </p>
+              {error ? (
+                <button onClick={() => window.location.reload()} className="rounded-md bg-accent px-3 py-2 text-xs font-medium text-white">
+                  Reload page
+                </button>
+              ) : latestReadyVersion ? (
+                <button onClick={() => selectVersion(null)} className="rounded-md bg-accent px-3 py-2 text-xs font-medium text-white">
+                  Open latest available version
+                </button>
+              ) : (
+                <p className="text-xs text-text-tertiary">No ready versions are available.</p>
+              )}
+            </>
+          )}
+        </div>
+      ) : compareOpen && asset && currentVersion && canCompare(asset.asset_type, versions) ? (
         <CompareOverlay asset={asset} versions={versions} rightVersion={currentVersion} onClose={closeCompare} canComment={canComment} />
       ) : (
       <>

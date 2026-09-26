@@ -188,12 +188,14 @@ function CommentMenu({
   isOwn,
   commentId,
   assetId,
+  versionId,
   onEdit,
   onDelete,
 }: {
   isOwn: boolean;
   commentId: string;
   assetId?: string;
+  versionId?: string;
   onEdit: () => void;
   onDelete: (commentId: string) => Promise<void>;
 }) {
@@ -206,6 +208,7 @@ function CommentMenu({
     <div className="relative">
       <button
         onClick={() => setOpen((p) => !p)}
+        title="Comment actions"
         className="h-7 w-7 flex items-center justify-center rounded-full text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary transition-colors"
       >
         <MoreHorizontal className="h-4 w-4" />
@@ -231,6 +234,9 @@ function CommentMenu({
               url = new URL(`${window.location.pathname}/assets/${assetId}`, window.location.origin)
             } else {
               url = new URL(window.location.href)
+            }
+            if (versionId && /^\/projects\/[^/]+\/assets\/[^/]+$/.test(url.pathname)) {
+              url.searchParams.set('versionId', versionId)
             }
             url.searchParams.set('commentId', commentId)
             navigator.clipboard.writeText(url.toString())
@@ -682,6 +688,7 @@ function CommentItem({
                   isOwn={isOwn}
                   commentId={comment.id}
                   assetId={comment.asset_id}
+                  versionId={comment.version_id}
                   onEdit={() => { setEditing(true); setEditBody(comment.body); }}
                   onDelete={onDelete}
                 />

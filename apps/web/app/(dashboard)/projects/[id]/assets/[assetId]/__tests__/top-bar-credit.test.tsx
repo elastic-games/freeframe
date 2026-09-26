@@ -22,21 +22,25 @@
  * down, which is an iPad in portrait.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
+
+const replace = vi.fn()
+let searchParamsString = ''
 
 const asset = {
   id: 'a2',
   name: 'Episode 4 — rough cut.mov',
   project_id: 'p1',
   asset_type: 'video',
-  latest_version: { id: 'v1', version_number: 1, processing_status: 'ready' },
+  latest_version: { id: 'v1', asset_id: 'a2', version_number: 1, processing_status: 'ready', deleted_at: null },
 }
+const secondVersion = { id: 'v2', asset_id: 'a2', version_number: 2, processing_status: 'ready', deleted_at: null }
 const allAssets = [{ id: 'a1' }, asset, { id: 'a3' }]
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), replace }),
   usePathname: () => '/projects/p1/assets/a2',
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => new URLSearchParams(searchParamsString),
 }))
 vi.mock('swr', () => ({
   default: (key: string) => ({
@@ -47,7 +51,7 @@ vi.mock('@/components/review/review-provider', () => ({
   ReviewProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useReview: () => ({
     asset,
-    versions: [asset.latest_version],
+    versions: [asset.latest_version, secondVersion],
     isLoading: false,
     refetchComments: vi.fn(),
     refetchVersions: vi.fn(),
@@ -81,15 +85,16 @@ vi.mock('@/stores/auth-store', () => ({
   useAuthStore: storeHook({ user: { id: 'u1', name: 'Reviewer' } }),
 }))
 vi.mock('@/stores/review-store', () => ({
-  useReviewStore: storeHook({
+  useReviewStore: Object.assign(storeHook({
     currentVersion: { id: 'v1', version_number: 1 },
+    setCurrentVersion: vi.fn(),
     isDrawingMode: false,
     focusedCommentId: null,
     playheadTime: 0,
     seekTo: vi.fn(),
     setFocusedCommentId: vi.fn(),
     setActiveAnnotation: vi.fn(),
-  }),
+  }), { getState: () => ({ currentVersion: { id: 'v1' } }) }),
 }))
 vi.mock('@/stores/upload-store', () => ({
   useUploadStore: storeHook({ startVersionUpload: vi.fn() }),
@@ -109,11 +114,17 @@ vi.mock('@/components/review/mobile-comment-sheet', () => ({
   MobileCommentSheet: () => null,
   PEEK_PX: 56,
 }))
-vi.mock('@/components/review/version-switcher', () => ({ VersionSwitcher: () => null }))
+vi.mock('@/components/review/version-switcher', () => ({
+  VersionSwitcher: ({ onVersionSelect }: { onVersionSelect?: (version: unknown) => void }) =>
+    <button onClick={() => onVersionSelect?.({ id: 'v2', asset_id: 'a2', version_number: 2, processing_status: 'ready', deleted_at: null })}>
+      Switch to v2
+    </button>,
+}))
 vi.mock('@/components/review/share-dialog', () => ({ ShareDialog: () => null }))
 vi.mock('@/components/review/compare/compare-overlay', () => ({ CompareOverlay: () => null }))
 
 import ReviewPage from '../page'
+import { useReviewStore } from '@/stores/review-store'
 
 function renderPage() {
   return render(<ReviewPage params={{ id: 'p1', assetId: 'a2' }} />)
@@ -122,6 +133,30 @@ function renderPage() {
 describe('the credit and the asset navigator in the top bar', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    searchParamsString = ''
+  })
+
+  it('shows an explicit unavailable state for a version outside the ready asset list', () => {
+    searchParamsString = 'versionId=missing&commentId=c1&compare=v1'
+    renderPage()
+
+    expect(screen.getByRole('alert')).toHaveTextContent('This version is unavailable')
+    fireEvent.click(screen.getByRole('button', { name: 'Open latest available version' }))
+    expect(replace).toHaveBeenCalledWith('/projects/p1/assets/a2?compare=v1', { scroll: false })
+  })
+
+  it('keeps a linked version on load and writes a shareable URL when the reviewer switches', () => {
+    searchParamsString = 'versionId=v1&commentId=c1&compare=v2'
+    const { rerender } = renderPage()
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(useReviewStore().setCurrentVersion).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Switch to v2' }))
+    expect(replace).toHaveBeenCalledWith('/projects/p1/assets/a2?versionId=v2&compare=v2', { scroll: false })
+
+    searchParamsString = 'versionId=v2&compare=v2'
+    rerender(<ReviewPage params={{ id: 'p1', assetId: 'a2' }} />)
+    expect(useReviewStore().setCurrentVersion).toHaveBeenCalledWith(expect.objectContaining({ id: 'v2' }))
   })
 
   it('puts the credit in the same row as the navigator, not over it', () => {

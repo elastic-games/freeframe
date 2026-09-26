@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Studio-managed Reviews now keeps the original FreeFrame dashboard and project, asset, version, comment, folder, and upload views while Studio checks the active canonical project binding for each request.
 - Project-scoped Studio delegation for native Video Reviews, with bounded media lifetimes.
 - Access log sanitization for signed media queries and share grants.
+- Asset review links can select an exact ready version with `?versionId=<version UUID>`. The version switcher updates the URL, and unavailable versions show a clear state instead of opening a different cut under the linked URL.
 - Elastic Labs VPS deployment template using the host's nginx, with isolated FreeFrame services and loopback-only app ports.
 
 ### Changed
