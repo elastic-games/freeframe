@@ -1,7 +1,8 @@
-> Historical iframe configuration. The native Reviews candidate uses
-> [NATIVE_REVIEWS.md](NATIVE_REVIEWS.md). With `STUDIO_NATIVE_ONLY=true`,
-> ticket exchange and preexisting standalone sessions for Studio-linked users
-> are rejected; the old admin mapping below does not authorize native access.
+> The deployed owner preview supports both the original FreeFrame dashboard on
+> `reviews.elasticlabs.site` and Studio's native Reviews workspace. See
+> [NATIVE_REVIEWS.md](NATIVE_REVIEWS.md) for the dual-dashboard configuration.
+> Studio's current ticket endpoint is owner-only; the multi-member/admin mapping
+> described below is historical and does not authorize new member access.
 
 # Elastic Labs Studio sign in and portal embed
 

@@ -4,26 +4,34 @@ The native pair was deployed as an owner-only preview on 2026-09-26. It accompan
 Studio's native library/viewer and `/api/studio/reviews` boundary. Existing media,
 asset/version/comment UUIDs and guest share records are preserved.
 
-## Member login entry
+## Two dashboard entry points
 
-In the native-only Elastic deployment, `https://reviews.elasticlabs.site/` opens
-`https://app.elasticlabs.site/apps/reviews`. Studio's existing session and sign-in
-form own member authentication. The standalone `/studio` page still implements
-the legacy ticket exchange, which native-only mode intentionally disables; do
-not send members through that page or re-enable the exchange to fix login.
+The owner requested the original FreeFrame dashboard at
+`https://reviews.elasticlabs.site/` alongside Studio's native workspace at
+`https://app.elasticlabs.site/apps/reviews`. Keep the review-domain root and
+member routes proxied to FreeFrame web; do not redirect them into the portal.
+Studio remains the identity authority for both dashboards.
 
-Copy the exact root/login/setup/studio/projects redirect locations from
-`nginx.http.conf` into the review-domain HTTPS server after Certbot setup. Old
-standalone project bookmarks open the native project chooser; their FreeFrame
-UUIDs are not Studio project keys. Redirects use a fixed destination and do not
-forward arbitrary callback queries. Leave `/share/`, `/api/`, `/stream/hls/`,
-frontend assets and the separate media-domain proxy intact.
+For this dual-dashboard pairing, set `FREEFRAME_NATIVE_ONLY=false` in Studio's
+web environment and `STUDIO_NATIVE_ONLY=false` in FreeFrame, with
+`STUDIO_SSO_ENABLED=true` and `ACCESS_TOKEN_EXPIRE_MINUTES=2`. The deployed Studio
+ticket route still requires a verified, active exact owner, current organization
+management permission, a configured native project binding and the single
+`FREEFRAME_ADMIN_STUDIO_USER_IDS` UUID. No other member is granted access by this
+configuration change. The original dashboard uses the owner's preexisting
+FreeFrame administrator role; native portal requests retain exact project
+scope, single-use delegation and bounded media capabilities.
 
-Back up the active nginx file, run `nginx -t`, reload nginx, then run
-`python3 deploy/elastic-labs/check-native-entry.py`. Check an anonymous browser
-reaches Studio's sign-in form and an existing owner session reaches the native
-project chooser. This routing change needs no application rebuild or database
-mutation. Upstream standalone installs do not use this Elastic nginx template.
+A signed-in Studio owner opening the review domain exchanges a short-lived,
+single-use assertion and stays on the FreeFrame domain. A signed-out visitor
+sees FreeFrame's Studio sign-in entry. Separate FreeFrame passwords, email-code,
+refresh, signup and setup remain disabled in Studio SSO mode. No keys need to
+change. Back up both environment files and nginx configuration, validate
+`nginx -t`, recreate the API using its immutable image and restart Studio web.
+No application rebuild or schema change is required for the existing deployed
+pair. Run `python3 deploy/elastic-labs/check-native-entry.py` and verify the
+original FreeFrame Projects dashboard with an actual Studio owner session.
+Preserve `/share/`, `/api/`, `/stream/hls/`, frontend assets and media routing.
 
 ## Required configuration
 
@@ -31,8 +39,8 @@ Set a distinct random `STUDIO_NATIVE_SECRET` (at least 32 characters) on the hos
 the matching Studio setting is `FREEFRAME_STUDIO_NATIVE_SECRET`. Never print or
 commit keys. Keep the ordinary JWT and legacy SSO keys separate.
 
-Enable `STUDIO_SSO_ENABLED=true` and `STUDIO_NATIVE_ONLY=true` for the native-only
-production pairing. In this mode the legacy Studio SSO exchange returns 404 and
+For an optional native-only pairing, enable `STUDIO_SSO_ENABLED=true` and
+`STUDIO_NATIVE_ONLY=true` and set Studio `FREEFRAME_NATIVE_ONLY=true`. In this mode the legacy Studio SSO exchange returns 404 and
 existing standalone access sessions for Studio-linked users are rejected. Guest
 shares retain the existing link/session/password checks. The default native-only
 flag is false to preserve upstream standalone installations.
