@@ -55,7 +55,7 @@ export async function middleware(request: NextRequest) {
 
   if (!accessToken && !refreshToken) {
     const loginUrl = new URL(withBasePath(studioSsoEnabled ? '/studio' : '/login'), request.url)
-    loginUrl.searchParams.set('from', pathname)
+    loginUrl.searchParams.set('from', pathname + request.nextUrl.search)
     return NextResponse.redirect(loginUrl)
   }
 

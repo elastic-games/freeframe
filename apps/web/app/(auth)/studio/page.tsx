@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { signInWithStudio } from '@/lib/auth'
+import { studioReturnPath } from '@/lib/studio-return-path'
 
 export default function StudioSignInPage() {
   const router = useRouter()
@@ -12,7 +13,7 @@ export default function StudioSignInPage() {
     let active = true
     signInWithStudio().then((token) => {
       if (!active) return
-      if (token) router.replace('/projects')
+      if (token) router.replace(studioReturnPath(new URLSearchParams(window.location.search).get('from')))
       else setFailed(true)
     })
     return () => { active = false }

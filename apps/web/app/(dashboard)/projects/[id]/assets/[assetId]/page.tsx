@@ -40,6 +40,7 @@ import Link from 'next/link'
 import { cn, formatTimecode } from '@/lib/utils'
 import { PoweredByBadge } from '@/components/shared/powered-by-badge'
 import { usePageTitle } from '@/hooks/use-page-title'
+import { useLinkedReviewVersion } from '@/hooks/use-linked-review-version'
 import type { Project, AssetResponse, ProjectMember, FolderTreeNode } from '@/types'
 
 const acceptByType: Record<string, string> = {
@@ -55,6 +56,8 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
   const searchParams = useSearchParams()
   const { asset, versions, isLoading, refetchComments, refetchVersions } = useReview()
   const { currentVersion, isDrawingMode, focusedCommentId, playheadTime, seekTo, setFocusedCommentId, setActiveAnnotation } = useReviewStore()
+  const requestedVersion = searchParams.get('version')
+  useLinkedReviewVersion(asset?.id, versions, requestedVersion, isLoading)
   const { user } = useAuthStore()
   const startVersionUpload = useUploadStore((s) => s.startVersionUpload)
   const versionFileInputRef = useRef<HTMLInputElement>(null)
@@ -223,6 +226,7 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
   // Deep-link to a specific comment from notification (?commentId=...)
   // Runs once after comments are loaded — seeks to timecode, focuses comment, shows annotation
   useEffect(() => {
+    if (requestedVersion && currentVersion?.id !== requestedVersion) return
     const commentId = searchParams.get('commentId')
     if (!commentId || deepLinkApplied.current || comments.length === 0) return
     const target = comments.find((c: any) => c.id === commentId)
@@ -236,7 +240,7 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
     if ((target as any).annotation?.drawing_data) {
       setActiveAnnotation((target as any).annotation.drawing_data)
     }
-  }, [comments, searchParams, seekTo, setFocusedCommentId, setActiveAnnotation])
+  }, [comments, searchParams, requestedVersion, currentVersion?.id, seekTo, setFocusedCommentId, setActiveAnnotation])
 
   // Version-compare overlay: driven entirely by the ?compare= URL param so it
   // survives refresh/deep-link. closeCompare strips all four compare params.
