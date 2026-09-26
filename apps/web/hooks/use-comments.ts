@@ -3,6 +3,8 @@
 import useSWR from 'swr'
 import { api } from '@/lib/api'
 import type { Comment, Annotation, CommentReaction } from '@/types'
+import { useReviewStore } from '@/stores/review-store'
+import { annotationClockCapture, presentationTimes, verifiedDrawingData } from '@/lib/review-clock'
 
 // ─── Extended comment type with nested data ───────────────────────────────────
 
@@ -23,6 +25,7 @@ export interface CommentWithReplies extends Comment {
 }
 
 interface CreateCommentPayload {
+  review_clock?: Record<string,unknown>
   body: string
   version_id?: string
   timecode_start?: number
@@ -93,6 +96,19 @@ export function useComments(assetId: string | null, versionId: string | null) {
     if (timecodeStart !== undefined) payload.timecode_start = timecodeStart
     if (timecodeEnd !== undefined) payload.timecode_end = timecodeEnd
     if (annotationData) payload.annotation = { drawing_data: annotationData }
+    const state=useReviewStore.getState()
+    if (process.env.NEXT_PUBLIC_STUDIO_SSO_ENABLED==='true' && state.currentAsset?.asset_type==='video'
+      && (timecodeStart!==undefined || annotationData)) {
+      if (state.currentVersion?.id!==versionId || state.reviewClock?.reviewClock.versionId!==versionId) throw new Error('The selected video frame is not verified.')
+      const capture=annotationClockCapture(state.reviewClock,state.playbackCalibration,state.presentedMediaTime)
+      if (annotationData) payload.annotation={drawing_data:verifiedDrawingData(annotationData,capture)}
+      const canonicalTime=presentationTimes(state.reviewClock)[capture.reviewIndex]
+      payload.timecode_start=canonicalTime
+      if (timecodeEnd!==undefined && timecodeEnd!==timecodeStart) throw new Error('Verified feedback currently supports a single presented frame.')
+      if (timecodeEnd!==undefined) payload.timecode_end=canonicalTime
+      payload.review_clock=capture
+      if (payload.annotation) payload.annotation.frame_number=capture.reviewIndex
+    }
     if (parentId) payload.parent_id = parentId
     if (visibility) payload.visibility = visibility
     if (mentionUserIds?.length) (payload as any).mention_user_ids = mentionUserIds

@@ -1,5 +1,5 @@
 import { withBasePath } from './base-path'
-import { studioFrontendOrigin } from './studio-development'
+import { studioFrontendOrigin, studioSessionCookieSeconds } from './studio-development'
 
 const ACCESS_TOKEN_KEY = 'ff_access_token'
 const REFRESH_TOKEN_KEY = 'ff_refresh_token'
@@ -50,7 +50,7 @@ export function setTokens(access: string, refresh: string): void {
   localStorage.setItem(ACCESS_TOKEN_KEY, access)
   localStorage.setItem(REFRESH_TOKEN_KEY, refresh)
   // Set cookies so middleware can check auth on server side
-  const maxAge = STUDIO_SSO_ENABLED ? 120 : 60 * 60 * 24 * 7
+  const maxAge = STUDIO_SSO_ENABLED ? studioSessionCookieSeconds() : 60 * 60 * 24 * 7
   document.cookie = `${ACCESS_TOKEN_KEY}=${access}; path=/; max-age=${maxAge}; SameSite=Lax`
   document.cookie = `${REFRESH_TOKEN_KEY}=${refresh}; path=/; max-age=${maxAge}; SameSite=Lax`
 }

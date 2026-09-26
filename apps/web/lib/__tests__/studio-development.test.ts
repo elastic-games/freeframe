@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { studioFrontendOrigin, studioReturnPath } from '../studio-development'
+import { studioFrontendOrigin, studioReturnPath, studioSessionCookieSeconds } from '../studio-development'
 
 describe('Studio development origin', () => {
   it('retains production defaults outside development', () => {
@@ -32,5 +32,17 @@ describe('Studio SSO exact-version return path', () => {
       '/projects/../../login', '/login?from=/projects', '/projects/%2f%2fevil.test', '/projects/\nasset']) {
       expect(studioReturnPath(value)).toBe('/projects')
     }
+  })
+})
+
+describe('bounded local Studio session', () => {
+  it('retains production lifetime and requires an explicit validated local origin', () => {
+    expect(studioSessionCookieSeconds('1800','http://localhost:3036','production')).toBe(120)
+    expect(studioSessionCookieSeconds('1800',undefined,'development')).toBe(120)
+    expect(studioSessionCookieSeconds('1800','http://localhost:3036','development')).toBe(1800)
+    expect(() => studioSessionCookieSeconds('1800','http://outside.test:3036','development')).toThrow()
+  })
+  it('rejects unbounded, non-integer or ambiguous lifetime settings', () => {
+    for (const seconds of ['119','3601','Infinity','1800.5','-1','1e3']) expect(() => studioSessionCookieSeconds(seconds,'http://localhost:3036','development')).toThrow()
   })
 })

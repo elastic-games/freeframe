@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Hls from 'hls.js'
 import { cn, formatTimecode } from '@/lib/utils'
+import { formatReviewedTimecode, nearestReviewIndex, presentationTimes } from '@/lib/review-clock'
 import { useReviewStore } from '@/stores/review-store'
 import type { Comment } from '@/types'
 
@@ -195,7 +196,7 @@ function CommentMarker({
 
   const handleClick = useCallback(() => {
     if (comment.timecode_start !== null) {
-      seekTo(comment.timecode_start, true)
+      seekTo(comment.timecode_start, true, comment.review_clock?.schema==='freeframe-annotation-clock/v1' ? 'canonical' : 'legacy')
     }
     setFocusedCommentId(comment.id)
     if ((comment as any).annotation?.drawing_data) {
@@ -249,7 +250,7 @@ function CommentMarker({
               <span className="text-xs font-medium text-white truncate">{authorName}</span>
               {comment.timecode_start !== null && (
                 <span className="ml-auto text-[10px] font-mono text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded">
-                  {formatTimecode(comment.timecode_start)}
+                  {comment.review_clock?.schema==='freeframe-annotation-clock/v1' ? `Reviewed frame ${comment.review_clock.reviewIndex}` : `${formatTimecode(comment.timecode_start)} · unverified legacy time`}
                 </span>
               )}
             </div>
@@ -287,7 +288,10 @@ export function ProgressBar({
   const [hoveredCommentId, setHoveredCommentId] = useState<string | null>(null)
   const focusedCommentId = useReviewStore((s) => s.focusedCommentId)
 
-  const { previewImage, seekPreview, clearPreview } = useFramePreview(streamUrl)
+  const clock=useReviewStore((s) => s.reviewClock)
+  // The hidden preview has no independent presented-frame calibration.
+  // Keep verified timeline labels, and suppress its unproven frame image.
+  const { previewImage, seekPreview, clearPreview } = useFramePreview(clock ? null : streamUrl)
 
   const timeToPercent = useCallback(
     (time: number): number => {
@@ -303,9 +307,10 @@ export function ProgressBar({
       if (!track || !duration) return 0
       const rect = track.getBoundingClientRect()
       const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
-      return ratio * duration
+      const time=ratio * duration
+      return clock ? presentationTimes(clock)[nearestReviewIndex(clock,time)] : time
     },
-    [duration],
+    [duration,clock],
   )
 
   const endDrag = useCallback(() => {
@@ -519,7 +524,8 @@ export function ProgressBar({
           {/* Time label */}
           <div className="flex justify-center">
             <span className="bg-black/90 text-white text-[11px] font-mono px-2 py-0.5 rounded-md">
-              {formatTimecode(hoverTime)}
+              {clock ? formatReviewedTimecode(hoverTime,clock) : formatTimecode(hoverTime)}
+              {clock && <span className="block text-[9px]">Preview timing unverified; image hidden</span>}
             </span>
           </div>
         </div>

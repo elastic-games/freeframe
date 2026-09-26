@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 import os
@@ -352,6 +352,19 @@ def get_stream_url(
             url = generate_presigned_get_url(s3_key, expires_in=300 if getattr(current_user, "_studio_native", False) else 3600)
 
     return StreamUrlResponse(url=url, asset_type=asset.asset_type, expires_in=300 if getattr(current_user, "_studio_native", False) else 3600)
+
+
+@router.get('/assets/{asset_id}/review-clock')
+def get_review_clock(asset_id: uuid.UUID, version_id: uuid.UUID, response: Response,
+    db: Session=Depends(get_db), current_user: User=Depends(get_current_user)):
+    from ..services.review_clock import clock_for_asset
+    asset=db.query(Asset).filter(Asset.id==asset_id,Asset.deleted_at.is_(None)).first()
+    if not asset: raise HTTPException(404,'Asset not found')
+    require_asset_access(db,asset,current_user)
+    version=db.query(AssetVersion).filter(AssetVersion.id==version_id,AssetVersion.asset_id==asset_id,AssetVersion.deleted_at.is_(None)).first()
+    if not version: raise HTTPException(404,'Exact review version not found')
+    response.headers['Cache-Control']='private, no-store'
+    return clock_for_asset(db,asset,version,current_user)
 
 
 @router.post("/assets/{asset_id}/versions", response_model=InitiateUploadResponse)

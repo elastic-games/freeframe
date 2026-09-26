@@ -39,6 +39,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn, formatTimecode } from '@/lib/utils'
+import { formatReviewedTimecode } from '@/lib/review-clock'
 import { PoweredByBadge } from '@/components/shared/powered-by-badge'
 import { usePageTitle } from '@/hooks/use-page-title'
 import type { Project, AssetResponse, ProjectMember, FolderTreeNode } from '@/types'
@@ -258,7 +259,7 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
     setFocusedCommentId(commentId)
     setActiveTab('comments')
     if ((target as any).timecode_start !== null && (target as any).timecode_start !== undefined) {
-      seekTo((target as any).timecode_start, true)
+      seekTo((target as any).timecode_start, true, (target as any).review_clock?.schema==='freeframe-annotation-clock/v1' ? 'canonical' : 'legacy')
     }
     if ((target as any).annotation?.drawing_data) {
       setActiveAnnotation((target as any).annotation.drawing_data)
@@ -783,7 +784,7 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
           // sheet's mini transport rather than leaving a dead play button.
           currentTime={
             asset.asset_type === 'video' || asset.asset_type === 'audio'
-              ? formatTimecode(playheadTime ?? 0)
+              ? useReviewStore.getState().reviewClock ? formatReviewedTimecode(playheadTime ?? 0,useReviewStore.getState().reviewClock!) : formatTimecode(playheadTime ?? 0)
               : ''
           }
           lockedToCompose={isDrawingMode}

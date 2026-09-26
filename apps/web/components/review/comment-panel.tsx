@@ -418,7 +418,10 @@ function CommentItem({
   onShowAnnotation,
 }: CommentItemProps) {
   const storeSeekTo = useReviewStore((s) => s.seekTo);
-  const seekTo = onSeekToTimecode ?? storeSeekTo;
+  const seekTo=(time:number,pause?:boolean,clock?:'canonical'|'legacy') => {
+    if (onSeekToTimecode) onSeekToTimecode(time,pause);
+    else storeSeekTo(time,pause,clock);
+  };
   const setActiveAnnotation = useReviewStore((s) => s.setActiveAnnotation);
   const showAnnotation = onShowAnnotation ?? setActiveAnnotation;
   const setFocusedCommentId = useReviewStore((s) => s.setFocusedCommentId);
@@ -500,7 +503,7 @@ function CommentItem({
           comment.timecode_start !== null &&
           comment.timecode_start !== undefined
         ) {
-          seekTo(comment.timecode_start, true);
+          seekTo(comment.timecode_start, true, comment.review_clock?.schema==='freeframe-annotation-clock/v1' ? 'canonical' : 'legacy');
         }
         showAnnotation(
           comment.annotation ? comment.annotation.drawing_data : null,
@@ -548,16 +551,16 @@ function CommentItem({
                 <button
                   className="inline-flex items-center gap-1 rounded-md bg-accent/15 px-1.5 py-0.5 text-[11px] font-mono text-accent hover:bg-accent/25 transition-colors"
                   onClick={() => {
-                    seekTo(comment.timecode_start!, true);
+                    seekTo(comment.timecode_start!, true, comment.review_clock?.schema==='freeframe-annotation-clock/v1' ? 'canonical' : 'legacy');
                     setFocusedCommentId(comment.id);
                     if (comment.annotation) {
                       showAnnotation(comment.annotation.drawing_data);
                     }
                   }}
-                  title="Jump to timecode"
+                  title={comment.review_clock ? 'Jump to verified reviewed frame' : 'Unverified legacy playback time; preserves the original clock'}
                 >
                   <Clock className="h-2.5 w-2.5" />
-                  {formatTime(comment.timecode_start)}
+                  {comment.review_clock?.schema==='freeframe-annotation-clock/v1' ? `Reviewed frame ${comment.review_clock.reviewIndex}` : `${formatTime(comment.timecode_start)} · unverified legacy time`}
                   {comment.timecode_end !== null &&
                     comment.timecode_end !== undefined && (
                       <> — {formatTime(comment.timecode_end)}</>
@@ -574,7 +577,7 @@ function CommentItem({
                     comment.timecode_start !== null &&
                     comment.timecode_start !== undefined
                   ) {
-                    seekTo(comment.timecode_start, true);
+                    seekTo(comment.timecode_start, true, comment.review_clock?.schema==='freeframe-annotation-clock/v1' ? 'canonical' : 'legacy');
                   }
                 }}
                 title="Show annotation"

@@ -13,6 +13,7 @@ class CommentCreate(BaseModel):
     parent_id: Optional[uuid.UUID] = None
     timecode_start: Optional[float] = None
     timecode_end: Optional[float] = None
+    review_clock: Optional[dict] = None
     body: str
     visibility: Optional[str] = "public"  # "public" or "internal"
     annotation: Optional[AnnotationData] = None
@@ -109,6 +110,7 @@ class CommentResponse(BaseModel):
     guest_author_id: Optional[uuid.UUID]
     timecode_start: Optional[float]
     timecode_end: Optional[float]
+    review_clock: Optional[dict] = None
     body: str
     resolved: bool
     visibility: str = "public"

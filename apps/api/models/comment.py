@@ -24,6 +24,7 @@ class Comment(Base):
     guest_author_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("guest_users.id"), nullable=True)
     timecode_start: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     timecode_end: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    review_clock: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     body: Mapped[str] = mapped_column(Text, nullable=False)
     resolved: Mapped[bool] = mapped_column(Boolean, default=False)
     visibility: Mapped[str] = mapped_column(String(20), default="public", server_default="public", nullable=False)

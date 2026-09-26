@@ -372,6 +372,16 @@ def _create_comment(asset_id, body, db, current_user, operation=None):
     if not version:
         raise HTTPException(status_code=400, detail="version_id does not belong to this asset")
 
+    clock = None
+    if body.review_clock is not None:
+        from ..services.review_clock import clock_for_asset, normalized_capture
+        clock = normalized_capture(body.review_clock,clock_for_asset(db,asset,version,current_user),
+            body.timecode_start,body.timecode_end,body.annotation.frame_number if body.annotation else None)
+        from fractions import Fraction
+        body.timecode_start=float(Fraction(clock['canonicalTimeSeconds']))
+        if body.timecode_end is not None: body.timecode_end=body.timecode_start
+        if body.annotation is not None: body.annotation.frame_number=clock['reviewIndex']
+
     # A parent has to be a live comment on THIS asset. Without the check the
     # id was written straight through, and replies are read back by parent_id
     # alone with no asset filter, so a comment created here could be rendered
@@ -394,6 +404,7 @@ def _create_comment(asset_id, body, db, current_user, operation=None):
         author_id=current_user.id,
         timecode_start=body.timecode_start,
         timecode_end=body.timecode_end,
+        review_clock=clock,
         body=body.body,
         visibility=body.visibility or "public",
     )
@@ -461,6 +472,19 @@ def _reply_to_comment(asset_id, comment_id, body, db, current_user, operation=No
     if not parent:
         raise HTTPException(status_code=404, detail="Parent comment not found")
 
+    clock = None
+    if body.review_clock is not None:
+        from ..services.review_clock import clock_for_asset, normalized_capture
+        version = db.query(AssetVersion).filter(AssetVersion.id==parent.version_id,
+            AssetVersion.asset_id==asset_id,AssetVersion.deleted_at.is_(None)).first()
+        if not version: raise HTTPException(409,'Reply review version is unavailable')
+        clock = normalized_capture(body.review_clock,clock_for_asset(db,asset,version,current_user),
+            body.timecode_start,body.timecode_end,body.annotation.frame_number if body.annotation else None)
+        from fractions import Fraction
+        body.timecode_start=float(Fraction(clock['canonicalTimeSeconds']))
+        if body.timecode_end is not None: body.timecode_end=body.timecode_start
+        if body.annotation is not None: body.annotation.frame_number=clock['reviewIndex']
+
     # These four were dropped on the floor before. The endpoint takes a full
     # CommentCreate, so a client sending a timecoded or annotated reply got a
     # 201 back with all of it silently missing, and the annotation is the part
@@ -475,6 +499,7 @@ def _reply_to_comment(asset_id, comment_id, body, db, current_user, operation=No
         body=body.body,
         timecode_start=body.timecode_start,
         timecode_end=body.timecode_end,
+        review_clock=clock,
         visibility=body.visibility or "public",
     )
     db.add(reply)

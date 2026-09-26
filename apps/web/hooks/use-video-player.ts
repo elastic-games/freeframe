@@ -3,6 +3,7 @@
 import Hls, { type Level } from 'hls.js'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useReviewStore } from '@/stores/review-store'
+import { calibrateHls, presentedReviewFrame, rationalNumber, nearestReviewIndex, reviewedFrameSeekSeconds, type ReviewClockEvidence, type PlaybackCalibration } from '@/lib/review-clock'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -38,6 +39,7 @@ export interface VideoPlayerState {
   isLoading: boolean
   isFullscreen: boolean
   error: string | null
+  frameDiagnostic: string | null
 }
 
 export interface UseVideoPlayerReturn extends VideoPlayerControls, VideoPlayerState {
@@ -50,6 +52,7 @@ export interface UseVideoPlayerReturn extends VideoPlayerControls, VideoPlayerSt
 export interface UseVideoPlayerOptions {
   /** Compare panes: don't touch global review-store signals (seekTarget/playheadTime/activeAnnotation). */
   detached?: boolean
+  reviewClock?: ReviewClockEvidence | null
 }
 
 export function useVideoPlayer(
@@ -57,6 +60,7 @@ export function useVideoPlayer(
   options?: UseVideoPlayerOptions,
 ): UseVideoPlayerReturn {
   const detached = options?.detached === true
+  const reviewClock = options?.reviewClock
   const videoRef = useRef<HTMLVideoElement>(null)
   const hlsRef = useRef<Hls | null>(null)
   const syncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -70,6 +74,9 @@ export function useVideoPlayer(
   // when the user pauses rejects (AbortError) only AFTER that pause, and must
   // not arm a retry from its own rejection.
   const playIntentRef = useRef(0)
+  const calibrationRef = useRef<PlaybackCalibration | null>(null)
+  const requestedFrameRef = useRef<number|null>(null)
+  const initPtsRef = useRef<{pts:number;scale:number} | null>(null)
 
   const { setPlayheadTime, seekTarget, setActiveAnnotation } = useReviewStore()
 
@@ -84,6 +91,7 @@ export function useVideoPlayer(
   const [currentQuality, setCurrentQuality] = useState(-1) // -1 = auto
   const [isLoading, setIsLoading] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [frameDiagnostic,setFrameDiagnostic]=useState<string|null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // Ends the current intent to play: disarms an armed retry and invalidates a
@@ -100,7 +108,7 @@ export function useVideoPlayer(
 
   // Sync playhead to store at ~4fps to avoid excessive re-renders
   useEffect(() => {
-    if (detached) return
+    if (detached || reviewClock) return
     syncIntervalRef.current = setInterval(() => {
       const video = videoRef.current
       if (video && !video.paused) {
@@ -110,7 +118,7 @@ export function useVideoPlayer(
     return () => {
       if (syncIntervalRef.current) clearInterval(syncIntervalRef.current)
     }
-  }, [setPlayheadTime, detached])
+  }, [setPlayheadTime, detached, reviewClock])
 
   // React to external seek requests (e.g. clicking comment timecode)
   useEffect(() => {
@@ -119,11 +127,19 @@ export function useVideoPlayer(
     const video = videoRef.current
     if (!video) return
     const dur = video.duration
+    const origin = reviewClock && calibrationRef.current
+      ? rationalNumber(reviewClock.reviewClock.hls.variants.find((v) => v.level===calibrationRef.current!.level)!.browserOriginSeconds) : 0
+    const mediaTarget = reviewClock && seekTarget.clock!=='legacy'
+      ? reviewedFrameSeekSeconds(reviewClock,nearestReviewIndex(reviewClock,seekTarget.time))+origin : seekTarget.time
+    if (reviewClock) {
+      requestedFrameRef.current=nearestReviewIndex(reviewClock,seekTarget.clock==='legacy' ? mediaTarget-origin : seekTarget.time)
+      useReviewStore.getState().setPresentedFrame(null,null)
+    }
     // Allow seek even if duration isn't fully resolved yet (NaN/0)
     if (dur && Number.isFinite(dur)) {
-      const clamped = Math.max(0, Math.min(seekTarget.time, dur))
+      const clamped = Math.max(0, Math.min(mediaTarget, dur))
       video.currentTime = clamped
-      setCurrentTime(clamped)
+      if (!reviewClock) setCurrentTime(clamped)
       if (seekTarget.pause) {
         cancelPlayRetry()
         video.pause()
@@ -134,9 +150,9 @@ export function useVideoPlayer(
       const onLoaded = () => {
         const d = video.duration
         if (d && Number.isFinite(d)) {
-          const clamped = Math.max(0, Math.min(seekTarget.time, d))
+          const clamped = Math.max(0, Math.min(mediaTarget, d))
           video.currentTime = clamped
-          setCurrentTime(clamped)
+          if (!reviewClock) setCurrentTime(clamped)
           if (seekTarget.pause) {
             cancelPlayRetry()
             video.pause()
@@ -148,7 +164,7 @@ export function useVideoPlayer(
       video.addEventListener('loadedmetadata', onLoaded)
       return () => video.removeEventListener('loadedmetadata', onLoaded)
     }
-  }, [seekTarget, detached, cancelPlayRetry])
+  }, [seekTarget, detached, cancelPlayRetry, reviewClock])
 
   // Fullscreen change listener.
   //
@@ -178,20 +194,22 @@ export function useVideoPlayer(
   useEffect(() => {
     const video = videoRef.current
     if (!video || !src) return
+    calibrationRef.current=null; initPtsRef.current=null
 
     setError(null)
     setIsLoading(true)
 
     const onLoadedMetadata = () => {
-      setDuration(video.duration)
+      setDuration(reviewClock ? rationalNumber(reviewClock.timing.duration) : video.duration)
       setIsLoading(false)
     }
 
     const onTimeUpdate = () => {
-      setCurrentTime(video.currentTime)
+      if (!reviewClock) setCurrentTime(video.currentTime)
       // Update buffered end
       if (video.buffered.length > 0) {
-        setBuffered(video.buffered.end(video.buffered.length - 1))
+        setBuffered(video.buffered.end(video.buffered.length - 1) - (reviewClock && calibrationRef.current
+          ? rationalNumber(reviewClock.reviewClock.hls.variants.find((v) => v.level===calibrationRef.current!.level)!.browserOriginSeconds) : 0))
       }
     }
 
@@ -205,7 +223,7 @@ export function useVideoPlayer(
     }
     const onEnded = () => {
       setIsPlaying(false)
-      if (!detached) setPlayheadTime(video.duration)
+      if (!detached && !reviewClock) setPlayheadTime(video.duration)
     }
     const onError = () => {
       setIsLoading(false)
@@ -213,7 +231,7 @@ export function useVideoPlayer(
     }
     const onProgress = () => {
       if (video.buffered.length > 0) {
-        setBuffered(video.buffered.end(video.buffered.length - 1))
+        onTimeUpdate()
       }
     }
 
@@ -229,6 +247,32 @@ export function useVideoPlayer(
     video.addEventListener('progress', onProgress)
 
     const isHlsSource = src.includes('.m3u8')
+    let frameCallback: number | null = null
+    const calibrations=new Map<number,PlaybackCalibration>()
+    let activeLevel:number|null=null
+    let pendingFrame:ReturnType<typeof presentedReviewFrame>=null
+    const publishFrame=(frame:NonNullable<typeof pendingFrame>) => {
+      setCurrentTime(frame.canonicalTime)
+      if (!detached) useReviewStore.getState().setPresentedFrame(frame.mediaTime,frame.index,frame.canonicalTime)
+      requestedFrameRef.current=null
+    }
+    const captureFrame = (_now:number, metadata:VideoFrameCallbackMetadata) => {
+      const calibration=calibrationRef.current
+      const frame=reviewClock && calibration ? presentedReviewFrame(reviewClock,calibration,metadata.mediaTime) : null
+      if (process.env.NODE_ENV==='development' && reviewClock) setFrameDiagnostic(`Presented media ${metadata.mediaTime.toFixed(9)}s · native frame ${frame?.index ?? 'unverified'} · requested ${requestedFrameRef.current ?? 'none'}`)
+      pendingFrame=frame
+      if (frame && !video.seeking && (requestedFrameRef.current===null || requestedFrameRef.current===frame.index)) {
+        publishFrame(frame)
+      } else if (reviewClock && !detached) useReviewStore.getState().setPresentedFrame(null,null)
+      frameCallback=video.requestVideoFrameCallback(captureFrame)
+    }
+    if (reviewClock && typeof video.requestVideoFrameCallback==='function') frameCallback=video.requestVideoFrameCallback(captureFrame)
+    const invalidatePresentedFrame=() => { pendingFrame=null; if (reviewClock && !detached) useReviewStore.getState().setPresentedFrame(null,null) }
+    const onSeeked=() => {
+      if (pendingFrame && (requestedFrameRef.current===null || requestedFrameRef.current===pendingFrame.index)) publishFrame(pendingFrame)
+    }
+    video.addEventListener('seeked',onSeeked)
+    video.addEventListener('seeking',invalidatePresentedFrame)
 
     if (isHlsSource && Hls.isSupported()) {
       const hls = new Hls({
@@ -236,6 +280,28 @@ export function useVideoPlayer(
         lowLatencyMode: false,
       })
       hlsRef.current = hls
+      if (reviewClock) {
+        hls.on(Hls.Events.INIT_PTS_FOUND,(_event,data) => { if (data.id==='main') initPtsRef.current={pts:data.initPTS,scale:data.timescale} })
+        hls.on(Hls.Events.BUFFER_APPENDED,(_event,data) => {
+          const frag=data.frag; const init=initPtsRef.current; const start=frag.elementaryStreams.video?.startPTS
+          if (frag.type!=='main' || typeof frag.sn!=='number' || start===undefined || !init) return
+          const calibration=calibrateHls(reviewClock,frag.level,frag.sn,start,init.pts,init.scale)
+          if (calibration) calibrations.set(frag.level,calibration)
+          if (activeLevel===frag.level || activeLevel===null && calibrationRef.current===null) {
+            calibrationRef.current=calibration
+            if (!detached) useReviewStore.getState().setPlaybackCalibration(calibration)
+          }
+        })
+        hls.on(Hls.Events.FRAG_CHANGED,(_event,data) => {
+          if (activeLevel!==data.frag.level) {
+            activeLevel=data.frag.level; calibrationRef.current=calibrations.get(activeLevel)||null
+            if (!detached) {
+              useReviewStore.getState().setPlaybackCalibration(calibrationRef.current)
+              useReviewStore.getState().setPresentedFrame(null,null)
+            }
+          }
+        })
+      }
       hls.loadSource(src)
       hls.attachMedia(video)
 
@@ -272,6 +338,10 @@ export function useVideoPlayer(
     return () => {
       // The element outlives this source, so a retry armed for it must not.
       cancelPlayRetry()
+      if (frameCallback!==null) video.cancelVideoFrameCallback(frameCallback)
+      video.removeEventListener('seeking',invalidatePresentedFrame)
+      video.removeEventListener('seeked',onSeeked)
+      calibrationRef.current=null; initPtsRef.current=null
       video.removeEventListener('loadedmetadata', onLoadedMetadata)
       video.removeEventListener('timeupdate', onTimeUpdate)
       video.removeEventListener('play', onPlay)
@@ -288,7 +358,7 @@ export function useVideoPlayer(
         hlsRef.current = null
       }
     }
-  }, [src, setPlayheadTime, cancelPlayRetry])
+  }, [src, setPlayheadTime, cancelPlayRetry, reviewClock, detached])
 
   // ─── Controls ───────────────────────────────────────────────────────────────
 
@@ -342,11 +412,20 @@ export function useVideoPlayer(
   const seek = useCallback((time: number) => {
     const video = videoRef.current
     if (!video) return
-    const clamped = Math.max(0, Math.min(time, video.duration || 0))
+    if (reviewClock && !detached) {
+      requestedFrameRef.current=nearestReviewIndex(reviewClock,time)
+      useReviewStore.getState().setPresentedFrame(null,null)
+    }
+    const origin = reviewClock && calibrationRef.current
+      ? rationalNumber(reviewClock.reviewClock.hls.variants.find((v) => v.level===calibrationRef.current!.level)!.browserOriginSeconds) : 0
+    const mediaTarget=reviewClock ? reviewedFrameSeekSeconds(reviewClock,nearestReviewIndex(reviewClock,time))+origin : time
+    const clamped = Math.max(0, Math.min(mediaTarget, video.duration || 0))
     video.currentTime = clamped
-    setCurrentTime(clamped)
-    if (!detached) setPlayheadTime(clamped)
-  }, [setPlayheadTime, detached])
+    if (!reviewClock) {
+      setCurrentTime(clamped)
+      if (!detached) setPlayheadTime(clamped)
+    }
+  }, [setPlayheadTime, detached, reviewClock])
 
   const setPlaybackRate = useCallback((rate: number) => {
     const video = videoRef.current
@@ -429,6 +508,7 @@ export function useVideoPlayer(
     isLoading,
     isFullscreen,
     error,
+    frameDiagnostic,
     // controls
     play,
     pause,

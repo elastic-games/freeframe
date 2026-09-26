@@ -40,6 +40,7 @@ export class ApiError extends Error {
 }
 
 interface RequestOptions {
+  signal?: AbortSignal
   headers?: Record<string, string>
 }
 
@@ -64,6 +65,7 @@ async function request<T>(
     if (STUDIO_MANAGED) return managedRequest(method, path, body)
     return fetch(`${API_URL}${path}`, {
       method,
+      signal: options?.signal,
       headers: buildHeaders(token),
       body: body !== undefined ? JSON.stringify(body) : undefined,
     })

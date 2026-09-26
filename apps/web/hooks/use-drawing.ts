@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useReviewStore } from '@/stores/review-store'
+import { annotationClockCapture } from '@/lib/review-clock'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -23,6 +24,8 @@ const MAX_HISTORY = 20
 let sharedFabric: import('fabric').Canvas | null = null
 let sharedHistory: string[] = []
 let sharedIsLoading = false
+let sharedDrawingClock: ReturnType<typeof annotationClockCapture> | null = null
+let sharedDrawingClockInvalid = false
 let sharedPendingSize: { w: number; h: number } | null = null
 
 // Notify all hook consumers when canvas becomes ready
@@ -85,6 +88,7 @@ export function useDrawing(): UseDrawingReturn {
         defaultCursor: 'crosshair',
       })
 
+      sharedDrawingClock=null; sharedDrawingClockInvalid=false
       sharedFabric = canvas
       notifyCanvasReady()
 
@@ -116,6 +120,15 @@ export function useDrawing(): UseDrawingReturn {
         }
       }
 
+      canvas.on('mouse:down', () => {
+        const state=useReviewStore.getState()
+        if (!state.isDrawingMode || process.env.NEXT_PUBLIC_STUDIO_SSO_ENABLED!=='true' || state.currentAsset?.asset_type!=='video') return
+        try {
+          const capture=annotationClockCapture(state.reviewClock,state.playbackCalibration,state.presentedMediaTime)
+          if (sharedDrawingClock && (sharedDrawingClock.reviewClockSha256!==capture.reviewClockSha256 || sharedDrawingClock.reviewIndex!==capture.reviewIndex)) sharedDrawingClockInvalid=true
+          else if (!sharedDrawingClock) sharedDrawingClock=capture
+        } catch { sharedDrawingClockInvalid=true }
+      })
       canvas.on('object:added', saveHistory)
       canvas.on('object:modified', saveHistory)
       canvas.on('object:removed', saveHistory)
@@ -301,6 +314,7 @@ export function useDrawing(): UseDrawingReturn {
 
   const clear = useCallback(() => {
     if (!sharedFabric) return
+    sharedDrawingClock=null; sharedDrawingClockInvalid=false
     sharedFabric.clear()
     sharedHistory = [JSON.stringify(sharedFabric.toJSON())]
   }, [])
@@ -328,6 +342,9 @@ export function useDrawing(): UseDrawingReturn {
     // the letterboxed container, so the overlay never has to guess. Data without
     // it predates the frame fix and is replayed against the container.
     json._frameSpace = 'media'
+    if (process.env.NEXT_PUBLIC_STUDIO_SSO_ENABLED==='true' && useReviewStore.getState().currentAsset?.asset_type==='video') {
+      json._reviewClockCapture=sharedDrawingClockInvalid ? null : sharedDrawingClock
+    }
     return json
   }, [])
 

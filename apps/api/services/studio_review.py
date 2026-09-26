@@ -5,7 +5,6 @@ import hashlib
 import hmac
 import json
 import subprocess
-import tempfile
 import time
 import uuid
 from fractions import Fraction
@@ -97,21 +96,22 @@ def visible_comments(db, member, asset_id, version_id):
             'text':comment.body, 'resolved':comment.resolved, 'visibility':comment.visibility,
             'createdAt':comment.created_at.isoformat(), 'updatedAt':comment.updated_at.isoformat(),
             'drawing':{'id':str(drawing.id), 'data':drawing.drawing_data, 'frameNumber':drawing.frame_number} if drawing else None}
+        if isinstance(getattr(comment,'review_clock',None),dict): row['reviewClock']=comment.review_clock
         row['sourceHash'] = digest(row)
         rows.append(row)
     return rows
 
 
-def probe_file(path):
+def probe_file(path, timeout=60):
+    from .media_probe import bounded_probe
     ffprobe = Path(settings.studio_review_ffprobe_path)
     if not ffprobe.is_absolute() or not ffprobe.is_file():
         raise HTTPException(503, 'Review timing probe unavailable')
     try:
-        result = subprocess.run([str(ffprobe), '-v', 'error', '-select_streams', 'v:0', '-show_frames', '-show_streams',
+        result = bounded_probe([str(ffprobe), '-v', 'error', '-select_streams', 'v:0', '-show_frames', '-show_streams',
             '-show_entries', 'stream=time_base,start_pts,duration_ts,width,height,avg_frame_rate:frame=best_effort_timestamp',
-            '-of', 'json', str(path)], capture_output=True, timeout=60, check=True)
-        if len(result.stdout) > 8_000_000: raise ValueError()
-        data = json.loads(result.stdout); stream = data['streams'][0]
+            '-of', 'json', str(path)], limit=8_000_000, timeout=timeout)
+        data = json.loads(result); stream = data['streams'][0]
         tb = Fraction(stream['time_base'])
         pts = [int(f['best_effort_timestamp']) for f in data['frames']]
         if not pts or len(pts) > 100_000 or any(a >= b for a,b in zip(pts,pts[1:])): raise ValueError()
@@ -130,31 +130,13 @@ def media_evidence(db, version_id):
     if len(videos) != 1 or not videos[0].s3_key_download:
         raise HTTPException(409, 'A single review MP4 is required for exact timing')
     media = videos[0]
-    client = get_s3_client()
-    def download(key, target):
-        response = client.get_object(Bucket=settings.s3_bucket, Key=key)
-        size = int(response['ContentLength'])
-        if size > 512_000_000: raise HTTPException(413, 'Review media exceeds bridge limit')
-        sha = hashlib.sha256(); total = 0
-        try:
-            with target.open('wb') as handle:
-                while chunk := response['Body'].read(1024 * 1024):
-                    total += len(chunk)
-                    if total > 512_000_000: raise HTTPException(413, 'Review media exceeds bridge limit')
-                    sha.update(chunk); handle.write(chunk)
-        finally: response['Body'].close()
-        if total != size: raise HTTPException(503, 'Review media incomplete')
-        return sha.hexdigest()
-    try:
-        with tempfile.TemporaryDirectory(prefix='studio-review-') as directory:
-            raw = Path(directory) / 'source'; reviewed = Path(directory) / 'review.mp4'
-            raw_sha = download(media.s3_key_raw, raw)
-            review_sha = download(media.s3_key_download, reviewed)
-            timing = probe_file(reviewed)
-            return {'rawSha256':raw_sha, 'reviewSha256':review_sha, 'timing':timing}
-    except HTTPException: raise
-    except Exception:
-        raise HTTPException(503, 'Review media evidence unavailable') from None
+    from .review_clock import native_review_clock
+    version=db.query(AssetVersion).filter(AssetVersion.id==version_id).first()
+    asset=db.query(Asset).filter(Asset.id==version.asset_id).first()
+    evidence=native_review_clock(media,asset.project_id,asset.id,version.id)
+    clock=evidence['reviewClock']
+    return {'rawSha256':clock['rawSha256'],'reviewSha256':clock['reviewSha256'],
+        'timing':evidence['timing'],'reviewClock':clock}
 
 
 def read_review(db, user, project_id, asset_id, version_id, operation):
@@ -165,6 +147,7 @@ def read_review(db, user, project_id, asset_id, version_id, operation):
         'visibleComments':{c['id']:c['sourceHash'] for c in comments}, 'visibilityHash':digest({c['id']:c['sourceHash'] for c in comments})}
     if operation == 'snapshot':
         result['media'] = media_evidence(db,version_id)
+        result['schemaVersion'] = 2
         # Membership may have changed while media was downloaded/probed.
         db.expire_all()
         member, _, _ = authorized_scope(db,user,project_id,asset_id,version_id)

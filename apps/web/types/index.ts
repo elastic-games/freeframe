@@ -194,6 +194,7 @@ export interface GuestAuthor {
 }
 
 export interface Comment {
+  review_clock?: {schema:string;reviewIndex:number;canonicalTimeSeconds:string} | null;
   id: string;
   asset_id: string;
   version_id: string;

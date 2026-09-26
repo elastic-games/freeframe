@@ -25,6 +25,7 @@ import { useReview } from "./review-provider";
 import { useDrawing } from "@/hooks/use-drawing";
 import { api } from "@/lib/api";
 import { resolveSubmitTimecode } from "@/lib/resolve-submit-timecode";
+import { formatReviewedTimecode, nearestReviewIndex } from '@/lib/review-clock';
 import type { User } from "@/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -277,6 +278,9 @@ export function CommentInput({
   const hasTimecode = assetType === "video" || assetType === "audio";
 
   function displayTime(seconds: number): string {
+    const clock=useReviewStore.getState().reviewClock;
+    if (clock && timeFormat==='frames') return String(nearestReviewIndex(clock,seconds));
+    if (clock && timeFormat==='timecode') return formatReviewedTimecode(seconds,clock);
     switch (timeFormat) {
       case "frames":
         return formatFrames(seconds);

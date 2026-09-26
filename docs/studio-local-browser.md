@@ -27,3 +27,5 @@ to the same project path and version query after the native SSO exchange. Return
 paths outside `/projects` are rejected. Browser acceptance must verify the
 visible account and selected version; a redirect or successful build alone is
 insufficient.
+
+For longer local verification, `NEXT_PUBLIC_STUDIO_DEVELOPMENT_SESSION_SECONDS=1800` permits a 30-minute SSO cookie only in development with a validated loopback Studio origin. Values must be 120–3600 seconds; production remains 120 seconds. The isolated API may separately set `ACCESS_TOKEN_EXPIRE_MINUTES=30`; production settings remain unchanged. Sign in again through normal Studio SSO after restarting.

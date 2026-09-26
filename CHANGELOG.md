@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Studio-managed Reviews now keeps the original FreeFrame dashboard and project, asset, version, comment, folder, and upload views while Studio checks the active canonical project binding for each request.
 - Project-scoped Studio delegation for native Video Reviews, with bounded media lifetimes.
 - Access log sanitization for signed media queries and share grants.
+- Exact version-bound review clocks verify MP4/HLS bytes, presentation timestamps and native remux origin; presented browser frames and drawing captures are checked before new verified timed feedback. Legacy annotations retain their original clock and remain explicitly unverified.
 - Development browser SSO supports validated loopback Studio origins, retaining exact project/version links through sign-in. Production origin defaults remain unchanged.
 - A read-only Studio review bridge verifies current mapped actor membership, visible annotations, upload checksums and exact review presentation timestamps before freezing a correction snapshot.
 - Asset review links can select an exact ready version with `?versionId=<version UUID>`. The version switcher updates the URL, and unavailable versions show a clear state instead of opening a different cut under the linked URL.

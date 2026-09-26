@@ -22,6 +22,7 @@ import { useMediaQuery, MEDIA_SM } from "@/hooks/use-media-query";
 import { useReview } from "./review-provider";
 import { ProgressBar } from "./progress-bar";
 import type { Comment } from "@/types";
+import { formatReviewedTimecode, nearestReviewIndex, presentationTimes, type ReviewClockEvidence } from '@/lib/review-clock';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -132,6 +133,7 @@ export function VideoPlayer({
 }: VideoPlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
+  const [clockEvidence,setClockEvidence] = useState<ReviewClockEvidence|null>(null);
   const [loop, setLoop] = useState(false);
 
   const { isDrawingMode, timeFormat, setTimeFormat, setPlayheadTime, currentVersion } =
@@ -147,6 +149,8 @@ export function VideoPlayer({
   // the secondary ones move behind an overflow menu and the primary ones get a
   // 44px touch target instead of 28px.
   const compact = !useMediaQuery(MEDIA_SM);
+  const reviewFrameIndex=useReviewStore((s) => s.reviewFrameIndex);
+  const clockRequired=process.env.NEXT_PUBLIC_STUDIO_SSO_ENABLED==='true';
   const [overflowOpen, setOverflowOpen] = useState(false);
   const overflowRef = useRef<HTMLDivElement>(null);
   const timeFormatRef = useRef<HTMLDivElement>(null);
@@ -179,6 +183,8 @@ export function VideoPlayer({
   }, [timeFormatOpen]);
 
   function displayTime(seconds: number): string {
+    if (clockEvidence && timeFormat==='frames') return String(nearestReviewIndex(clockEvidence,seconds));
+    if (clockEvidence && timeFormat==='timecode') return formatReviewedTimecode(seconds,clockEvidence);
     switch (timeFormat) {
       case "frames":
         return formatFrames(seconds);
@@ -199,7 +205,10 @@ export function VideoPlayer({
     // requests, and without this a slower earlier response could land last and leave
     // the player on the wrong version's stream.
     let ignore = false;
+    const clockAbort=new AbortController();
     setStreamUrl(null);
+    setClockEvidence(null);
+    if (clockRequired) useReviewStore.getState().setReviewClock(null);
     if (initialStreamUrl) {
       const resolved = initialStreamUrl.startsWith("/")
         ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${initialStreamUrl}`
@@ -213,10 +222,18 @@ export function VideoPlayer({
     const streamPath = versionId
       ? `/assets/${assetId}/stream?version_id=${versionId}`
       : `/assets/${assetId}/stream`;
-    api
-      .get<StreamUrlResponse>(streamPath)
-      .then((data) => {
+    Promise.resolve()
+      .then(async () => {
+        let evidence:ReviewClockEvidence|null=null;
+        if (clockRequired && versionId) {
+          const clockTimeout=setTimeout(() => clockAbort.abort(),75_000);
+          try { evidence=await api.get<ReviewClockEvidence>(`/assets/${assetId}/review-clock?version_id=${versionId}`,{signal:clockAbort.signal}) } catch { /* Timed writes require verification; playback remains available. */ } finally {clearTimeout(clockTimeout)}
+        }
         if (ignore) return;
+        const data=await api.get<StreamUrlResponse>(streamPath);
+        if (ignore) return;
+        setClockEvidence(evidence);
+        if (clockRequired) useReviewStore.getState().setReviewClock(evidence);
         // HLS proxy returns relative paths — prepend API URL
         const url = data.url.startsWith("/")
           ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${data.url}`
@@ -228,10 +245,11 @@ export function VideoPlayer({
       });
     return () => {
       ignore = true;
+      clockAbort.abort();
     };
-  }, [assetId, initialStreamUrl, versionId]);
+  }, [assetId, initialStreamUrl, versionId,clockRequired]);
 
-  const player = useVideoPlayer(streamUrl);
+  const player = useVideoPlayer(streamUrl,{reviewClock:clockEvidence});
 
   const {
     videoRef,
@@ -247,6 +265,7 @@ export function VideoPlayer({
     isLoading,
     isFullscreen,
     error,
+    frameDiagnostic,
     pause,
     togglePlay,
     seek,
@@ -449,6 +468,20 @@ export function VideoPlayer({
       </div>
 
       {/* Bottom transport bar (matches audio player style) */}
+      {clockRequired && (
+        <div role="status" className="flex items-center justify-between gap-3 px-4 py-1 text-xs text-text-secondary">
+          <span>{clockEvidence && reviewFrameIndex!==null
+            ? `Reviewed frame ${reviewFrameIndex} of ${clockEvidence.timing.pts.length-1} · timing verified`
+            : clockEvidence ? 'Waiting for a verified presented frame · play the visible viewer once' : 'Frame timing unavailable'}</span>
+          {process.env.NODE_ENV==='development' && reviewFrameIndex===null && frameDiagnostic && <span>{frameDiagnostic}</span>}
+          <div className="flex gap-2">
+            {[-1,1].map((step) => <button key={step} aria-label={step<0?'Previous reviewed frame':'Next reviewed frame'}
+              disabled={!clockEvidence || reviewFrameIndex===null || reviewFrameIndex+step<0 || reviewFrameIndex+step>=clockEvidence.timing.pts.length}
+              onClick={() => { if (clockEvidence && reviewFrameIndex!==null) { pause(); seek(presentationTimes(clockEvidence)[reviewFrameIndex+step]); } }}
+              className="rounded px-2 py-1 hover:bg-bg-hover disabled:opacity-30">{step<0?'Previous frame':'Next frame'}</button>)}
+          </div>
+        </div>
+      )}
       <div
         className={cn(
           "flex items-center justify-between bg-bg-secondary/80 border-t border-border shrink-0",

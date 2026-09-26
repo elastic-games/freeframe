@@ -28,3 +28,15 @@ export function studioReturnPath(value: string | null): string {
     return '/projects'
   }
 }
+
+/** Bounded local session window; production SSO cookie lifetime stays 120 seconds. */
+export function studioSessionCookieSeconds(
+  configured=process.env.NEXT_PUBLIC_STUDIO_DEVELOPMENT_SESSION_SECONDS,
+  developmentOrigin=process.env.NEXT_PUBLIC_STUDIO_DEVELOPMENT_ORIGIN,
+  mode:string=process.env.NODE_ENV || 'production',
+):number {
+  if (mode!=='development' || !configured || !developmentOrigin) return 120
+  studioFrontendOrigin(undefined,developmentOrigin,mode)
+  if (!/^\d+$/.test(configured) || Number(configured)<120 || Number(configured)>3600) throw new Error('Local Studio session must be between 120 and 3600 seconds')
+  return Number(configured)
+}
