@@ -12,6 +12,31 @@ footer, labelled with the project name for assistive technology. Project
 Settings and Delete retain their existing authorization and confirmation
 behavior; no hover or prior card selection is required to discover the menu.
 
+The management visibility fix was deployed on 2026-09-27 as FreeFrame web
+`fb2691f426dd34fbf3b524084d2502525668bfff`. Studio remained at
+`ef7d7becfd8d682f0afc25e3c5828623ec9ef58f`; API/worker identities and review
+data were preserved. Rollback web: `b8ff2b0e2e6ca522fcff50864e4f38fb0ada3fab`.
+Protected receipt:
+`/var/backups/elastic-native-reviews/card-controls-20260927T182704Z`.
+
+Local production build, types, lint, 673 frontend cases and 634 backend cases
+passed. Account-free component captures verify both themes. The Linux runtime
+package preserves pnpm symlinks; an initial flattened package failed startup
+and was automatically rolled back before packaging was corrected. The public
+entry checks passed. Native checks now cover the four active projects, denial
+for the previously deleted Studio Portal project and its sample asset,
+replay/foreign scope denial, and live HLS with the 300-second expiry cap. The
+stale five-project check caused a second automatic rollback before being
+updated; no project was restored or otherwise changed.
+
+Fresh signed-in Safari at the Studio Reviews URL showed outlined management
+buttons on all four owner cards without hover. Echo Citadel's menu opened with
+Project Settings and Delete, and Settings exposed its current editable name.
+The dialog was cancelled without saving. Private full-dashboard and menu proof
+is retained locally; public before/after component captures and their provenance
+are in `docs/screenshots/project-controls/`. The owned preview route, dev server,
+verification window, temporary runtime container and build swap were removed.
+
 The owner requested the original FreeFrame dashboard at
 `https://reviews.elasticlabs.site/` and inside Studio's workspace at
 `https://app.elasticlabs.site/apps/reviews`. Keep the review-domain root and
