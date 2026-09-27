@@ -35,7 +35,17 @@ for every service image. The previous frontend pair and protected receipt are
 retained in `/var/backups/elastic-native-reviews/reused-workspace-20260926T224051Z`.
 Both inactive frontend builds, twelve public entry/auth checks and read-only
 native project/replay/scope/public HLS checks passed. Fresh signed-in combined
-layout verification remains pending; the active Safari video was not interrupted.
+layout verification was pending at that initial cutover.
+
+The sidebar/appearance correction deploys Studio
+`2dca6eed543270477013bee402dc5abf3f9037ab` with FreeFrame web
+`562c039437b7bf5820e583e978f7ded74933561c`; API/workers still use the immutable
+`016dd3c55468114d033eaf1c67295ec348c3d533` images. Configuration and data were
+unchanged. The protected backup/receipt is
+`/var/backups/elastic-native-reviews/theme-workspace-20260926T235909Z`.
+Both local and VPS builds, 664 frontend cases, 634 backend cases and the public
+entry/native/HLS checks passed. Post-deployment visual acceptance is pending
+Safari availability; no successful theme interaction is claimed yet.
 
 For this dual-dashboard pairing, set `FREEFRAME_NATIVE_ONLY=false` in Studio's
 web environment and `STUDIO_NATIVE_ONLY=false` in FreeFrame, with
