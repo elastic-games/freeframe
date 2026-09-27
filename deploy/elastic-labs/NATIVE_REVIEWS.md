@@ -7,6 +7,31 @@ asset/version/comment UUIDs and guest share records are preserved.
 
 ## Two dashboard entry points
 
+### Instance-wide attribution disabled
+
+On 2026-09-27 the owner requested removing the attribution badge everywhere
+because it covered controls on the standalone project page. The deployed
+instance's existing `powered_by_freeframe` branding setting was changed to
+`false` through the existing branding handler after verifying the exact active
+owner's superadmin role. Other branding fields were preserved. Every
+`PoweredByBadge` surface reads this setting, including standalone dashboards,
+asset viewers, sign-in, public shares and settings previews.
+
+This is a live branding configuration change, requiring no application rebuild.
+FreeFrame web remains `fb2691f426dd34fbf3b524084d2502525668bfff`; Studio remains
+`ef7d7becfd8d682f0afc25e3c5828623ec9ef58f`. All application container identities
+were preserved. The protected prior flag and receipt are at
+`/var/backups/elastic-native-reviews/attribution-off-20260927T183157Z`.
+Keep the setting false when applying or resetting instance branding.
+
+Internal/public branding APIs and rendered page branding confirmed false.
+The public share error page initially retained the prior 60-second server
+branding cache; after refresh, its actual browser view contained no attribution.
+The exact signed-in project view remains unverified because the Mac was locked
+and Safari could not be accessed. The owner was asked to unlock for that check.
+
+### Project management controls
+
 Project owner cards expose an always-visible, outlined management button in the
 footer, labelled with the project name for assistive technology. Project
 Settings and Delete retain their existing authorization and confirmation
