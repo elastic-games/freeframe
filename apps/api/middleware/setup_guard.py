@@ -11,6 +11,7 @@ all subsequent requests pass through without any DB query.
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 # Once setup is confirmed, skip the check for all future requests
 _setup_complete = False
@@ -24,6 +25,18 @@ EXEMPT_PREFIXES = (
     "/share/",     # Public share links should work regardless
     "/auth/studio-sso",
 )
+
+def _has_admin():
+    from ..database import SessionLocal
+    from ..models.user import User
+    db = SessionLocal()
+    try:
+        return db.query(User).filter(
+            User.is_superadmin == True,
+            User.deleted_at.is_(None),
+        ).first() is not None
+    finally:
+        db.close()
 
 
 class SetupGuardMiddleware(BaseHTTPMiddleware):
@@ -41,17 +54,7 @@ class SetupGuardMiddleware(BaseHTTPMiddleware):
 
         # Check if setup is done (query DB once, then cache)
         try:
-            from ..database import SessionLocal
-            from ..models.user import User
-
-            db = SessionLocal()
-            try:
-                has_admin = db.query(User).filter(
-                    User.is_superadmin == True,
-                    User.deleted_at.is_(None),
-                ).first() is not None
-            finally:
-                db.close()
+            has_admin = await run_in_threadpool(_has_admin)
 
             if has_admin:
                 _setup_complete = True

@@ -13,6 +13,7 @@ from contextvars import ContextVar
 from fastapi import HTTPException, Request
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 from ..config import settings
 from ..models.asset import Asset, AssetVersion
 from ..models.comment import Comment, CommentAttachment
@@ -144,6 +145,33 @@ def _check_refs(db: Session, project_id: uuid.UUID, values: dict, allow_deleted:
         _check_refs(db, project_id, {"asset": parts[2], "version": parts[3], "upload_id": values.get("upload_id")})
 
 
+def _authorize_delegation(db, project_id, user_id, values, folder_parent, nonce, allow_deleted):
+    try:
+        project = db.query(Project).filter(Project.id == project_id, Project.deleted_at.is_(None)).first()
+        member = get_project_member(db, project_id, user_id)
+        user = get_user_by_id(db, user_id)
+        if (not project or not member or member.role != ProjectRole.owner or not user
+                or user.status == UserStatus.deactivated or not (user.preferences or {}).get("studio_sso")):
+            raise _denied()
+        if folder_parent is not None:
+            _check_refs(db, project_id, {"folder": folder_parent})
+        _check_refs(db, project_id, values, allow_deleted=allow_deleted)
+        from ..middleware.auth import release_auth_read
+        user = release_auth_read(db, user)
+        # Consume assertions only after authorization. Redis is shared across API
+        # workers; an unavailable replay store must not authorize a mutation.
+        try:
+            accepted = get_redis().set(f"studio_native:{nonce}", "1", nx=True, ex=65)
+        except Exception:
+            raise HTTPException(status_code=503, detail="Review authorization unavailable") from None
+        if not accepted:
+            raise _denied()
+        return user
+    except Exception:
+        db.close()
+        raise
+
+
 async def delegated_studio_user(request: Request, token: str, db: Session) -> User:
     secret = settings.studio_native_secret
     if not settings.studio_sso_enabled or not secret or len(secret) < 32:
@@ -166,14 +194,9 @@ async def delegated_studio_user(request: Request, token: str, db: Session) -> Us
                   if method == request.method and re.fullmatch(pattern, request.url.path)), None)
     if not match:
         raise _denied()
-    project = db.query(Project).filter(Project.id == project_id, Project.deleted_at.is_(None)).first()
-    member = get_project_member(db, project_id, user_id)
-    user = get_user_by_id(db, user_id)
-    if (not project or not member or member.role != ProjectRole.owner or not user
-            or user.status == UserStatus.deactivated or not (user.preferences or {}).get("studio_sso")):
-        raise _denied()
     values = dict(match.groupdict())
     raw = b""
+    folder_parent = None
     for key in ("version_id", "folder_id"):
         if request.query_params.get(key):
             values[key] = request.query_params[key]
@@ -195,22 +218,15 @@ async def delegated_studio_user(request: Request, token: str, db: Session) -> Us
         parent_id = values.pop("parent_id", None)
         if parent_id is not None:
             if "/folders" in request.url.path:
-                _check_refs(db, project_id, {"folder": parent_id})
+                folder_parent = parent_id
             else:
                 values["comment_parent"] = parent_id
     digest = hashlib.sha256(request.url.query.encode() + b"\n" + raw).hexdigest()
     if not isinstance(claim.get("request_hash"), str) or not hmac.compare_digest(claim["request_hash"], digest):
         raise _denied()
     nonce = _uuid(claim.get("jti"))
-    _check_refs(db, project_id, values, allow_deleted=request.url.path.endswith("/restore"))
-    # Consume assertions only after authorization. Redis is shared across API
-    # workers; an unavailable replay store must not authorize a mutation.
-    try:
-        accepted = get_redis().set(f"studio_native:{nonce}", "1", nx=True, ex=65)
-    except Exception:
-        raise HTTPException(status_code=503, detail="Review authorization unavailable") from None
-    if not accepted:
-        raise _denied()
+    user = await run_in_threadpool(_authorize_delegation, db, project_id, user_id, values,
+                                   folder_parent, nonce, request.url.path.endswith("/restore"))
     user._studio_native = True
     NATIVE_SCOPE.set(True)
     return user

@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Elastic Labs VPS deployment template using the host's nginx, with isolated FreeFrame services and loopback-only app ports.
 
 ### Changed
+- Release read-only authentication, poster-upload and SSE database checkouts before
+  waiting on request bodies, object storage or event streams. Recheck project ownership
+  before publishing a newly uploaded poster so revoked access cannot replace its old key.
 - **The API test tooling moves to pytest 9, and out of the runtime image** — pytest 8.4.2 was pinned in
   `apps/api/requirements.txt`, hits the CVE-2025-71176 advisory, and because the Dockerfile installs that
   file it was shipping the test runner in the production image. Test-only deps now live in a new

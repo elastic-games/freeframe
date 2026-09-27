@@ -12,6 +12,20 @@ new bounded settings default to previous pool 5/overflow 10/timeout 30 seconds.
 Native planned API two workers with pool 2/overflow 0; worker role bounds require
 real concurrent workflow proof before activation, including nested sessions.
 
+The isolated pool-lifetime candidate releases a read-only auth checkout while
+keeping the same ORM user attached for existing synchronous mutation routes.
+Delegated assertions read and bind the complete request body before database
+queries and release the DB connection before Redis replay checks. Poster upload
+reads and object I/O run without a DB checkout, then a fresh ownership check
+publishes a unique key; denial removes only the new key and preserves the old
+poster. SSE closes its ACL session before streaming. First-use setup checks run
+in the thread pool. The `rehearse_pool.py` synthetic local HTTP/PG fixture
+checks these lifetimes under two concurrent SSE streams, delayed bodies/reads,
+slow object I/O, genuine login/JWT and read traffic. Its PG16/Python3.11.5
+result is an offhost source proof, **not** PG18/Python3.11.16 activation proof.
+Do not apply pool2 bounds until exact native runtime, all role connections,
+media workflows and Studio SSO have representative concurrent evidence.
+
 Redis7.4.11 cache/pubsub parses unix:///run/socket?db=0; Celery5.6.3/Kombu broker
 and result backend parse redis+socket:///run/socket?virtual_host=0. Optional
 CELERY_BROKER_URL/CELERY_RESULT_BACKEND_URL preserve REDIS_URL fallback by default.

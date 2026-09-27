@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from starlette.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 import uuid
@@ -248,6 +249,46 @@ def remove_project_member(project_id: uuid.UUID, user_id: uuid.UUID, db: Session
 ALLOWED_POSTER_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 MAX_POSTER_SIZE = 10 * 1024 * 1024  # 10MB
 
+def _poster_upload_access(db, project_id, current_user):
+    try:
+        project = _get_project(db, project_id)
+        _require_project_owner(db, project_id, current_user)
+        return project.poster_s3_key
+    finally:
+        db.close()
+
+class _PosterAccessDenied(Exception):
+    def __init__(self, denial: HTTPException):
+        self.denial = denial
+
+def _save_uploaded_poster(db, project_id, current_user, s3_key):
+    try:
+        # Membership may change while file/object IO is in progress.
+        try:
+            project = _get_project(db, project_id)
+            _require_project_owner(db, project_id, current_user)
+        except HTTPException as error:
+            raise _PosterAccessDenied(error) from error
+        prior_key = project.poster_s3_key
+        project.poster_s3_key = s3_key
+        db.commit()
+        db.refresh(project)
+        resp = ProjectResponse.model_validate(project)
+        resp.poster_url = _resolve_poster_url(project)
+        return resp, prior_key
+    finally:
+        db.close()
+
+def _put_poster(s3_key, data, content_type):
+    put_object(s3_key, data, content_type=content_type, cache_control="max-age=86400")
+
+def _remove_poster_object(s3_key):
+    if s3_key:
+        try:
+            delete_object(s3_key)
+        except Exception:
+            pass
+
 @router.post("/{project_id}/poster", response_model=ProjectResponse)
 async def upload_project_poster(
     project_id: uuid.UUID,
@@ -255,8 +296,7 @@ async def upload_project_poster(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    project = _get_project(db, project_id)
-    _require_project_owner(db, project_id, current_user)
+    await run_in_threadpool(_poster_upload_access, db, project_id, current_user)
 
     if file.content_type not in ALLOWED_POSTER_TYPES:
         raise HTTPException(status_code=400, detail="File must be JPEG, PNG, WebP, or GIF")
@@ -265,23 +305,18 @@ async def upload_project_poster(
     if len(data) > MAX_POSTER_SIZE:
         raise HTTPException(status_code=400, detail="File must be under 10MB")
 
-    # Delete old poster if exists
-    if project.poster_s3_key:
-        try:
-            delete_object(project.poster_s3_key)
-        except Exception:
-            pass
-
     ext = file.filename.rsplit(".", 1)[-1].lower() if file.filename and "." in file.filename else "jpg"
-    s3_key = f"posters/{project_id}/poster.{ext}"
-    put_object(s3_key, data, content_type=file.content_type, cache_control="max-age=86400")
-
-    project.poster_s3_key = s3_key
-    db.commit()
-    db.refresh(project)
-
-    resp = ProjectResponse.model_validate(project)
-    resp.poster_url = _resolve_poster_url(project)
+    # A fresh key prevents a revoked upload from overwriting the live poster.
+    s3_key = f"posters/{project_id}/poster-{uuid.uuid4().hex}.{ext}"
+    await run_in_threadpool(_put_poster, s3_key, data, file.content_type)
+    try:
+        resp, old_key = await run_in_threadpool(_save_uploaded_poster, db, project_id, current_user, s3_key)
+    except _PosterAccessDenied as error:
+        # ACL denial occurs before commit. Unknown commit outcomes retain the
+        # object for the existing orphan sweeper instead of breaking a DB link.
+        await run_in_threadpool(_remove_poster_object, s3_key)
+        raise error.denial from error
+    await run_in_threadpool(_remove_poster_object, old_key)
     return resp
 
 @router.delete("/{project_id}/poster", status_code=status.HTTP_204_NO_CONTENT)

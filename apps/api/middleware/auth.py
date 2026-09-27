@@ -1,5 +1,6 @@
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from starlette.concurrency import run_in_threadpool
 import uuid
 from typing import Optional
 from sqlalchemy.orm import Session
@@ -10,6 +11,30 @@ from ..models.user import User, UserStatus
 
 bearer_scheme = HTTPBearer()
 optional_bearer_scheme = HTTPBearer(auto_error=False)
+
+def release_auth_read(db: Session, user: User) -> User:
+    """Keep the request's attached User without retaining its auth connection."""
+    db.expunge(user)
+    db.close()
+    # A clean detached persistent object attaches without a query or checkout.
+    db.add(user)
+    return user
+
+def _access_user(token: str, db: Session) -> User:
+    try:
+        payload = decode_token(token)
+        if not payload or payload.get("type") != "access":
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+        user = get_user_by_id(db, uuid.UUID(payload["sub"]))
+        if not user or user.status == UserStatus.deactivated:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or deactivated")
+        from ..config import settings
+        if settings.studio_native_only and (user.preferences or {}).get("studio_sso"):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Use Studio Reviews")
+        return release_auth_read(db, user)
+    except Exception:
+        db.close()
+        raise
 
 async def get_current_user(
     request: Request,
@@ -28,16 +53,7 @@ async def get_current_user(
                     return await delegated_studio_user(request, token, db)
             except JWTError:
                 pass
-    payload = decode_token(token)
-    if not payload or payload.get("type") != "access":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
-    user = get_user_by_id(db, uuid.UUID(payload["sub"]))
-    if not user or user.status == UserStatus.deactivated:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or deactivated")
-    from ..config import settings
-    if settings.studio_native_only and (user.preferences or {}).get("studio_sso"):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Use Studio Reviews")
-    return user
+    return await run_in_threadpool(_access_user, token, db)
 
 def get_optional_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_bearer_scheme),
@@ -56,7 +72,7 @@ def get_optional_user(
         from ..config import settings
         if settings.studio_native_only and (user.preferences or {}).get("studio_sso"):
             return None
-        return user
+        return release_auth_read(db, user)
     except Exception:
+        db.close()
         return None
-

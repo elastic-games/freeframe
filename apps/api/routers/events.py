@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
+from starlette.concurrency import run_in_threadpool
 import uuid
 from typing import Optional
 from sqlalchemy.orm import Session
@@ -12,6 +13,23 @@ from ..services.event_service import event_stream
 from ..services.permissions import get_project_member, is_public_project
 
 router = APIRouter(prefix="/events", tags=["events"])
+
+def _authorize_stream(db, project_id, user, token):
+    try:
+        if not user and token:
+            payload = decode_token(token)
+            if payload and payload.get("type") == "access":
+                user = get_user_by_id(db, uuid.UUID(payload["sub"]))
+        from ..config import settings
+        if settings.studio_native_only and user and (user.preferences or {}).get("studio_sso") and not getattr(user, "_studio_native", False):
+            raise HTTPException(status_code=403, detail="Use Studio Reviews")
+        if not user or user.status == UserStatus.deactivated:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authenticated")
+        if not get_project_member(db, project_id, user.id) and not is_public_project(db, project_id):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not a project member")
+    finally:
+        # The Redis stream uses only the captured project ID.
+        db.close()
 
 @router.get("/{project_id}")
 async def stream_events(
@@ -26,19 +44,7 @@ async def stream_events(
     header = request.headers.get("authorization", "")
     if not user and header.startswith("Bearer "):
         user = await delegated_studio_user(request, header[7:], db)
-    if not user and token:
-        payload = decode_token(token)
-        if payload and payload.get("type") == "access":
-            user = get_user_by_id(db, uuid.UUID(payload["sub"]))
-    from ..config import settings
-    if settings.studio_native_only and user and (user.preferences or {}).get("studio_sso") and not getattr(user, "_studio_native", False):
-        raise HTTPException(status_code=403, detail="Use Studio Reviews")
-    if not user or user.status == UserStatus.deactivated:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authenticated")
-
-    # Verify user has access to this project
-    if not get_project_member(db, project_id, user.id) and not is_public_project(db, project_id):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not a project member")
+    await run_in_threadpool(_authorize_stream, db, project_id, user, token)
 
     return StreamingResponse(
         event_stream(str(project_id)),
