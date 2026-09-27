@@ -7,6 +7,11 @@ asset/version/comment UUIDs and guest share records are preserved.
 
 ## Two dashboard entry points
 
+Project owner cards expose an always-visible, outlined management button in the
+footer, labelled with the project name for assistive technology. Project
+Settings and Delete retain their existing authorization and confirmation
+behavior; no hover or prior card selection is required to discover the menu.
+
 The owner requested the original FreeFrame dashboard at
 `https://reviews.elasticlabs.site/` and inside Studio's workspace at
 `https://app.elasticlabs.site/apps/reviews`. Keep the review-domain root and
