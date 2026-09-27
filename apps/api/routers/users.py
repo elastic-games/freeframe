@@ -57,6 +57,8 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
 
 @router.post("/invite", response_model=AdminUserResponse, status_code=status.HTTP_201_CREATED)
 def invite_user(body: InviteRequest, db: Session = Depends(get_db), current_user: User = Depends(require_admin)):
+    if settings.studio_sso_enabled:
+        raise HTTPException(status_code=403, detail="Add members in Elastic Labs Studio")
     if get_user_by_email(db, body.email):
         raise HTTPException(status_code=400, detail="Email already registered")
     

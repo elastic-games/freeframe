@@ -9,7 +9,7 @@ import { resolveTheme, useThemeStore } from '@/stores/theme-store'
  * be resolved and falls back to dark; the effect corrects it right after mount.
  */
 export function useResolvedTheme(): 'dark' | 'light' {
-  const theme = useThemeStore((s) => s.theme)
+  const theme = useThemeStore((s) => s.hostTheme ?? s.theme)
   const [resolved, setResolved] = useState<'dark' | 'light'>(
     theme === 'light' ? 'light' : 'dark',
   )

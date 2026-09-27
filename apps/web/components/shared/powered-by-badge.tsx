@@ -4,6 +4,7 @@ import * as React from 'react'
 import { useBranding } from '@/components/shared/branding-provider'
 import { cn } from '@/lib/utils'
 import { ThemedDefaultLogo } from '@/components/shared/themed-default-logo'
+import { useThemeStore } from '@/stores/theme-store'
 
 interface PoweredByBadgeProps {
   className?: string
@@ -19,8 +20,9 @@ export function PoweredByBadge({
   showIcon = true,
 }: PoweredByBadgeProps) {
   const { poweredByFreeframe, orgName } = useBranding()
+  const embedded = useThemeStore((s) => s.hostTheme !== null)
 
-  if (!poweredByFreeframe) return null
+  if (!poweredByFreeframe || embedded) return null
 
   const classes = cn(
     'inline-flex items-center gap-1.5 text-xs text-text-tertiary',

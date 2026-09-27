@@ -22,6 +22,7 @@ EXEMPT_PREFIXES = (
     "/redoc",
     "/openapi.json",
     "/share/",     # Public share links should work regardless
+    "/auth/studio-sso",
 )
 
 

@@ -4,6 +4,7 @@ import * as React from 'react'
 import { Monitor, Moon, Sun, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useThemeStore, type Theme } from '@/stores/theme-store'
+import { requestStudioControl } from '@/lib/studio-embed'
 
 const themes: { value: Theme; label: string; description: string; icon: React.ElementType }[] = [
   {
@@ -27,14 +28,14 @@ const themes: { value: Theme; label: string; description: string; icon: React.El
 ]
 
 export default function AppearancePage() {
-  const { theme, setTheme } = useThemeStore()
+  const { theme, hostTheme, setTheme } = useThemeStore()
 
   return (
     <div className="p-6 max-w-2xl">
       <div className="mb-6">
         <h1 className="text-lg font-semibold text-text-primary">Appearance</h1>
         <p className="text-sm text-text-tertiary mt-1">
-          Customize how FreeFrame looks on your device.
+          {hostTheme ? 'Appearance is shared with Studio.' : 'Customize how FreeFrame looks on your device.'}
         </p>
       </div>
 
@@ -42,13 +43,13 @@ export default function AppearancePage() {
       <div className="space-y-3">
         <h2 className="text-sm font-medium text-text-primary">Theme</h2>
         <div className="grid grid-cols-3 gap-3">
-          {themes.map((t) => {
+          {themes.filter((t) => !hostTheme || t.value !== 'system').map((t) => {
             const Icon = t.icon
-            const isActive = theme === t.value
+            const isActive = (hostTheme ?? theme) === t.value
             return (
               <button
                 key={t.value}
-                onClick={() => setTheme(t.value)}
+                onClick={() => hostTheme && t.value !== 'system' ? requestStudioControl('set-theme', t.value) : setTheme(t.value)}
                 className={cn(
                   'relative flex flex-col items-center gap-3 rounded-xl border p-4 transition-all text-center',
                   isActive

@@ -23,12 +23,12 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/stream", tags=["streaming"])
 
 
-def create_hls_token(s3_prefix: str, expires_hours: int = 24) -> str:
+def create_hls_token(s3_prefix: str, expires_hours: int = 24, expires_seconds: int | None = None) -> str:
     """Create a short-lived JWT for HLS proxy access."""
     payload = {
         "sub": "hls",
         "pfx": s3_prefix,
-        "exp": datetime.now(timezone.utc) + timedelta(hours=expires_hours),
+        "exp": datetime.now(timezone.utc) + timedelta(seconds=expires_seconds) if expires_seconds is not None else datetime.now(timezone.utc) + timedelta(hours=expires_hours),
     }
     return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
 
@@ -44,7 +44,7 @@ def _verify_hls_token(token: str) -> str:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 
-def _rewrite_manifest(content: str, s3_prefix: str, manifest_path: str, token: str) -> str:
+def _rewrite_manifest(content: str, s3_prefix: str, manifest_path: str, token: str, expires_in: int = 86400) -> str:
     """Rewrite URLs in an m3u8 manifest.
 
     - .m3u8 references -> proxy URLs with token (appended as query param)
@@ -75,7 +75,7 @@ def _rewrite_manifest(content: str, s3_prefix: str, manifest_path: str, token: s
             # Segment -> presigned S3 URL (direct to S3, 24-hour expiry to
             # match the outer token lifetime so pause-and-resume works)
             s3_key = f"{s3_prefix}/{relative_key}"
-            result.append(generate_presigned_get_url(s3_key, expires_in=86400))
+            result.append(generate_presigned_get_url(s3_key, expires_in=expires_in))
         else:
             result.append(line)
 
@@ -112,7 +112,8 @@ def hls_proxy(path: str, token: str = Query(...)):
         logger.error("Failed to fetch HLS manifest %s: %s", s3_key, e)
         raise HTTPException(status_code=404, detail="Manifest not found")
 
-    rewritten = _rewrite_manifest(content, s3_prefix, normalised, token)
+    remaining = max(1, int(jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])["exp"]) - int(datetime.now(timezone.utc).timestamp()))
+    rewritten = _rewrite_manifest(content, s3_prefix, normalised, token, expires_in=min(86400, remaining))
 
     return Response(
         content=rewritten,

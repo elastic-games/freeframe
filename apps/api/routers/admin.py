@@ -12,6 +12,7 @@ from .users import require_admin
 from ..tasks.celery_app import send_task_safe
 from ..tasks.cleanup_tasks import cleanup_soft_deleted
 from ..schemas.admin import PurgeStartResponse
+from ..config import settings
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -92,6 +93,8 @@ def update_user_role(
     current_user: User = Depends(get_current_user),
 ):
     """Promote or demote a user to/from admin role. Only accessible by admins."""
+    if settings.studio_sso_enabled:
+        raise HTTPException(status_code=403, detail="Manage administrator roles in Elastic Labs Studio")
     if not current_user.is_superadmin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

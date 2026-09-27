@@ -4,6 +4,8 @@ const ACCESS_TOKEN_KEY = 'ff_access_token'
 const REFRESH_TOKEN_KEY = 'ff_refresh_token'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const STUDIO_SSO_ENABLED = process.env.NEXT_PUBLIC_STUDIO_SSO_ENABLED === 'true'
+const STUDIO_TICKET_URL = process.env.NEXT_PUBLIC_STUDIO_TICKET_URL || 'https://app.elasticlabs.site/api/reviews/sso-ticket'
 
 export function getAccessToken(): string | null {
   if (typeof window === 'undefined') return null
@@ -20,8 +22,9 @@ export function setTokens(access: string, refresh: string): void {
   localStorage.setItem(ACCESS_TOKEN_KEY, access)
   localStorage.setItem(REFRESH_TOKEN_KEY, refresh)
   // Set cookies so middleware can check auth on server side
-  document.cookie = `${ACCESS_TOKEN_KEY}=${access}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
-  document.cookie = `${REFRESH_TOKEN_KEY}=${refresh}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
+  const maxAge = STUDIO_SSO_ENABLED ? 120 : 60 * 60 * 24 * 7
+  document.cookie = `${ACCESS_TOKEN_KEY}=${access}; path=/; max-age=${maxAge}; SameSite=Lax`
+  document.cookie = `${REFRESH_TOKEN_KEY}=${refresh}; path=/; max-age=${maxAge}; SameSite=Lax`
 }
 
 export function clearTokens(): void {
@@ -31,7 +34,35 @@ export function clearTokens(): void {
   // Clear auth cookies
   document.cookie = `${ACCESS_TOKEN_KEY}=; path=/; max-age=0`
   document.cookie = `${REFRESH_TOKEN_KEY}=; path=/; max-age=0`
-  window.location.href = withBasePath('/login')
+  window.location.href = withBasePath(STUDIO_SSO_ENABLED ? '/studio' : '/login')
+}
+
+/** Studio owns login; FreeFrame only exchanges a one-use identity assertion. */
+export async function signInWithStudio(): Promise<string | null> {
+  if (!STUDIO_SSO_ENABLED || typeof window === 'undefined') return null
+  try {
+    const ticketResponse = await fetch(STUDIO_TICKET_URL, {
+      method: 'POST',
+      credentials: 'include',
+      cache: 'no-store',
+    })
+    if (!ticketResponse.ok) return null
+    const { ticket } = await ticketResponse.json() as { ticket: string }
+    if (!ticket) return null
+    const response = await fetch(`${API_URL}/auth/studio-sso`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticket }),
+      cache: 'no-store',
+    })
+    if (!response.ok) return null
+    const data = await response.json() as { access_token: string }
+    if (!data.access_token) return null
+    setTokens(data.access_token, '')
+    return data.access_token
+  } catch {
+    return null
+  }
 }
 
 // Deduplicate concurrent refresh calls — when access token expires, multiple
@@ -50,6 +81,7 @@ export async function refreshAccessToken(): Promise<string | null> {
 }
 
 async function _doRefresh(): Promise<string | null> {
+  if (STUDIO_SSO_ENABLED) return signInWithStudio()
   const refreshToken = getRefreshToken()
   if (!refreshToken) {
     clearTokens()

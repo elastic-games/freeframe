@@ -3,7 +3,7 @@
 import * as React from 'react'
 import Link from 'next/link'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import { MoreHorizontal, ImagePlus, Settings, Trash2, Globe, Lock } from 'lucide-react'
+import { MoreHorizontal, Settings, Trash2, Globe } from 'lucide-react'
 import { cn, formatRelativeTime, formatBytes } from '@/lib/utils'
 import { getGradientForProject } from '@/lib/gradient-utils'
 import { api } from '@/lib/api'
@@ -27,6 +27,7 @@ export function ProjectCard({
 }: ProjectCardProps) {
   const gradient = getGradientForProject(project.id)
   const assetCount = project.asset_count ?? 0
+  const canManage = isOwner || project.role === 'owner'
   const [settingsOpen, setSettingsOpen] = React.useState(false)
   const [deleting, setDeleting] = React.useState(false)
 
@@ -97,7 +98,7 @@ export function ProjectCard({
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between px-3 py-2.5">
+          <div className={cn('flex min-h-10 items-center justify-between px-3 py-2.5', canManage && 'pr-12')}>
             <span className="text-2xs text-text-tertiary">
               {assetCount > 0
                 ? `${assetCount} item${assetCount !== 1 ? 's' : ''} · ${formatBytes(project.storage_bytes ?? 0)}`
@@ -107,14 +108,17 @@ export function ProjectCard({
         </Link>
 
         {/* Context menu trigger */}
-        {(isOwner || project.role === 'owner') && (
+        {canManage && (
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
               <button
-                className="absolute bottom-2 right-2.5 flex h-7 w-7 items-center justify-center rounded-md text-text-tertiary hover:bg-bg-hover hover:text-text-primary transition-all opacity-0 group-hover:opacity-100"
+                type="button"
+                aria-label={`Manage ${project.name}`}
+                title="Manage project"
+                className="absolute bottom-1 right-2 flex h-8 w-8 items-center justify-center rounded-md border border-border bg-bg-primary text-text-secondary hover:bg-bg-hover hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
               >
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
               </button>
             </DropdownMenu.Trigger>
 

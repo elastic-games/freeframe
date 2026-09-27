@@ -10,6 +10,9 @@ from .services.s3_service import run_startup_bucket_setup
 from .services.email_service import mail_is_configured
 from .middleware.global_rate_limit import GlobalRateLimitMiddleware
 from .middleware.setup_guard import SetupGuardMiddleware
+from .services.safe_access_log import SafeAccessFilter
+
+logging.getLogger("uvicorn.access").addFilter(SafeAccessFilter())
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

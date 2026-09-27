@@ -154,7 +154,8 @@ def ensure_bucket_exists():
         # origin from FRONTEND_URL in AllowedOrigins (e.g.
         # https://host/freeframe -> https://host). Mirrors the CORS origin
         # used in main.py.
-        _allowed_origins = [o for o in [settings.frontend_origin, "http://localhost:3000"] if o]
+        _allowed_origins = [o for o in [settings.frontend_origin, "http://localhost:3000",
+            *[part.strip() for part in settings.cors_allow_origins.split(",") if part.strip() and part.strip() != "*"]] if o]
         try:
             # One rule per origin: Garage joins a rule's AllowedOrigins into a single
             # comma-separated Access-Control-Allow-Origin response header, which
@@ -263,6 +264,9 @@ def create_multipart_upload(s3_key: str, content_type: str) -> str:
 
 def presign_upload_part(s3_key: str, upload_id: str, part_number: int, expires_in: int = 3600) -> str:
     """Return a presigned URL for uploading a single part."""
+    from .studio_native import NATIVE_SCOPE
+    if NATIVE_SCOPE.get():
+        expires_in = min(expires_in, 300)
     s3 = _get_presign_client()
     return s3.generate_presigned_url(
         "upload_part",
@@ -510,6 +514,9 @@ def generate_presigned_put_url(s3_key: str, content_type: str | None = None, exp
     Uses s3_public_endpoint so the URL is reachable from the browser
     (e.g. https://public-host instead of http://localhost:9000).
     """
+    from .studio_native import NATIVE_SCOPE
+    if NATIVE_SCOPE.get():
+        expires_in = min(expires_in, 300)
     s3 = _get_presign_client()
     params: dict = {"Bucket": settings.s3_bucket, "Key": s3_key}
     if content_type:
@@ -526,6 +533,9 @@ def generate_presigned_get_url(s3_key: str, expires_in: int = 3600, download_fil
         download_filename: If set, adds Content-Disposition: attachment header
                           so the browser downloads with this filename.
     """
+    from .studio_native import NATIVE_SCOPE
+    if NATIVE_SCOPE.get():
+        expires_in = min(expires_in, 300)
     s3 = _get_presign_client()
     params: dict = {"Bucket": settings.s3_bucket, "Key": s3_key}
     if download_filename:

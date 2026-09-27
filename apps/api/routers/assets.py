@@ -341,7 +341,7 @@ def get_stream_url(
             # Route through the HLS proxy so the master playlist, variant
             # playlists, and .ts segments all get served via short-lived
             # presigned URLs — the S3 bucket can stay fully private. (#51)
-            token = create_hls_token(media_file.s3_key_processed)
+            token = create_hls_token(media_file.s3_key_processed, expires_seconds=300 if getattr(current_user, "_studio_native", False) else None)
             url = f"/stream/hls/master.m3u8?token={token}"
     else:
         s3_key = media_file.s3_key_processed or media_file.s3_key_raw
@@ -349,9 +349,9 @@ def get_stream_url(
             filename = build_download_filename(asset.name, s3_key, media_file.original_filename)
             url = generate_presigned_get_url(s3_key, download_filename=filename)
         else:
-            url = generate_presigned_get_url(s3_key)
+            url = generate_presigned_get_url(s3_key, expires_in=300 if getattr(current_user, "_studio_native", False) else 3600)
 
-    return StreamUrlResponse(url=url, asset_type=asset.asset_type)
+    return StreamUrlResponse(url=url, asset_type=asset.asset_type, expires_in=300 if getattr(current_user, "_studio_native", False) else 3600)
 
 
 @router.post("/assets/{asset_id}/versions", response_model=InitiateUploadResponse)

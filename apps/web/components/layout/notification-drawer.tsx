@@ -15,6 +15,7 @@ import { useNotificationStore } from '@/stores/notification-store'
 import { formatRelativeTime } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import type { Notification, NotificationType } from '@/types'
+import { useThemeStore } from '@/stores/theme-store'
 
 const notificationIcons: Record<NotificationType, React.ElementType> = {
   mention: AtSign,
@@ -98,6 +99,7 @@ interface NotificationDrawerProps {
 }
 
 export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
+  const embedded = useThemeStore((s) => s.hostTheme !== null)
   const { notifications, isLoading, fetchNotifications, markAllRead, unreadCount } =
     useNotificationStore()
   const [tab, setTab] = React.useState<'all' | 'unread'>('all')
@@ -113,10 +115,10 @@ export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
   return (
     <>
       {/* Backdrop — offset to not cover sidebar */}
-      <div className="fixed top-0 right-0 bottom-0 left-[52px] z-40" onClick={onClose} />
+      <div className={cn('fixed right-0 bottom-0 z-40', embedded ? 'top-11 left-0' : 'top-0 left-[52px]')} onClick={onClose} />
 
       {/* Drawer */}
-      <div className="fixed left-safe [--ff-left:52px] top-0 z-50 h-full w-[380px] border-r border-border bg-bg-primary shadow-2xl flex flex-col pb-safe animate-in slide-in-from-left-2 duration-150">
+      <div className={cn('fixed left-safe z-50 w-[380px] border-r border-border bg-bg-primary shadow-2xl flex flex-col pb-safe animate-in slide-in-from-left-2 duration-150', embedded ? '[--ff-left:0px] top-11 h-[calc(100dvh-44px)] max-w-full' : '[--ff-left:52px] top-0 h-full')}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 h-12 border-b border-border shrink-0">
           <span className="text-sm font-semibold text-text-primary">Notifications</span>
