@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from urllib.parse import urlparse
-from pydantic import model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Default S3 endpoint (local MinIO). Shared between the field default and the
@@ -37,7 +37,12 @@ class Settings(BaseSettings):
     )
 
     database_url: str
+    database_pool_size: int = Field(default=5, ge=1)
+    database_max_overflow: int = Field(default=10, ge=0)
+    database_pool_timeout: float = Field(default=30, gt=0)
     redis_url: str
+    celery_broker_url: str | None = None
+    celery_result_backend_url: str | None = None
     s3_storage: str = "minio"  # "s3" for AWS S3, "minio" for local MinIO
     s3_bucket: str = "freeframe"
     s3_endpoint: str = DEFAULT_S3_ENDPOINT

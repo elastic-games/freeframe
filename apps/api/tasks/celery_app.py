@@ -10,8 +10,8 @@ except ImportError:
 
 celery_app = Celery(
     "freeframe",
-    broker=settings.redis_url,
-    backend=settings.redis_url,
+    broker=settings.celery_broker_url or settings.redis_url,
+    backend=settings.celery_result_backend_url or settings.redis_url,
     include=[
         "apps.api.tasks.transcode_tasks",
         "apps.api.tasks.watermark_tasks",
