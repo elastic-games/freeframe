@@ -55,13 +55,16 @@ async def run():
         return await actual_read(file,*args,**kwargs)
     UploadFile.read=delayed_read
     put_started=[threading.Event(),threading.Event()];release=threading.Event();call_lock=threading.Lock();puts=[]
+    deleted=[]
     def put(key,*args,**kwargs):
         with call_lock:index=len(puts);puts.append(key)
         put_started[index].set()
         assert release.wait(12),'Synthetic object IO timed out'
+    def delete(key):
+        with call_lock:deleted.append(key)
     projects.put_object=put
     projects.generate_presigned_get_url=lambda key:'http://fixture.invalid/'+key
-    projects.delete_object=lambda key:None
+    projects.delete_object=delete
     import apps.api.main as main
     main.run_startup_bucket_setup=lambda:None
     server=uvicorn.Server(uvicorn.Config(app,host='127.0.0.1',port=int(os.environ['FIXTURE_HTTP_PORT']),
@@ -123,6 +126,24 @@ async def run():
                 results=await asyncio.gather(*posts)
                 assert all(r.status_code==200 for r in results),[r.status_code for r in results]
                 assert all(r.json()['poster_url'] for r in results)
+                first_poster_key=results[0].json()['poster_url'].split('fixture.invalid/',1)[1]
+                put_started=[threading.Event(),threading.Event()];release=threading.Event();puts=[]
+                same_project=[asyncio.create_task(client.post(f'/projects/{pids[0]}/poster',headers=headers[0],
+                     files={'file':(f'concurrent{i}.png',b'synthetic-image','image/png')})) for i in range(2)]
+                for _ in range(200):
+                    if all(flag.is_set() for flag in put_started):break
+                    await asyncio.sleep(.01)
+                assert all(flag.is_set() for flag in put_started),'Same-project uploads did not overlap'
+                assert seen['current']==0
+                release.set()
+                results=await asyncio.gather(*same_project)
+                assert all(r.status_code==200 for r in results),[r.status_code for r in results]
+                with SessionLocal() as db:current_poster=db.get(Project,pids[0]).poster_s3_key
+                assert current_poster in puts
+                expected_deleted={first_poster_key,*puts}-{current_poster}
+                assert set(deleted)==expected_deleted, ('Same-project object cleanup differs',
+                       len(deleted),len(set(deleted)),len(expected_deleted),current_poster in deleted,
+                       len(set(deleted)-expected_deleted),len(expected_deleted-set(deleted)))
             await asyncio.sleep(.1)
             assert seen['current']==0
             # Direct real delegated authorization covers an awaited, uncached ASGI body.
@@ -200,7 +221,7 @@ async def run():
             finally:database.SessionLocal=original;worker_engine.dispose()
             print(json.dumps({'result':'PASS','pg_major':engine.dialect.server_version_info[0],
                   'python':__import__('platform').python_version(),'api_pool':2,'overflow':0,'sse_streams':2,
-                  'overlapping_slow_posters':2,'overlapping_delayed_file_reads':2,'overlapping_delegated_bodies':2,'overlapping_redis_replays':2,'authenticated_read_pairs':len(reads),'max_read_pair_ms':round(max(reads),3),
+                  'overlapping_slow_posters':2,'same_project_overlapping_posters':2,'same_project_object_cleanup':True,'overlapping_delayed_file_reads':2,'overlapping_delegated_bodies':2,'overlapping_redis_replays':2,'authenticated_read_pairs':len(reads),'max_read_pair_ms':round(max(reads),3),
                   'peak_checkouts':seen['peak'],'final_checkouts':seen['current'],'worker_branding_pool':1,
                   'sync_user_commit_refresh':True,'foreign_project_denied':True},sort_keys=True))
     finally:

@@ -265,7 +265,13 @@ def _save_uploaded_poster(db, project_id, current_user, s3_key):
     try:
         # Membership may change while file/object IO is in progress.
         try:
-            project = _get_project(db, project_id)
+            # Serialize only the short DB publish. The second upload must see
+            # the first one's new key as its prior key for safe object cleanup.
+            project = db.query(Project).filter(
+                Project.id == project_id, Project.deleted_at.is_(None),
+            ).with_for_update().first()
+            if not project:
+                raise HTTPException(status_code=404, detail="Project not found")
             _require_project_owner(db, project_id, current_user)
         except HTTPException as error:
             raise _PosterAccessDenied(error) from error

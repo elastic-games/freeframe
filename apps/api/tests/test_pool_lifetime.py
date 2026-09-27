@@ -15,6 +15,7 @@ from starlette.requests import Request
 async def test_revoked_owner_during_poster_read_cannot_commit():
     from apps.api.routers import projects
     db=MagicMock();old_key='posters/old-owned-poster.png';project=SimpleNamespace(poster_s3_key=old_key)
+    db.query.return_value.filter.return_value.with_for_update.return_value.first.return_value=project
     async def read():
         db.close.assert_called_once()
         return b'synthetic-image'
@@ -36,6 +37,7 @@ async def test_ambiguous_poster_commit_retains_new_object_for_reconciliation():
     from apps.api.routers import projects
     db=MagicMock();db.commit.side_effect=RuntimeError('ambiguous commit')
     project=SimpleNamespace(poster_s3_key='posters/prior.png')
+    db.query.return_value.filter.return_value.with_for_update.return_value.first.return_value=project
     async def read():return b'synthetic-image'
     file=SimpleNamespace(content_type='image/png',filename='fixture.png',read=read)
     with patch.object(projects,'_get_project',return_value=project), \

@@ -18,7 +18,11 @@ Delegated assertions read and bind the complete request body before database
 queries and release the DB connection before Redis replay checks. Poster upload
 reads and object I/O run without a DB checkout, then a fresh ownership check
 publishes a unique key; denial removes only the new key and preserves the old
-poster. SSE closes its ACL session before streaming. First-use setup checks run
+poster. The short publish takes a project row lock so simultaneous uploads
+observe each other's prior key without keeping the lock during object I/O.
+An ambiguous commit retains the new object for review; the orphan sweeper is
+report-only by default and must not be assumed to delete it. SSE closes its
+ACL session before streaming. First-use setup checks run
 in the thread pool. The `rehearse_pool.py` synthetic local HTTP/PG fixture
 checks these lifetimes under two concurrent SSE streams, delayed bodies/reads,
 slow object I/O, genuine login/JWT and read traffic. Its PG16/Python3.11.5
