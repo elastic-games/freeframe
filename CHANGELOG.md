@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Opening Video Reviews connects Studio sign-in quietly, without briefly showing the FreeFrame logo and authentication card. Failed connections still show sign-in and retry controls.
 - Studio embedding now uses one compact review toolbar instead of a second sidebar, follows Studio appearance live, and omits the attribution badge inside the portal. Standalone FreeFrame keeps its original sidebar and saved appearance.
 
 - Route native Studio HLS requests directly to the FreeFrame API in the Elastic Labs nginx template.

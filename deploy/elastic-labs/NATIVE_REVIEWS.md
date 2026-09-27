@@ -26,6 +26,13 @@ is ephemeral and does not replace the standalone saved preference. Navigation
 and appearance requests from the compact bar operate Studio's shared controls;
 embedded attribution is omitted. No locale synchronization is implied.
 
+The `/studio` ticket exchange lives outside the branded authentication layout.
+Successful sign-in transitions quietly to the requested dashboard, without a
+FreeFrame logo or authentication card flashing inside Studio. An accessible
+status remains available while connecting; failed exchanges still show visible
+Studio sign-in and retry controls. The ticket exchange and authorization checks
+are unchanged, including return-path validation and version/comment bookmarks.
+
 The reused workspace frontend was deployed on 2026-09-26: Studio source
 `c59f1da120c92c41ec3f138a6255b9c8cfc5e23d` and FreeFrame web image
 `eb158e03c72a7a5a7e3289b70186a0bf5446f59d`. API and workers retain image
