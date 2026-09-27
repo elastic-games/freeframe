@@ -33,6 +33,21 @@ status remains available while connecting; failed exchanges still show visible
 Studio sign-in and retry controls. The ticket exchange and authorization checks
 are unchanged, including return-path validation and version/comment bookmarks.
 
+The quiet-entry correction was deployed on 2026-09-27 as FreeFrame web image
+`b8ff2b0e2e6ca522fcff50864e4f38fb0ada3fab`. Studio stayed at
+`4b14d92ddee407f44c0bc4d1cf9e6147e4e846da` during this cutover, and the
+API/worker container identities and images were preserved. The rollback web is
+`562c039437b7bf5820e583e978f7ded74933561c`; the protected receipt is at
+`/var/backups/elastic-native-reviews/quiet-entry-20260927T154940Z`.
+Local gates passed: 669 frontend cases, 634 backend cases, production build,
+types and lint. The server build, twelve public entry/auth checks and read-only
+native scope/replay/HLS checks passed. Fresh signed-in Safari navigation from
+the main navbar reached the original Projects dashboard with five projects.
+Before/after connection-screen captures are in `docs/screenshots/studio-entry/`;
+the after capture shows the quiet pending state, not a failed authentication.
+The owned temporary swap and unused build stages were cleaned up; durable
+swapfiles and all live/rollback image tags were retained.
+
 The reused workspace frontend was deployed on 2026-09-26: Studio source
 `c59f1da120c92c41ec3f138a6255b9c8cfc5e23d` and FreeFrame web image
 `eb158e03c72a7a5a7e3289b70186a0bf5446f59d`. API and workers retain image
