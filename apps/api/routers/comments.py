@@ -440,6 +440,10 @@ def reply_to_comment(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    return _reply_to_comment(asset_id, comment_id, body, db, current_user)
+
+
+def _reply_to_comment(asset_id, comment_id, body, db, current_user, operation=None):
     asset = _get_asset(db, asset_id)
     require_asset_access(db, asset, current_user)
     parent = db.query(Comment).filter(
@@ -490,6 +494,10 @@ def reply_to_comment(
             comment_id=reply.id,
         ))
 
+    if operation is not None:
+        operation.asset_id = asset_id
+        operation.version_id = parent.version_id
+        operation.comment_id = reply.id
     db.commit()
     db.refresh(reply)
 

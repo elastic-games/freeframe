@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Route native Studio HLS requests directly to the FreeFrame API in the Elastic Labs nginx template.
 
 ### Added
+- Revocable per-node review-worker keys bound to one project and folder, with narrow asset, upload, and comment-reply operations and durable idempotency receipts.
 - Studio-managed Reviews now keeps the original FreeFrame dashboard and project, asset, version, comment, folder, and upload views while Studio checks the active canonical project binding for each request.
 - Project-scoped Studio delegation for native Video Reviews, with bounded media lifetimes.
 - Access log sanitization for signed media queries and share grants.

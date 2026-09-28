@@ -41,6 +41,10 @@ def initiate_upload(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    return _initiate_upload(body, db, current_user)
+
+
+def _initiate_upload(body: InitiateUploadRequest, db: Session, current_user: User, operation=None):
     # Validate mime type
     if body.mime_type not in ALLOWED_MIME_TYPES:
         raise HTTPException(status_code=400, detail=f"Unsupported file type: {body.mime_type}")
@@ -126,6 +130,9 @@ def initiate_upload(
         s3_key_raw=s3_key,
     )
     db.add(media_file)
+    if operation is not None:
+        operation.asset_id = asset.id
+        operation.version_id = version.id
     db.commit()
 
     return InitiateUploadResponse(
