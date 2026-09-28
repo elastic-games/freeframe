@@ -147,6 +147,8 @@ def test_disposable_db_asset_comment_reply_and_upload_receipt(client, real_db, m
 
     listing = client.get("/review-workers/assets?clip=010_Idle_01", headers=headers)
     assert listing.status_code == 200 and listing.json()[0]["asset_id"] == str(asset.id)
+    legacy_suffix = client.get("/review-workers/assets?clip=010_Idle_01_480p", headers=headers)
+    assert legacy_suffix.status_code == 200 and legacy_suffix.json()[0]["asset_id"] == str(asset.id)
     comments = client.get(f"/review-workers/assets/{asset.id}/comments?version_id={old.id}", headers=headers)
     assert comments.status_code == 200 and comments.json()[0]["body"] == "Fix hoof slide"
     reply_body = {"version_id": str(old.id), "corrected_version_id": str(fixed.id),

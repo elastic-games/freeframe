@@ -137,7 +137,13 @@ def list_worker_assets(clip: str | None = None, db: Session = Depends(get_db), s
         # Older portal assets use spaces in titles while SVN clip IDs use underscores.
         # Match whole clip tokens so 010_Idle_01 cannot select 010 Idle 011.
         pattern = r"(?<![A-Za-z0-9])" + r"[\W_]*".join(map(re.escape, clip.split("_"))) + r"(?![A-Za-z0-9])"
-        rows = [a for a in rows if re.search(pattern, a.name, flags=re.IGNORECASE)]
+        exact = [a for a in rows if re.search(pattern, a.name, flags=re.IGNORECASE)]
+        # Some capture folder IDs include a resolution suffix absent from an
+        # existing review title (for example 122_DualChainWhips_480p).
+        # A unique three-digit ID can recover that review; ambiguity remains
+        # visible to the CLI, which refuses to upload without an explicit ID.
+        clip_id = re.compile(r"(?<![0-9])" + re.escape(clip[:3]) + r"(?![0-9])")
+        rows = exact or [a for a in rows if clip_id.search(a.name)]
     result = []
     for asset in rows:
         versions = db.query(AssetVersion).filter(AssetVersion.asset_id == asset.id,
