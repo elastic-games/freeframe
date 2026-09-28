@@ -6,6 +6,7 @@ key_file. The key itself lives only in the mode-0600 file. No browser session
 or FreeFrame user JWT is required.
 """
 import argparse
+import ctypes
 import hashlib
 import json
 import math
@@ -20,6 +21,33 @@ from fractions import Fraction
 from pathlib import Path
 
 
+def _windows_dpapi(data: bytes, *, protect: bool) -> bytes:
+    """Encrypt or decrypt a key for the current Windows user without a passphrase."""
+    from ctypes import wintypes
+
+    class Blob(ctypes.Structure):
+        _fields_ = [("cbData", wintypes.DWORD), ("pbData", ctypes.POINTER(ctypes.c_byte))]
+
+    source = ctypes.create_string_buffer(data)
+    source_blob = Blob(len(data), ctypes.cast(source, ctypes.POINTER(ctypes.c_byte)))
+    output_blob = Blob()
+    crypt32 = ctypes.windll.crypt32
+    operation = crypt32.CryptProtectData if protect else crypt32.CryptUnprotectData
+    operation.argtypes = [ctypes.POINTER(Blob), ctypes.c_void_p, ctypes.POINTER(Blob),
+                          ctypes.c_void_p, ctypes.c_void_p, wintypes.DWORD, ctypes.POINTER(Blob)]
+    operation.restype = wintypes.BOOL
+    if not operation(ctypes.byref(source_blob), None, None, None, None, 1,
+                     ctypes.byref(output_blob)):
+        raise ctypes.WinError()
+    try:
+        return ctypes.string_at(output_blob.pbData, output_blob.cbData)
+    finally:
+        local_free = ctypes.windll.kernel32.LocalFree
+        local_free.argtypes = [ctypes.c_void_p]
+        local_free.restype = ctypes.c_void_p
+        local_free(ctypes.cast(output_blob.pbData, ctypes.c_void_p))
+
+
 def config(path: Path):
     value = json.loads(path.read_text())
     api = value["api_url"].rstrip("/")
@@ -30,9 +58,14 @@ def config(path: Path):
                 parsed.scheme == "http" and parsed.hostname in ("127.0.0.1", "localhost")):
             raise ValueError("api_url must be https://reviews.elasticlabs.site/api")
     key_file = Path(value["key_file"]).expanduser()
-    if key_file.stat().st_mode & 0o077:
-        raise ValueError("review key file must be readable only by its owner")
-    key = key_file.read_text().strip()
+    if os.name == "nt":
+        if key_file.suffix != ".dpapi":
+            raise ValueError("Windows review credential must use a DPAPI key file")
+        key = _windows_dpapi(key_file.read_bytes(), protect=False).decode().strip()
+    else:
+        if key_file.stat().st_mode & 0o077:
+            raise ValueError("review key file must be readable only by its owner")
+        key = key_file.read_text().strip()
     if not key.startswith("rw_"):
         raise ValueError("invalid review credential file")
     return api, key
@@ -45,11 +78,12 @@ def initialize_key(config_path: Path, node: str):
         raise ValueError("review config already exists; rotate explicitly")
     directory = config_path.parent
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
-    key_path = directory / (node + ".key")
+    key_path = directory / (node + (".dpapi" if os.name == "nt" else ".key"))
     key = "rw_" + secrets.token_urlsafe(32)
     fd = os.open(key_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-    with os.fdopen(fd, "w") as stream:
-        stream.write(key + "\n")
+    with os.fdopen(fd, "wb") as stream:
+        stream.write(_windows_dpapi(key.encode(), protect=True) if os.name == "nt"
+                     else (key + "\n").encode())
     config_path.write_text(json.dumps({"api_url": "https://reviews.elasticlabs.site/api",
                                        "key_file": str(key_path), "node": node}) + "\n")
     config_path.chmod(0o600)
