@@ -1,6 +1,8 @@
 import { getAccessToken } from './auth'
+import { api, ApiError } from './api'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const STUDIO_MANAGED = process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS === 'true'
 
 export type ExportFormat = 'edl' | 'fcpxml' | 'premiere_xml' | 'csv'
 
@@ -29,6 +31,19 @@ export async function exportComments(opts: {
   if (opts.fps) params.set('fps', String(opts.fps))
   if (opts.includeResolved === false) params.set('include_resolved', 'false')
 
+  if (STUDIO_MANAGED) {
+    let content: string
+    try {
+      content = await api.get<string>(`/assets/${opts.assetId}/comments/export?${params}`)
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 422 && !opts.fps) throw new FpsRequiredError()
+      throw error
+    }
+    downloadBlob(new Blob([content], { type: opts.format === 'csv' ? 'text/csv' : 'text/plain' }),
+      `comments.${EXT[opts.format]}`)
+    return
+  }
+
   const res = await fetch(`${API_URL}/assets/${opts.assetId}/comments/export?${params}`, {
     headers: { Authorization: `Bearer ${getAccessToken()}` },
   })
@@ -48,10 +63,14 @@ export async function exportComments(opts: {
 
   const blob = await res.blob()
   const match = /filename="([^"]+)"/.exec(res.headers.get('content-disposition') || '')
+  downloadBlob(blob, match?.[1] || `comments.${EXT[opts.format]}`)
+}
+
+function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = match?.[1] || `comments.${EXT[opts.format]}`
+  a.download = filename
   a.style.display = 'none'
   document.body.appendChild(a)
   a.click()

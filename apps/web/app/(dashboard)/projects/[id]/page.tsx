@@ -146,7 +146,7 @@ export default function ProjectDetailPage() {
     deleteShareLink,
     createFolderShare,
     mutateShareLinks,
-  } = useShareLinks(projectId);
+  } = useShareLinks(process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS === "true" ? "" : projectId);
 
   // Comments for the selected asset
   const selectedVersionId = selectedAsset?.latest_version?.id || null;
@@ -256,7 +256,7 @@ export default function ProjectDetailPage() {
   }, [assets]);
 
   const { data: authorUsers } = useSWR<User[]>(
-    authorIds.length > 0 ? `/users?ids=${authorIds.join(",")}` : null,
+    process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS !== "true" && authorIds.length > 0 ? `/users?ids=${authorIds.join(",")}` : null,
     () => api.get<User[]>(`/users?ids=${authorIds.join(",")}`),
   );
 
@@ -282,7 +282,7 @@ export default function ProjectDetailPage() {
   }, [assets]);
 
   const { data: assigneeUsers } = useSWR<User[]>(
-    assigneeIds.length > 0 ? `/users?ids=${assigneeIds.join(",")}` : null,
+    process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS !== "true" && assigneeIds.length > 0 ? `/users?ids=${assigneeIds.join(",")}` : null,
     () => api.get<User[]>(`/users?ids=${assigneeIds.join(",")}`),
   );
 
@@ -297,9 +297,10 @@ export default function ProjectDetailPage() {
   // owner → Full Access, editor → Edit & Share, reviewer → Comment Only, viewer → View Only
   const canUpload = currentRole === "owner" || currentRole === "editor";
   const canCreateFolder = currentRole === "owner" || currentRole === "editor";
-  const canShare = currentRole === "owner" || currentRole === "editor";
-  const canManageMembers = currentRole === "owner";
-  const canSeeShareLinks = currentRole === "owner" || currentRole === "editor";
+  const studioManaged = process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS === "true";
+  const canShare = !studioManaged && (currentRole === "owner" || currentRole === "editor");
+  const canManageMembers = !studioManaged && currentRole === "owner";
+  const canSeeShareLinks = !studioManaged && (currentRole === "owner" || currentRole === "editor");
   const canComment = currentRole !== "viewer";
 
   function openShareDialog(assetIds: string[], folderIds: string[]) {
@@ -787,7 +788,7 @@ export default function ProjectDetailPage() {
                 mutateAssets();
                 mutateSubfolders();
               }}
-              onFolderShare={async (folderId, folderName) => {
+              onFolderShare={studioManaged ? undefined : async (folderId, folderName) => {
                 setShareDialogPreselect({
                   type: "folder",
                   id: folderId,
@@ -804,9 +805,9 @@ export default function ProjectDetailPage() {
                 mutateSubfolders();
               }}
               shareMode={false}
-              onShareModeChange={setShareMode}
-              onCreateShareLink={openShareDialog}
-              onAssetShare={(asset) => {
+              onShareModeChange={studioManaged ? undefined : setShareMode}
+              onCreateShareLink={studioManaged ? undefined : openShareDialog}
+              onAssetShare={studioManaged ? undefined : (asset) => {
                 // Open dialog in configure phase — creation happens when user clicks "Create"
                 setShareDialogPreselect({
                   type: "asset",

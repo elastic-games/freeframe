@@ -5,11 +5,17 @@ import { useRouter } from 'next/navigation'
 import { signInWithStudio } from '@/lib/auth'
 import { studioReturnPath } from '@/lib/studio-return-path'
 
+const STUDIO_MANAGED = process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS === 'true'
+
 export default function StudioSignInPage() {
   const router = useRouter()
   const [failed, setFailed] = useState(false)
 
   useEffect(() => {
+    if (STUDIO_MANAGED) {
+      router.replace(studioReturnPath(new URLSearchParams(window.location.search).get('from')))
+      return
+    }
     let active = true
     signInWithStudio().then((token) => {
       if (!active) return

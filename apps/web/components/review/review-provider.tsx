@@ -9,7 +9,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { useReviewStore } from "@/stores/review-store";
 import type { AssetResponse, AssetVersion, Comment } from "@/types";
 
@@ -33,6 +33,8 @@ interface ReviewContextValue {
   comments: Comment[];
   isLoading: boolean;
   error: string | null;
+  errorStatus: number | null;
+  retry: () => void;
   addComment: (payload: CreateCommentPayload) => Promise<Comment>;
   resolveComment: (commentId: string) => Promise<void>;
   seekTo: (time: number) => void;
@@ -66,6 +68,9 @@ export function ReviewProvider({
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [errorStatus, setErrorStatus] = useState<number | null>(null);
+  const [reloadNonce, setReloadNonce] = useState(0);
+  const generationRef = useRef(0);
   const pauseHandlerRef = useRef<(() => void) | null>(null);
 
   const { setCurrentAsset, setCurrentVersion, setPlayheadTime, currentVersion } =
@@ -88,7 +93,7 @@ export function ReviewProvider({
 
   const shareSessionParam = shareSession ? `&share_session=${encodeURIComponent(shareSession)}` : '';
 
-  const fetchAsset = useCallback(async () => {
+  const fetchAsset = useCallback(async (generation: number): Promise<boolean> => {
     try {
       let data: AssetResponse;
 
@@ -143,7 +148,7 @@ export function ReviewProvider({
         data = await api.get<AssetResponse>(`/assets/${assetId}`);
       }
 
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || generation !== generationRef.current) return false;
       setAsset(data);
       setCurrentAsset(data);
 
@@ -152,7 +157,7 @@ export function ReviewProvider({
         const allVersions = await api.get<AssetVersion[]>(
           `/assets/${assetId}/versions`,
         );
-        if (!mountedRef.current) return;
+        if (!mountedRef.current || generation !== generationRef.current) return false;
         setVersions(allVersions ?? []);
 
         const readyVersion = (allVersions ?? [])
@@ -181,7 +186,7 @@ export function ReviewProvider({
             { headers },
           );
           const vlist = vres.ok ? await vres.json() : [];
-          if (!mountedRef.current) return;
+          if (!mountedRef.current || generation !== generationRef.current) return false;
           const mapped = ((vlist as any[]) ?? []).map((v) => ({
             id: v.id,
             asset_id: assetId,
@@ -199,13 +204,20 @@ export function ReviewProvider({
           if (data.latest_version) setCurrentVersion(data.latest_version);
         }
       }
+      return true;
     } catch (err) {
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || generation !== generationRef.current) return false;
+      setAsset(null);
+      setVersions([]);
+      setComments([]);
+      useReviewStore.setState({ currentAsset: null, currentVersion: null });
       setError(err instanceof Error ? err.message : "Failed to load asset");
+      setErrorStatus(err instanceof ApiError ? err.status : 503);
+      return false;
     }
   }, [assetId, shareToken, shareSessionParam, setCurrentAsset, setCurrentVersion]);
 
-  const fetchComments = useCallback(async () => {
+  const fetchComments = useCallback(async (generation = generationRef.current) => {
     const reqId = ++commentsReqRef.current;
     try {
       let data: Comment[];
@@ -229,12 +241,20 @@ export function ReviewProvider({
       } else {
         data = await api.get<Comment[]>(`/assets/${assetId}/comments`);
       }
-      if (!mountedRef.current || reqId !== commentsReqRef.current) return;
+      if (!mountedRef.current || generation !== generationRef.current || reqId !== commentsReqRef.current) return;
       setComments(data ?? []);
-    } catch {
-      // Comments failing silently — asset is still viewable
+    } catch (err) {
+      if (process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS === "true" &&
+          mountedRef.current && generation === generationRef.current) {
+        setAsset(null);
+        setVersions([]);
+        setComments([]);
+        useReviewStore.setState({ currentAsset: null, currentVersion: null });
+        setError(err instanceof Error ? err.message : "Failed to load comments");
+        setErrorStatus(err instanceof ApiError ? err.status : 503);
+      }
     }
-  }, [assetId, shareToken]);
+  }, [assetId, shareToken, shareSessionParam]);
 
   const refetchComments = useCallback(async () => {
     await fetchComments();
@@ -242,26 +262,45 @@ export function ReviewProvider({
 
   const refetchVersions = useCallback(async () => {
     if (shareToken) return;
+    const generation = generationRef.current;
     try {
       const allVersions = await api.get<AssetVersion[]>(`/assets/${assetId}/versions`);
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || generation !== generationRef.current) return;
       setVersions(allVersions ?? []);
-    } catch {
-      // ignore
+    } catch (err) {
+      if (process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS === "true" &&
+          mountedRef.current && generation === generationRef.current) {
+        setAsset(null);
+        setVersions([]);
+        setComments([]);
+        useReviewStore.setState({ currentAsset: null, currentVersion: null });
+        setError(err instanceof Error ? err.message : "Failed to load versions");
+        setErrorStatus(err instanceof ApiError ? err.status : 503);
+      }
     }
   }, [assetId, shareToken]);
 
   useEffect(() => {
+    const generation = ++generationRef.current;
     setIsLoading(true);
     setError(null);
+    setErrorStatus(null);
+    setAsset(null);
+    setVersions([]);
+    setComments([]);
+    useReviewStore.setState({ currentAsset: null, currentVersion: null });
     // In share mode, comments are version-scoped and fetched by the effect below once
     // the version is known — so the first (and only) comments request is already scoped
     // to the viewed version, avoiding an all-versions flash on open.
-    const commentsPromise = shareToken ? Promise.resolve() : fetchComments();
-    Promise.all([fetchAsset(), commentsPromise]).finally(() => {
-      if (mountedRef.current) setIsLoading(false);
-    });
-  }, [fetchAsset, fetchComments, shareToken]);
+    void (async () => {
+      const loaded = await fetchAsset(generation);
+      if (loaded && !shareToken) await fetchComments(generation);
+      if (mountedRef.current && generation === generationRef.current) setIsLoading(false);
+    })();
+    return () => { if (generationRef.current === generation) generationRef.current++; };
+  }, [fetchAsset, fetchComments, shareToken, reloadNonce]);
+
+  const retry = useCallback(() => setReloadNonce((n) => n + 1), []);
 
   // Share mode: (re)scope comments to the selected version — but only once a version is
   // known, so we never fetch the unfiltered all-versions list.
@@ -344,7 +383,7 @@ export function ReviewProvider({
       }
       return comment;
     },
-    [assetId],
+    [assetId, shareToken, shareSessionParam],
   );
 
   const resolveComment = useCallback(
@@ -386,6 +425,8 @@ export function ReviewProvider({
       comments,
       isLoading,
       error,
+      errorStatus,
+      retry,
       addComment,
       resolveComment,
       seekTo,
@@ -397,10 +438,14 @@ export function ReviewProvider({
     [
       assetId,
       asset,
+      shareToken,
+      shareSession,
       versions,
       comments,
       isLoading,
       error,
+      errorStatus,
+      retry,
       addComment,
       resolveComment,
       seekTo,

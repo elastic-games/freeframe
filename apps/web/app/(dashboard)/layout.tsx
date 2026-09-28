@@ -12,6 +12,7 @@ import { UploadSSEBridge } from "@/components/layout/upload-sse-bridge";
 import { PoweredByBadge } from "@/components/shared/powered-by-badge";
 import { refuseFileDrag } from "@/lib/drag";
 import { cn } from "@/lib/utils";
+import { STUDIO_ORIGIN } from "@/lib/studio-embed";
 import { useThemeStore } from "@/stores/theme-store";
 
 export default function DashboardLayout({
@@ -29,15 +30,28 @@ export default function DashboardLayout({
   // The asset viewer renders its own top bar, carrying both the header's role
   // and the attribution credit, so the shell supplies neither here.
   const isAssetViewer = /\/projects\/[^/]+\/assets\/[^/]+/.test(pathname);
+  const lastProject = React.useRef<string | null | undefined>(undefined);
+
+  React.useEffect(() => {
+    if (process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS !== "true" || window.parent === window) return;
+    const projectId = pathname.match(/\/projects\/([0-9a-f]{8}-[0-9a-f-]{27,})(?:\/|$)/i)?.[1] || null;
+    if (lastProject.current === undefined) { lastProject.current = projectId; return; }
+    if (projectId && projectId !== lastProject.current) window.parent.postMessage(
+      { type: "elastic-studio:project-navigation", providerProjectId: projectId },
+      STUDIO_ORIGIN,
+    );
+    lastProject.current = projectId;
+  }, [pathname]);
 
   React.useEffect(() => {
     fetchUser();
-    fetchHistory();
+    if (process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS !== "true") fetchHistory();
   }, [fetchUser, fetchHistory]);
 
   // Global keyboard shortcut for command palette
   React.useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      if (process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS === "true") return;
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setCommandOpen((prev) => !prev);

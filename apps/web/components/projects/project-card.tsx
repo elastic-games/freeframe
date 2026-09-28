@@ -27,7 +27,7 @@ export function ProjectCard({
 }: ProjectCardProps) {
   const gradient = getGradientForProject(project.id)
   const assetCount = project.asset_count ?? 0
-  const canManage = isOwner || project.role === 'owner'
+  const canManage = process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS !== 'true' && (isOwner || project.role === 'owner')
   const [settingsOpen, setSettingsOpen] = React.useState(false)
   const [deleting, setDeleting] = React.useState(false)
 

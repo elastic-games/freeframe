@@ -90,7 +90,7 @@ export function Header({ onSearchOpen }: HeaderProps) {
       {/* Right side actions */}
       <div className="flex items-center gap-1.5">
         {/* Search trigger */}
-        <button
+        {process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS !== 'true' && <button
           onClick={onSearchOpen}
           className="flex items-center gap-1.5 rounded-md border border-border bg-bg-secondary/60 px-2.5 py-1 text-xs text-text-tertiary hover:border-border-focus hover:text-text-secondary transition-colors"
         >
@@ -99,7 +99,7 @@ export function Header({ onSearchOpen }: HeaderProps) {
           <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-border bg-bg-tertiary/50 px-1 py-0.5 font-mono text-[10px] text-text-tertiary">
             <span>⌘</span>K
           </kbd>
-        </button>
+        </button>}
 
         {/* Panel toggle — only on project detail pages, not the listing */}
         {pathname !== '/projects' && (

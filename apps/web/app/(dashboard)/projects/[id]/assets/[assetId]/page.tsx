@@ -54,7 +54,7 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const { asset, versions, isLoading, refetchComments, refetchVersions } = useReview()
+  const { asset, versions, isLoading, error, errorStatus, retry, refetchComments, refetchVersions } = useReview()
   const { currentVersion, isDrawingMode, focusedCommentId, playheadTime, seekTo, setFocusedCommentId, setActiveAnnotation } = useReviewStore()
   const requestedVersion = searchParams.get('version')
   useLinkedReviewVersion(asset?.id, versions, requestedVersion, isLoading)
@@ -279,6 +279,25 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [prevAsset, nextAsset, searchParams])
 
+  if (!isLoading && error) {
+    const denied = errorStatus === 401 || errorStatus === 403 || errorStatus === 404
+    return (
+      <div className="flex h-full items-center justify-center px-6" role="alert">
+        <div className="max-w-sm text-center">
+          <Info className="mx-auto h-8 w-8 text-text-tertiary" />
+          <h2 className="mt-3 text-sm font-medium text-text-primary">
+            {denied ? 'Review access unavailable' : 'Review temporarily unavailable'}
+          </h2>
+          <p className="mt-2 text-xs text-text-tertiary">
+            {denied ? 'Your access to this project or asset may have changed.' : 'The asset could not be loaded. Please try again.'}
+          </p>
+          <button type="button" onClick={retry} className="mt-4 rounded-md bg-accent px-4 py-2 text-xs font-medium text-white">
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
   if (isLoading || !asset) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -636,7 +655,8 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
             <Upload className="h-3.5 w-3.5" />
             New Version
           </button>
-          <ShareDialog assetId={asset.id} assetName={asset.name} projectId={projectId} asset={asset} />
+          {process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS !== 'true' &&
+            <ShareDialog assetId={asset.id} assetName={asset.name} projectId={projectId} asset={asset} />}
           <button
             // When the sheet is the comment surface, this button drives the
             // sheet. Toggling `sidebarOpen` there would do nothing visible,

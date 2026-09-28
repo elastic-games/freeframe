@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { usePathname } from 'next/navigation'
 import {
   X,
   CheckCircle,
@@ -409,22 +410,26 @@ export function UploadsPanel({
   railCollapsed?: boolean
 } = {}) {
   const embedded = useThemeStore((s) => s.hostTheme !== null)
-  const { files, panelOpen, setPanelOpen, clearCompleted, fetchHistory, fetchMoreHistory, historyHasMore, historyLoading } = useUploadStore()
+  const pathname = usePathname()
+  const managed = process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS === 'true'
+  const currentProject = pathname?.match(/\/projects\/([0-9a-f]{8}-[0-9a-f-]{27,})(?:\/|$)/i)?.[1]
+  const { files, panelOpen, setPanelOpen, clearCompleted, removeFile, fetchHistory, fetchMoreHistory, historyHasMore, historyLoading } = useUploadStore()
+  const visibleFiles = managed ? files.filter((file) => file.projectId === currentProject) : files
   const [filter, setFilter] = React.useState<FilterTab>('active')
   const scrollRef = React.useRef<HTMLDivElement>(null)
   const sentinelRef = React.useRef<HTMLDivElement>(null)
 
   // Fetch backend history when panel opens
   React.useEffect(() => {
-    if (panelOpen) {
+    if (panelOpen && !managed) {
       fetchHistory()
     }
-  }, [panelOpen, fetchHistory])
+  }, [panelOpen, fetchHistory, managed])
 
   // Infinite scroll — IntersectionObserver on sentinel (skip on Active tab
   // since its items come from the live upload store, not paginated history)
   React.useEffect(() => {
-    if (!panelOpen || filter === 'active') return
+    if (!panelOpen || filter === 'active' || managed) return
     const sentinel = sentinelRef.current
     if (!sentinel) return
 
@@ -438,20 +443,20 @@ export function UploadsPanel({
     )
     observer.observe(sentinel)
     return () => observer.disconnect()
-  }, [panelOpen, filter, historyHasMore, historyLoading, fetchMoreHistory])
+  }, [panelOpen, filter, historyHasMore, historyLoading, fetchMoreHistory, managed])
 
   if (!panelOpen) return null
 
   // Sort descending by createdAt
-  const sorted = [...files].sort((a, b) => b.createdAt - a.createdAt)
+  const sorted = [...visibleFiles].sort((a, b) => b.createdAt - a.createdAt)
   const filtered = sorted.filter((f) => matchesFilter(f.status, filter))
   const groups = groupByDate(filtered)
 
   const counts = {
-    all: files.length,
-    active: files.filter((f) => matchesFilter(f.status, 'active')).length,
-    complete: files.filter((f) => f.status === 'complete').length,
-    failed: files.filter((f) => matchesFilter(f.status, 'failed')).length,
+    all: visibleFiles.length,
+    active: visibleFiles.filter((f) => matchesFilter(f.status, 'active')).length,
+    complete: visibleFiles.filter((f) => f.status === 'complete').length,
+    failed: visibleFiles.filter((f) => matchesFilter(f.status, 'failed')).length,
   }
 
   const tabs: { id: FilterTab; label: string; count: number }[] = [
@@ -511,7 +516,13 @@ export function UploadsPanel({
           <div className="flex items-center gap-1">
             {counts.complete > 0 && (
               <button
-                onClick={clearCompleted}
+                onClick={() => {
+                  if (managed) {
+                    for (const file of visibleFiles) if (file.status === 'complete') removeFile(file.id)
+                  } else {
+                    clearCompleted()
+                  }
+                }}
                 className="text-xs text-text-tertiary hover:text-text-secondary transition-colors px-2 py-1 rounded hover:bg-bg-hover"
               >
                 Clear
@@ -566,7 +577,7 @@ export function UploadsPanel({
               </p>
               <p className="text-xs text-text-tertiary mt-1">
                 {filter === 'all'
-                  ? 'Upload files from any project to track them here.'
+                  ? (managed ? 'Uploads for this project appear here.' : 'Upload files from any project to track them here.')
                   : 'Items will appear here as uploads progress.'}
               </p>
             </div>

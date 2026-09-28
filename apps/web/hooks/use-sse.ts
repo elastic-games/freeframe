@@ -75,6 +75,8 @@ export interface UseSSEReturn {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const STUDIO_MANAGED = process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS === 'true'
+const STUDIO_TRANSPORT_URL = process.env.NEXT_PUBLIC_STUDIO_TRANSPORT_URL || 'https://app.elasticlabs.site/api/studio/freeframe-transport'
 const BACKOFF_STEPS = [1000, 2000, 4000, 8000, 16000, 30000]
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -125,6 +127,12 @@ export function useSSE(projectId: string | null | undefined, options: UseSSEOpti
     function connect() {
       if (destroyed) return
 
+      if (STUDIO_MANAGED) {
+        const url = new URL(STUDIO_TRANSPORT_URL)
+        url.searchParams.set('stream', 'events')
+        url.searchParams.set('project', projectId!)
+        es = new EventSource(url.toString(), { withCredentials: true })
+      } else {
       const token = getAccessToken()
       // Use window.location.origin as a base so deployments behind a reverse
       // proxy can set NEXT_PUBLIC_API_URL to a relative path like "/api"
@@ -136,6 +144,7 @@ export function useSSE(projectId: string | null | undefined, options: UseSSEOpti
       }
 
       es = new EventSource(url.toString())
+      }
 
       es.onopen = () => {
         if (destroyed) return

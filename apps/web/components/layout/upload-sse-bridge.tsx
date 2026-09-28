@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo } from 'react'
+import { usePathname } from 'next/navigation'
 import { useUploadStore, type UploadFile } from '@/stores/upload-store'
 import { useSSE } from '@/hooks/use-sse'
 
@@ -36,20 +37,24 @@ export function pollIntervalFor(files: UploadFile[]): number {
 }
 
 export function UploadSSEBridge() {
+  const pathname = usePathname()
   const files = useUploadStore((s) => s.files)
   const refreshProcessingItems = useUploadStore((s) => s.refreshProcessingItems)
+  const managed = process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS === 'true'
+  const currentProject = pathname?.match(/\/projects\/([0-9a-f]{8}-[0-9a-f-]{27,})(?:\/|$)/i)?.[1]
+  const scopedFiles = managed ? files.filter((file) => file.projectId === currentProject) : files
 
   const processingProjectIds = useMemo(() => {
     const ids = new Set<string>()
-    for (const f of files) {
+    for (const f of scopedFiles) {
       if (f.status === 'processing' && f.projectId) {
         ids.add(f.projectId)
       }
     }
     return Array.from(ids)
-  }, [files])
+  }, [scopedFiles])
 
-  const pollInterval = useMemo(() => pollIntervalFor(files), [files])
+  const pollInterval = useMemo(() => pollIntervalFor(scopedFiles), [scopedFiles])
 
   useEffect(() => {
     if (!pollInterval) return

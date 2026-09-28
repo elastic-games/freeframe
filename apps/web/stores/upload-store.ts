@@ -25,7 +25,12 @@ const PART_RETRY_BASE_MS = 2000 // 2s, 4s, 8s … ≈254s of total tolerance per
 const HEARTBEAT_MS = 15_000
 export const LIVE_WINDOW_MS = 150_000
 
-const TAB_KEY = 'ff-upload-tab'
+// A managed Studio session must not rehydrate upload rows left by the legacy
+// FreeFrame login on the same browser origin.
+const MANAGED_UPLOADS = process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS === 'true'
+const UPLOAD_STORAGE_KEY = MANAGED_UPLOADS ? 'ff-studio-managed-uploads' : 'ff-uploads'
+const TAB_KEY = MANAGED_UPLOADS ? 'ff-studio-managed-upload-tab' : 'ff-upload-tab'
+const UPLOAD_CHANNEL_KEY = MANAGED_UPLOADS ? 'ff-studio-managed-upload-tabs' : 'ff-upload-tabs'
 const newTabId = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`
 
 /**
@@ -90,7 +95,7 @@ function standingOfStoredRow(f: UploadFile, now: number): UploadFile {
  *  the work last wrote it -- not the copy this tab read when it loaded. */
 function storedHeartbeat(fileId: string): number | undefined {
   try {
-    const raw = window.localStorage.getItem('ff-uploads')
+    const raw = window.localStorage.getItem(UPLOAD_STORAGE_KEY)
     const files = (JSON.parse(raw ?? '{}') as { state?: { files?: UploadFile[] } }).state?.files
     return files?.find((f) => f.id === fileId)?.heartbeatAt
   } catch {
@@ -1667,7 +1672,7 @@ function mergeWithStored(name: string, outgoing: string): string {
 
 export const useUploadStore = create<UploadStore>()(
   persist(storeCreator, {
-    name: 'ff-uploads',
+    name: UPLOAD_STORAGE_KEY,
     // Every write goes through the merge above. It costs one read and one parse
     // of a list that holds a handful of rows, against a `set` that has already
     // re-rendered the panel.
@@ -1720,7 +1725,7 @@ export const useUploadStore = create<UploadStore>()(
 // looks again at the rows it hydrated as its own.
 if (typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined') {
   try {
-    const channel = new BroadcastChannel('ff-upload-tabs')
+    const channel = new BroadcastChannel(UPLOAD_CHANNEL_KEY)
     const nonce = newTabId()
     channel.onmessage = (e: MessageEvent) => {
       const msg = e.data as { type?: string; tab?: string; nonce?: string }

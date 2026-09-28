@@ -169,3 +169,46 @@ def test_native_hls_segments_do_not_outlive_manifest():
         result = hls_proxy("index.m3u8", token_value)
         assert result.status_code == 200
         assert 1 <= sign.call_args.kwargs["expires_in"] <= 300
+
+
+@pytest.mark.asyncio
+async def test_asset_rename_requires_exact_project_asset_graph(monkeypatch):
+    monkeypatch.setattr(settings, "studio_sso_enabled", True)
+    monkeypatch.setattr(settings, "studio_native_secret", SECRET)
+    path = f"/assets/{ASSET}"
+    db = MagicMock()
+    from apps.api.models.asset import Asset
+    from apps.api.models.project import Project
+    def query(model):
+        q = MagicMock()
+        q.filter.return_value = q
+        q.first.return_value = MagicMock(id=PROJECT) if model is Project else MagicMock(id=ASSET, project_id=OTHER)
+        return q
+    db.query.side_effect = query
+    from apps.api.models.user import UserStatus
+    user = MagicMock(id=ACTOR, status=UserStatus.active, preferences={"studio_sso": True})
+    body = b'{"name":"Renamed"}'
+    async def receive():
+        return {"type": "http.request", "body": body, "more_body": False}
+    r = Request({"type": "http", "method": "PATCH", "path": path, "query_string": b"",
+                 "headers": [(b"content-type", b"application/json")]}, receive)
+    now = int(time.time())
+    signed = jwt.encode({"iss": "elastic-labs-studio", "aud": "studio-native-reviews", "type": "studio_delegate",
+      "sub": str(ACTOR), "org": str(ORG), "project": str(PROJECT), "method": "PATCH", "path": path,
+      "request_hash": hashlib.sha256(b"\n" + body).hexdigest(), "iat": now, "exp": now + 45,
+      "jti": str(uuid.uuid4())}, SECRET, algorithm="HS256")
+    with patch("apps.api.services.studio_native.get_project_member", return_value=MagicMock(role=ProjectRole.owner)), \
+         patch("apps.api.services.studio_native.get_user_by_id", return_value=user), \
+         pytest.raises(HTTPException) as error:
+        await delegated_studio_user(r, signed, db)
+    assert error.value.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_project_member_read_rejects_foreign_project(monkeypatch):
+    monkeypatch.setattr(settings, "studio_sso_enabled", True)
+    monkeypatch.setattr(settings, "studio_native_secret", SECRET)
+    path = f"/projects/{OTHER}/members"
+    with pytest.raises(HTTPException) as error:
+        await delegated_studio_user(request("GET", path), token("GET", path), MagicMock())
+    assert error.value.status_code == 403

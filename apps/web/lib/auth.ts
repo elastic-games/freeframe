@@ -5,20 +5,24 @@ const REFRESH_TOKEN_KEY = 'ff_refresh_token'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 const STUDIO_SSO_ENABLED = process.env.NEXT_PUBLIC_STUDIO_SSO_ENABLED === 'true'
+const STUDIO_MANAGED = process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS === 'true'
 const STUDIO_TICKET_URL = process.env.NEXT_PUBLIC_STUDIO_TICKET_URL || 'https://app.elasticlabs.site/api/reviews/sso-ticket'
 
 export function getAccessToken(): string | null {
   if (typeof window === 'undefined') return null
+  if (STUDIO_MANAGED) return null
   return localStorage.getItem(ACCESS_TOKEN_KEY)
 }
 
 export function getRefreshToken(): string | null {
   if (typeof window === 'undefined') return null
+  if (STUDIO_MANAGED) return null
   return localStorage.getItem(REFRESH_TOKEN_KEY)
 }
 
 export function setTokens(access: string, refresh: string): void {
   if (typeof window === 'undefined') return
+  if (STUDIO_MANAGED) return
   localStorage.setItem(ACCESS_TOKEN_KEY, access)
   localStorage.setItem(REFRESH_TOKEN_KEY, refresh)
   // Set cookies so middleware can check auth on server side
@@ -39,6 +43,7 @@ export function clearTokens(): void {
 
 /** Studio owns login; FreeFrame only exchanges a one-use identity assertion. */
 export async function signInWithStudio(): Promise<string | null> {
+  if (STUDIO_MANAGED) return null
   if (!STUDIO_SSO_ENABLED || typeof window === 'undefined') return null
   try {
     const ticketResponse = await fetch(STUDIO_TICKET_URL, {
@@ -70,6 +75,7 @@ export async function signInWithStudio(): Promise<string | null> {
 let _refreshPromise: Promise<string | null> | null = null
 
 export async function refreshAccessToken(): Promise<string | null> {
+  if (STUDIO_MANAGED) return null
   if (_refreshPromise) return _refreshPromise
 
   _refreshPromise = _doRefresh()

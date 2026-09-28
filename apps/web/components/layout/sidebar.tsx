@@ -49,6 +49,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+  const studioManaged = process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS === 'true'
   const hostTheme = useThemeStore((s) => s.hostTheme)
   const embedded = hostTheme !== null
   // The embedded toolbar never expands into a second sidebar.
@@ -68,15 +69,18 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     lightUrl: orgLogoLight,
   })
   const [notifOpen, setNotifOpen] = React.useState(false)
-  const activeUploads = uploadFiles.filter((f) => f.status === 'uploading' || f.status === 'pending' || f.status === 'processing').length
+  const currentProject = pathname?.match(/\/projects\/([0-9a-f]{8}-[0-9a-f-]{27,})(?:\/|$)/i)?.[1]
+  const activeUploads = uploadFiles.filter((f) =>
+    (!studioManaged || f.projectId === currentProject) &&
+    (f.status === 'uploading' || f.status === 'pending' || f.status === 'processing')).length
   const { data: instance } = useSWR<InstanceSettings>(
-    '/instance/settings',
+    studioManaged ? null : '/instance/settings',
     () => api.get<InstanceSettings>('/instance/settings'),
   )
 
   React.useEffect(() => {
-    fetchNotifications()
-  }, [fetchNotifications])
+    if (!studioManaged) fetchNotifications()
+  }, [fetchNotifications, studioManaged])
 
   return (
     <>
@@ -161,7 +165,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           })}
 
           {/* Notifications button */}
-          <button
+          {!studioManaged && <button
             onClick={() => setNotifOpen((v) => !v)}
             className={cn(
               'group relative flex items-center rounded-md transition-colors duration-100',
@@ -189,7 +193,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 Notifications
               </span>
             )}
-          </button>
+          </button>}
 
           {/* Uploads button */}
           <button
@@ -278,7 +282,13 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 sideOffset={8}
                 className="z-50 min-w-[180px] rounded-lg border border-border bg-bg-elevated p-1 shadow-xl animate-slide-up"
               >
-                <DropdownMenu.Item asChild>
+                {studioManaged ? <DropdownMenu.Item asChild>
+                  <a href="https://app.elasticlabs.site" target="_top"
+                    className="flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-[13px] text-text-secondary hover:bg-bg-hover hover:text-text-primary focus:outline-none">
+                    <User className="h-4 w-4" />
+                    Open Studio
+                  </a>
+                </DropdownMenu.Item> : <><DropdownMenu.Item asChild>
                   <Link
                     href="/settings/profile"
                     className="flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-[13px] text-text-secondary hover:bg-bg-hover hover:text-text-primary focus:outline-none"
@@ -304,6 +314,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   <LogOut className="h-4 w-4" />
                   Log out
                 </DropdownMenu.Item>
+                </>}
               </DropdownMenu.Content>
             </DropdownMenu.Portal>
           </DropdownMenu.Root>

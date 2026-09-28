@@ -25,6 +25,7 @@ import { usePageTitle } from "@/hooks/use-page-title";
 import type { Project, ProjectType } from "@/types";
 
 type ViewMode = "grid" | "list";
+const STUDIO_MANAGED = process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS === "true";
 
 interface CreateProjectForm {
   name: string;
@@ -323,12 +324,12 @@ export default function ProjectsPage() {
               if (!open) resetForm();
             }}
           >
-            <Dialog.Trigger asChild>
+            {!STUDIO_MANAGED && <Dialog.Trigger asChild>
               <Button size="sm">
                 <Plus className="h-4 w-4" />
                 New Project
               </Button>
-            </Dialog.Trigger>
+            </Dialog.Trigger>}
 
             <Dialog.Portal>
               <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
@@ -411,8 +412,8 @@ export default function ProjectsPage() {
           <EmptyState
             icon={FolderOpen}
             title="No projects yet"
-            description="Create your first project to start organizing assets."
-            action={{
+            description={STUDIO_MANAGED ? "Studio project connection is pending. Open Studio to manage projects." : "Create your first project to start organizing assets."}
+            action={STUDIO_MANAGED ? undefined : {
               label: "New Project",
               onClick: () => setDialogOpen(true),
             }}
@@ -426,8 +427,8 @@ export default function ProjectsPage() {
             projects={myProjects}
             viewMode={viewMode}
             emptyMessage="You haven't created any projects yet."
-            onNewProject={() => setDialogOpen(true)}
-            showNewButton
+            onNewProject={STUDIO_MANAGED ? undefined : () => setDialogOpen(true)}
+            showNewButton={!STUDIO_MANAGED}
             userId={user?.id}
             onMutate={() => mutate()}
           />
