@@ -134,7 +134,10 @@ def list_worker_assets(clip: str | None = None, db: Session = Depends(get_db), s
                                   Asset.folder_id == worker.folder_id,
                                   Asset.deleted_at.is_(None)).all()
     if clip:
-        rows = [a for a in rows if clip.lower() in a.name.lower()]
+        # Older portal assets use spaces in titles while SVN clip IDs use underscores.
+        # Match whole clip tokens so 010_Idle_01 cannot select 010 Idle 011.
+        pattern = r"(?<![A-Za-z0-9])" + r"[\W_]*".join(map(re.escape, clip.split("_"))) + r"(?![A-Za-z0-9])"
+        rows = [a for a in rows if re.search(pattern, a.name, flags=re.IGNORECASE)]
     result = []
     for asset in rows:
         versions = db.query(AssetVersion).filter(AssetVersion.asset_id == asset.id,

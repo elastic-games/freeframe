@@ -129,7 +129,7 @@ def test_disposable_db_asset_comment_reply_and_upload_receipt(client, real_db, m
     real_db.add(ReviewWorker(name="elastic-5090", key_hash=hashlib.sha256(key.encode()).hexdigest(),
                              organization_id=uuid.uuid4(), project_id=project.id,
                              folder_id=folder.id, user_id=actor.id))
-    asset = Asset(project_id=project.id, folder_id=folder.id, name="Redchain 010_Idle_01",
+    asset = Asset(project_id=project.id, folder_id=folder.id, name="010 Idle 01 - MoCapAnything Keyfit v01",
                   asset_type=AssetType.video, created_by=actor.id)
     real_db.add(asset); real_db.flush()
     old = AssetVersion(asset_id=asset.id, version_number=1,
