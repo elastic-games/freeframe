@@ -27,6 +27,7 @@ import * as Switch from '@radix-ui/react-switch'
 import { cn, copyToClipboard, endOfDayISO } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
+import { shareUrl as makeShareUrl } from '@/lib/share-url'
 import type { AssetResponse, Folder, ShareLink, ShareLinkAppearance } from '@/types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -612,10 +613,10 @@ function LinkCreatedPhase({ result, allResults, onSelectResult, onDone, onAdvanc
     }).catch(() => {})
   }, [result.token])
 
-  const shareUrl =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}/share/${result.token}`
-      : `/share/${result.token}`
+  const shareUrl = makeShareUrl(
+    result.token,
+    typeof window !== 'undefined' ? window.location.origin : '',
+  )
 
   async function handleSaveTitle() {
     if (!title.trim() || title === result.title) {

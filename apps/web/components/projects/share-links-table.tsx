@@ -6,6 +6,7 @@ import { Search, Folder, File, Copy, Check, Eye } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatRelativeTime } from '@/lib/utils'
 import type { ShareLinkListItem } from '@/types'
+import { shareUrl } from '@/lib/share-url'
 
 interface ShareLinksTableProps {
   shareLinks: ShareLinkListItem[]
@@ -34,7 +35,7 @@ export function ShareLinksTable({
   const handleCopy = React.useCallback(
     async (token: string, e: React.MouseEvent) => {
       e.stopPropagation()
-      const url = `${frontendUrl}/share/${token}`
+      const url = shareUrl(token, frontendUrl)
       await navigator.clipboard.writeText(url)
       setCopiedToken(token)
       setTimeout(() => setCopiedToken(null), 2000)
@@ -95,7 +96,7 @@ export function ShareLinksTable({
             </thead>
             <tbody>
               {filtered.map((link, i) => {
-                const shareUrl = `${frontendUrl}/share/${link.token}`
+                const linkUrl = shareUrl(link.token, frontendUrl)
                 const isCopied = copiedToken === link.token
                 const isLast = i === filtered.length - 1
 
@@ -128,7 +129,7 @@ export function ShareLinksTable({
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <span className="inline-flex items-center rounded-md border border-border bg-bg-tertiary px-2 py-1 text-xs text-text-secondary font-mono truncate max-w-[200px]">
-                          {shareUrl}
+                          {linkUrl}
                         </span>
                         <button
                           onClick={(e) => handleCopy(link.token, e)}

@@ -15,6 +15,11 @@ user with the same UUID as the Studio user. Local FreeFrame records remain for
 project membership, comments, and audit attribution; members have no separate
 FreeFrame password. The first member to open Reviews must be a Studio admin.
 
+Public share links copied from Video Reviews use
+`https://app.elasticlabs.site/share/<token>`. The portal guest page embeds the
+existing FreeFrame share viewer; FreeFrame still validates the token, expiry,
+password, permissions, and media access.
+
 ## Production configuration
 
 - Generate a distinct random `FREEFRAME_SSO_SECRET` of at least 32 characters on
