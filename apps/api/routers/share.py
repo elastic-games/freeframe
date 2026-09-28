@@ -54,6 +54,12 @@ from ..config import settings
 router = APIRouter(tags=["sharing"])
 
 
+def _public_share_url(token: str) -> str:
+    origin = (settings.studio_portal_origin if settings.studio_sso_enabled or settings.studio_native_only
+              else settings.frontend_url).rstrip("/")
+    return f"{origin}/share/{token}"
+
+
 def _get_asset(db: Session, asset_id: uuid.UUID) -> Asset:
     asset = db.query(Asset).filter(Asset.id == asset_id, Asset.deleted_at.is_(None)).first()
     if not asset:
@@ -617,7 +623,7 @@ def share_project_with_user(
     shared_user = db.query(User).filter(User.id == user_id).first()
     if shared_user:
         if body.share_token:
-            project_link = f"{settings.frontend_url}/share/{body.share_token}"
+            project_link = _public_share_url(body.share_token)
         else:
             project_link = f"{settings.frontend_url}/projects/{project_id}"
         send_task_safe(send_share_email,
@@ -707,7 +713,7 @@ def share_folder_with_user(
     shared_user = db.query(User).filter(User.id == user_id).first()
     if shared_user:
         if body.share_token:
-            folder_link = f"{settings.frontend_url}/share/{body.share_token}"
+            folder_link = _public_share_url(body.share_token)
         else:
             folder_link = f"{settings.frontend_url}/projects/{folder.project_id}?folder={folder_id}"
         send_task_safe(send_share_email,
@@ -872,7 +878,7 @@ def share_with_user(
     if shared_user:
         # Use share link URL if token provided, otherwise internal URL
         if body.share_token:
-            asset_link = f"{settings.frontend_url}/share/{body.share_token}"
+            asset_link = _public_share_url(body.share_token)
         else:
             asset_link = f"{settings.frontend_url}/projects/{asset.project_id}/assets/{asset_id}"
         send_task_safe(send_share_email,
