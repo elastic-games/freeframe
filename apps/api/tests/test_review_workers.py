@@ -15,6 +15,7 @@ from apps.api.models.folder import Folder
 from apps.api.models.project import Project, ProjectMember
 from apps.api.models.review_worker import ReviewWorker
 from apps.api.models.user import User
+from apps.api.scripts.manage_review_workers import NODE_DISPLAY_NAMES
 
 
 def _worker():
@@ -115,6 +116,12 @@ def test_http_worker_route_refuses_missing_key(client):
     assert response.status_code == 401
 
 
+def test_worker_actor_names_are_node_names():
+    assert NODE_DISPLAY_NAMES["local-mac"] == "Local Mac"
+    assert NODE_DISPLAY_NAMES["elastic-5090"] == "Elastic 5090"
+    assert NODE_DISPLAY_NAMES["elastic-razer-3080"] == "Elastic Razer 3080"
+
+
 def test_disposable_db_asset_comment_reply_and_upload_receipt(client, real_db, monkeypatch):
     from apps.api.database import get_db
     actor = User(email=f"worker-{uuid.uuid4()}@example.invalid", name="Node 5090",
@@ -151,6 +158,22 @@ def test_disposable_db_asset_comment_reply_and_upload_receipt(client, real_db, m
     assert legacy_suffix.status_code == 200 and legacy_suffix.json()[0]["asset_id"] == str(asset.id)
     comments = client.get(f"/review-workers/assets/{asset.id}/comments?version_id={old.id}", headers=headers)
     assert comments.status_code == 200 and comments.json()[0]["body"] == "Fix hoof slide"
+    comment_body = {"version_id": str(old.id), "body": "Needs artist review: stabilize the hoof.",
+                    "idempotency_key": "comment-010-v1-hoof", "svn_revision": 89,
+                    "timecode_start": 2.0}
+    posted = client.post(f"/review-workers/assets/{asset.id}/comments",
+                         headers=headers, json=comment_body)
+    assert posted.status_code == 200, posted.text
+    repeated_comment = client.post(f"/review-workers/assets/{asset.id}/comments",
+                                   headers=headers, json=comment_body)
+    assert repeated_comment.status_code == 200
+    assert repeated_comment.json() == {"comment_id": posted.json()["comment_id"], "replayed": True}
+    attributed = client.get(f"/review-workers/assets/{asset.id}/comments?version_id={old.id}", headers=headers)
+    node_comment = next(item for item in attributed.json() if item["id"] == posted.json()["comment_id"])
+    assert node_comment["author"]["name"] == "Node 5090"
+    assert node_comment["timecode_start"] == 2.0
+    assert node_comment["parent_id"] is None
+    assert node_comment["visibility"] == "public"
     reply_body = {"version_id": str(old.id), "corrected_version_id": str(fixed.id),
                   "body": "Hoof contact corrected at 00:02:04.",
                   "idempotency_key": "reply-010-v2-hoof", "svn_revision": 89}

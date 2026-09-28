@@ -16,6 +16,13 @@ from apps.api.models.review_worker import ReviewWorker
 from apps.api.models.user import User, UserStatus
 
 NODES = ("local-mac", "elastic-5090", "elastic-minim4", "elastic-razer-3080", "elastic-2070")
+NODE_DISPLAY_NAMES = {
+    "local-mac": "Local Mac",
+    "elastic-5090": "Elastic 5090",
+    "elastic-minim4": "Elastic MiniM4",
+    "elastic-razer-3080": "Elastic Razer 3080",
+    "elastic-2070": "Elastic 2070",
+}
 
 
 def main():
@@ -54,7 +61,7 @@ def main():
             email = f"{args.node}@review-workers.invalid"
             if db.query(User).filter(User.email == email).first():
                 parser.error("worker actor already exists; inspect before retrying")
-            actor = User(email=email, name=f"Redchain review worker: {args.node}",
+            actor = User(email=email, name=NODE_DISPLAY_NAMES[args.node],
                          password_hash=None, status=UserStatus.active,
                          email_verified=False, preferences={"review_worker": True})
             db.add(actor)

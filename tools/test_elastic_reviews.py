@@ -78,3 +78,24 @@ def test_node_generates_local_key_and_reports_only_hash(tmp_path):
     assert len(digest) == 64 and digest == cli.hashlib.sha256(key.encode()).hexdigest()
     assert key not in config.read_text()
     assert config.stat().st_mode & 0o077 == 0
+
+
+def test_comment_posts_through_node_credential_with_stable_retry_key(monkeypatch, capsys):
+    monkeypatch.setattr(cli, "config", lambda _path: ("https://reviews.elasticlabs.site/api", "node-key"))
+    calls = []
+    def gateway(api, key, method, path, body=None):
+        calls.append((api, key, method, path, body))
+        return {"comment_id": "node-comment", "replayed": len(calls) > 1}
+    monkeypatch.setattr(cli, "request", gateway)
+    command = ["elastic_reviews.py", "comment", "--asset", "asset", "--version", "version",
+               "--svn-revision", "100", "--body", "Needs artist review",
+               "--timecode-start", "2.5"]
+    for _ in range(2):
+        monkeypatch.setattr(cli.sys, "argv", command)
+        assert cli.main() == 0
+    assert capsys.readouterr().err == ""
+    assert calls[0][0:4] == ("https://reviews.elasticlabs.site/api", "node-key", "POST",
+                              "/assets/asset/comments")
+    assert calls[0][4] == calls[1][4]
+    assert calls[0][4]["timecode_start"] == 2.5
+    assert "author" not in calls[0][4]

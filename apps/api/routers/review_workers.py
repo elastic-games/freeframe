@@ -264,6 +264,44 @@ class WorkerReply(BaseModel):
     svn_revision: int = Field(ge=1)
 
 
+class WorkerComment(BaseModel):
+    version_id: uuid.UUID
+    body: str = Field(min_length=1, max_length=5000)
+    idempotency_key: str
+    svn_revision: int = Field(ge=1)
+    timecode_start: float | None = Field(default=None, ge=0)
+    timecode_end: float | None = Field(default=None, ge=0)
+
+
+@router.post("/assets/{asset_id}/comments")
+def worker_create_comment(asset_id: uuid.UUID, body: WorkerComment,
+                          db: Session = Depends(get_db), scope=Depends(worker_scope)):
+    worker, user = scope
+    _asset(db, worker, asset_id)
+    version = _version(db, worker, body.version_id)
+    if version.asset_id != asset_id or version.processing_status != ProcessingStatus.ready:
+        _deny()
+    if body.timecode_end is not None and (body.timecode_start is None or
+                                           body.timecode_end < body.timecode_start):
+        raise HTTPException(status_code=400, detail="Invalid comment timecode range")
+    digest = _hash({"asset": str(asset_id), "version": str(version.id),
+                    "body": body.body, "timecode_start": body.timecode_start,
+                    "timecode_end": body.timecode_end, "svn_revision": body.svn_revision})
+    receipt, replay = _receipt(db, worker, "comment", body.idempotency_key,
+                               digest, body.svn_revision)
+    if replay:
+        if not receipt.comment_id:
+            raise HTTPException(status_code=409, detail="Review comment needs reconciliation")
+        return {"comment_id": receipt.comment_id, "replayed": True}
+    result = comments._create_comment(asset_id,
+        CommentCreate(version_id=version.id, body=body.body, visibility="public",
+                      timecode_start=body.timecode_start, timecode_end=body.timecode_end),
+        db, user, operation=receipt)
+    _audit(worker, "comment", asset=asset_id, version=version.id, comment=result.id,
+           svn_revision=body.svn_revision)
+    return {"comment_id": result.id, "replayed": False}
+
+
 @router.post("/assets/{asset_id}/comments/{comment_id}/replies")
 def worker_reply(asset_id: uuid.UUID, comment_id: uuid.UUID, body: WorkerReply,
                  db: Session = Depends(get_db), scope=Depends(worker_scope)):

@@ -358,6 +358,10 @@ def create_comment(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    return _create_comment(asset_id, body, db, current_user)
+
+
+def _create_comment(asset_id, body, db, current_user, operation=None):
     asset = _get_asset(db, asset_id)
     require_asset_access(db, asset, current_user)
 
@@ -419,6 +423,11 @@ def create_comment(
     # Activity log
     activity = ActivityLog(user_id=current_user.id, asset_id=asset_id, action=ActivityAction.commented)
     db.add(activity)
+
+    if operation is not None:
+        operation.asset_id = asset_id
+        operation.version_id = body.version_id
+        operation.comment_id = comment.id
 
     db.commit()
     db.refresh(comment)

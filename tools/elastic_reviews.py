@@ -217,6 +217,13 @@ def main():
     comments = sub.add_parser("comments")
     comments.add_argument("--asset", required=True)
     comments.add_argument("--version", required=True)
+    comment = sub.add_parser("comment")
+    comment.add_argument("--asset", required=True)
+    comment.add_argument("--version", required=True)
+    comment.add_argument("--svn-revision", type=int, required=True)
+    comment.add_argument("--body", required=True)
+    comment.add_argument("--timecode-start", type=float)
+    comment.add_argument("--timecode-end", type=float)
     uploading = sub.add_parser("upload")
     uploading.add_argument("--clip", required=True)
     uploading.add_argument("--candidate", required=True)
@@ -255,6 +262,14 @@ def main():
                              urllib.parse.urlencode({"version_id": args.version}))
         elif args.command == "upload":
             output = upload_file(api, key, args)
+        elif args.command == "comment":
+            stable = json.dumps([args.asset, args.version, args.body, args.timecode_start,
+                                 args.timecode_end, args.svn_revision], separators=(",", ":"))
+            output = request(api, key, "POST", f"/assets/{args.asset}/comments",
+                {"version_id": args.version, "body": args.body,
+                 "timecode_start": args.timecode_start, "timecode_end": args.timecode_end,
+                 "svn_revision": args.svn_revision,
+                 "idempotency_key": hashlib.sha256(stable.encode()).hexdigest()[:40]})
         else:
             stable = json.dumps([args.asset, args.version, args.corrected_version, args.comment, args.body,
                                  args.svn_revision], separators=(",", ":"))

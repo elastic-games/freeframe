@@ -58,6 +58,8 @@ Linux, it uses a mode-0600 key file.
 ```sh
 python3 tools/elastic_reviews.py list --clip 010_Idle_01
 python3 tools/elastic_reviews.py comments --asset <UUID> --version <UUID>
+python3 tools/elastic_reviews.py comment --asset <UUID> --version <UUID> \
+  --svn-revision 89 --body 'Needs artist review: match the planted hoof.'
 python3 tools/elastic_reviews.py upload --clip 010_Idle_01 --candidate v02 \
   --svn-revision 89 --file comparison.mp4 --reference-fps 24 --reference-frames 121
 python3 tools/elastic_reviews.py reply --asset <UUID> --version <reviewed-UUID> \
@@ -71,6 +73,12 @@ returns the version ID and portal URL. Retries reuse an idempotency key derived
 from clip, candidate, SHA-256, and SVN revision. A reply requires a distinct,
 ready corrected version and is idempotent. The CLI never approves or resolves
 an artist review.
+
+Use `comment` for a node's own review notes, with optional `--timecode-start`
+and `--timecode-end` in seconds. It posts a public comment under that node's
+FreeFrame identity and uses an idempotency key so a retry does not duplicate it.
+Do not use the owner's browser session to post on behalf of a node; browser
+comments use the signed-in owner's name.
 
 `manage_review_workers revoke --node <name>` disables that node without changing
 the other four. Rotation uses `init-key` with a fresh local config path and
