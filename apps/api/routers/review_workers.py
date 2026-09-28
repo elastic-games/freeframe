@@ -95,6 +95,12 @@ def _hash(value: dict):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
+def _asset_has_clip_number(asset_name: str, clip: str) -> bool:
+    match = re.match(r"^(?:Redchain[\W_]*)?([0-9]{3})(?![0-9])", asset_name,
+                     flags=re.IGNORECASE)
+    return bool(match and match.group(1) == clip[:3])
+
+
 def _receipt(db: Session, worker: ReviewWorker, kind: str, key: str, request_hash: str,
              svn_revision: int | None):
     if not 8 <= len(key) <= 120 or not re.fullmatch(r"[A-Za-z0-9:_-]+", key):
@@ -142,8 +148,7 @@ def list_worker_assets(clip: str | None = None, db: Session = Depends(get_db), s
         # existing review title (for example 122_DualChainWhips_480p).
         # A unique three-digit ID can recover that review; ambiguity remains
         # visible to the CLI, which refuses to upload without an explicit ID.
-        clip_id = re.compile(r"(?<![0-9])" + re.escape(clip[:3]) + r"(?![0-9])")
-        rows = exact or [a for a in rows if clip_id.search(a.name)]
+        rows = exact or [a for a in rows if _asset_has_clip_number(a.name, clip)]
     result = []
     for asset in rows:
         versions = db.query(AssetVersion).filter(AssetVersion.asset_id == asset.id,
@@ -185,8 +190,13 @@ def worker_initiate(body: WorkerUpload, db: Session = Depends(get_db), scope=Dep
     worker, user = scope
     if not CLIP.fullmatch(body.clip) or not VERSION.fullmatch(body.candidate) or not body.original_filename.lower().endswith(".mp4"):
         raise HTTPException(status_code=400, detail="Invalid review candidate")
+    filename_clip = re.match(r"^([0-9]{3})[_ -]", body.original_filename)
+    if filename_clip and filename_clip.group(1) != body.clip[:3]:
+        raise HTTPException(status_code=400, detail="Comparison filename has a different clip ID")
     if body.asset_id:
-        _asset(db, worker, body.asset_id)
+        existing = _asset(db, worker, body.asset_id)
+        if not _asset_has_clip_number(existing.name, body.clip):
+            raise HTTPException(status_code=409, detail="Review asset belongs to a different clip ID")
     digest = _hash(body.model_dump(mode="json", exclude={"idempotency_key", "asset_id"}))
     receipt, replay = _receipt(db, worker, "upload", body.idempotency_key, digest, body.svn_revision)
     if replay:
@@ -201,10 +211,9 @@ def worker_initiate(body: WorkerUpload, db: Session = Depends(get_db), scope=Dep
                 "chunk_size_bytes": version.chunk_size_bytes, "status": version.processing_status.value,
                 "replayed": True}
     if not body.asset_id:
-        duplicate = db.query(Asset).filter(Asset.project_id == worker.project_id,
-            Asset.folder_id == worker.folder_id, Asset.name == f"Redchain {body.clip}",
-            Asset.deleted_at.is_(None)).first()
-        if duplicate:
+        existing_assets = db.query(Asset).filter(Asset.project_id == worker.project_id,
+            Asset.folder_id == worker.folder_id, Asset.deleted_at.is_(None)).all()
+        if any(_asset_has_clip_number(asset.name, body.clip) for asset in existing_assets):
             db.rollback()
             raise HTTPException(status_code=409, detail="Existing clip asset requires asset_id")
     request = InitiateUploadRequest(project_id=worker.project_id, folder_id=worker.folder_id,

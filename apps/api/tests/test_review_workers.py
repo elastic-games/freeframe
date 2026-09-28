@@ -73,6 +73,36 @@ def test_foreign_asset_upload_stops_before_initiation(mock_db):
     initiate.assert_not_called()
 
 
+def test_same_folder_asset_for_another_clip_cannot_receive_upload(mock_db):
+    worker = _worker()
+    body = rw.WorkerUpload(clip="101_FlameramAcive_01", candidate="v01", sha256="a" * 64,
+                           svn_revision=85, idempotency_key="stable-key-101",
+                           original_filename="101_mocap_Keyfit_v01_Reference_vs_Result.mp4",
+                           file_size_bytes=123, asset_id=uuid.uuid4())
+    with patch.object(rw, "_asset", return_value=SimpleNamespace(name="064_StompActive_ThreeQuarterTopDown_02")), \
+         patch.object(rw.upload, "_initiate_upload") as initiate:
+        with pytest.raises(HTTPException) as denied:
+            rw.worker_initiate(body, mock_db, (worker, SimpleNamespace(id=worker.user_id)))
+    assert denied.value.status_code == 409
+    initiate.assert_not_called()
+
+
+def test_filename_clip_must_match_requested_clip(mock_db):
+    body = rw.WorkerUpload(clip="064_StompActive_ThreeQuarterTopDown_02", candidate="v02",
+                           sha256="a" * 64, svn_revision=101, idempotency_key="stable-key-064",
+                           original_filename="101_mocap_Keyfit_v01_Reference_vs_Result.mp4",
+                           file_size_bytes=123)
+    with pytest.raises(HTTPException) as denied:
+        rw.worker_initiate(body, mock_db, (_worker(), SimpleNamespace(id=uuid.uuid4())))
+    assert denied.value.status_code == 400
+
+
+def test_clip_identity_is_from_title_prefix_not_svn_revision():
+    title = "064_StompActive_ThreeQuarterTopDown_02 — Keyfit v01 — SVN r101"
+    assert rw._asset_has_clip_number(title, "064_StompActive_ThreeQuarterTopDown_02")
+    assert not rw._asset_has_clip_number(title, "101_FlameramAcive_01")
+
+
 def test_reply_cannot_attach_to_internal_comment(mock_db):
     worker = _worker()
     asset_id, version_id, comment_id = uuid.uuid4(), uuid.uuid4(), uuid.uuid4()

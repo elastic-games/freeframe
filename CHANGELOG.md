@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Bind worker uploads to the clip ID at the start of the portal title and reject mismatched comparison filenames; SVN revision numbers in a title cannot select another clip's asset.
 - Match existing portal review titles with spaces to SVN clip IDs with underscores, so worker uploads reuse the intended review asset.
 - Project owners can always see a labelled management menu on project cards, including on touch screens and when navigating by keyboard.
 - Opening Video Reviews connects Studio sign-in quietly, without briefly showing the FreeFrame logo and authentication card. Failed connections still show sign-in and retry controls.
