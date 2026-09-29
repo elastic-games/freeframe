@@ -55,8 +55,15 @@ def test_upload_resumes_held_part_without_resending(monkeypatch, tmp_path):
                            svn_revision=78, asset_id=None, reference_fps="24", reference_frames=121)
     result = cli.upload_file("https://reviews.elasticlabs.site/api", "test", args)
     assert result["status"] == "processing"
+    assert result["review_url"] == "https://app.elasticlabs.site/apps/reviews/projects/project/assets/asset?version=version"
     assert len(puts) == 1 and len(puts[0][1]) == 7
     assert [call[2]["part_number"] for call in calls if call[1].endswith("presign-part")] == [2]
+
+
+def test_review_url_keeps_api_origin_separate_from_studio_portal():
+    assert cli.review_url("project", "asset", "version") == (
+        "https://app.elasticlabs.site/apps/reviews/projects/project/assets/asset?version=version"
+    )
 
 
 def test_key_file_must_be_owner_only(tmp_path):

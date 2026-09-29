@@ -201,7 +201,7 @@ def upload_file(api, key, args):
 
 
 def review_url(project, asset, version):
-    return f"https://reviews.elasticlabs.site/projects/{project}/assets/{asset}?version={version}"
+    return f"https://app.elasticlabs.site/apps/reviews/projects/{project}/assets/{asset}?version={version}"
 
 
 def main():

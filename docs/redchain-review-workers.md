@@ -51,6 +51,8 @@ short-lived presigned URLs. The API stores only key hashes.
 
 `config.json` defaults to `~/.config/elastic-reviews/config.json` with a fixed
 HTTPS API URL and key-file path. The key is never passed in arguments or printed.
+The API stays on `reviews.elasticlabs.site/api`; generated browser review links
+open the same asset and version inside Studio at `app.elasticlabs.site/apps/reviews`.
 On Windows, `init-key` protects the key with the current user's DPAPI and writes
 an encrypted `.dpapi` file; the same Windows user must run the CLI. On macOS and
 Linux, it uses a mode-0600 key file.
