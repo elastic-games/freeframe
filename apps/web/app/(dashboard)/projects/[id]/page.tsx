@@ -1145,6 +1145,14 @@ export default function ProjectDetailPage() {
                           </span>
                         </div>
                       )}
+                      {selectedAsset.latest_version?.production_credit && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-text-tertiary">Produced by</span>
+                          <span className="text-xs text-text-primary">
+                            {selectedAsset.latest_version.production_credit}
+                          </span>
+                        </div>
+                      )}
                       {fileSizes[selectedAsset.id] != null && (
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-text-tertiary">

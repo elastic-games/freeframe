@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Redchain review cards can credit the animation-producing node without rewriting the original upload account or comment history.
 - Bind worker uploads to the clip ID at the start of the portal title and reject mismatched comparison filenames; SVN revision numbers in a title cannot select another clip's asset.
 - Match existing portal review titles with spaces to SVN clip IDs with underscores, so worker uploads reuse the intended review asset.
 - Studio-linked public review URLs copied from the Reviews workspace open on the Studio portal.

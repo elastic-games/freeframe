@@ -237,7 +237,7 @@ export function AppearancePopover() {
             <p className="text-[10px] font-semibold text-text-tertiary uppercase tracking-wider mb-2.5">Fields</p>
             <div className="space-y-3">
               <ToggleRow label="File Size" checked={showFileSize} onCheckedChange={setShowFileSize} />
-              <ToggleRow label="Uploaded By" checked={showUploader} onCheckedChange={setShowUploader} />
+              <ToggleRow label="Credit" checked={showUploader} onCheckedChange={setShowUploader} />
             </div>
           </div>
         </Popover.Content>

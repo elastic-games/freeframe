@@ -4,6 +4,7 @@ import * as React from 'react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { X, Download, MoreHorizontal, Layers, Share2, Trash2, FolderInput, FolderIcon, Check, Film, Music, Image as ImageIcon, Images, Link as LinkIcon, Pencil } from 'lucide-react'
 import { cn, formatRelativeTime, formatBytes } from '@/lib/utils'
+import { assetDisplayCredit } from '@/lib/asset-credit'
 import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/shared/avatar'
 import { EmptyState } from '@/components/shared/empty-state'
@@ -13,7 +14,7 @@ import { AppearancePopover } from './appearance-popover'
 import { SortPopover } from './sort-popover'
 import { MoveToDialog } from './move-to-dialog'
 import { useViewStore } from '@/stores/view-store'
-import type { Asset, AssetStatus, User, Folder, FolderTreeNode } from '@/types'
+import type { Asset, AssetStatus, AssetVersion, User, Folder, FolderTreeNode } from '@/types'
 
 function isCoarsePointer(): boolean {
   return typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
@@ -35,7 +36,7 @@ const statusOrder: Record<AssetStatus, number> = {
 }
 
 interface AssetGridProps {
-  assets: Asset[]
+  assets: (Asset & { latest_version?: AssetVersion | null })[]
   projectId: string
   isLoading?: boolean
   assignees?: Record<string, User>
@@ -359,7 +360,7 @@ export function AssetGrid({
                 projectId={projectId}
                 versionCount={versionCounts[asset.id]}
                 assignee={asset.assignee_id ? assignees[asset.assignee_id] : null}
-                authorName={authorNames[asset.created_by]}
+                authorName={assetDisplayCredit(asset, authorNames)}
                 thumbnailUrl={thumbnails[asset.id]}
                 fileSize={fileSizes[asset.id] ?? null}
                 selected={selectedAssetIds.has(asset.id)}
@@ -395,7 +396,7 @@ export function AssetGrid({
           <div className="flex items-center gap-4 px-3 py-2 border-b border-border bg-bg-secondary/50 text-[10px] text-text-tertiary font-medium uppercase tracking-wider">
             <div className="h-10 w-10 shrink-0" />
             <div className="flex-1 min-w-0">Name</div>
-            {showUploader && <div className="hidden md:block w-32">Uploader</div>}
+            {showUploader && <div className="hidden md:block w-32">Credit</div>}
             {showFileSize && <div className="hidden sm:block w-24 text-right">Size</div>}
             <div className="hidden md:block w-10 text-center">Ver.</div>
             <div className="hidden sm:block w-28">Date</div>
@@ -444,7 +445,7 @@ export function AssetGrid({
                   <p className="text-xs text-text-tertiary mt-0.5">{folder.item_count ?? 0} item{(folder.item_count ?? 0) !== 1 ? 's' : ''}</p>
                 </div>
 
-                {/* Uploader placeholder */}
+                {/* Credit placeholder */}
                 {showUploader && <div className="hidden md:block w-32 text-xs text-text-tertiary">—</div>}
 
                 {/* Size placeholder */}
@@ -518,7 +519,7 @@ export function AssetGrid({
             const assignee = asset.assignee_id ? assignees[asset.assignee_id] : null
             const fileSize = fileSizes[asset.id]
             const versionCount = versionCounts[asset.id]
-            const author = authorNames[asset.created_by]
+            const author = assetDisplayCredit(asset, authorNames)
             const TypeIcon = assetTypeIcons[asset.asset_type] ?? ImageIcon
             return (
               <div
@@ -560,7 +561,7 @@ export function AssetGrid({
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-text-primary truncate leading-snug">{asset.name}</p>
                 </div>
-                {/* Uploader */}
+                {/* Producer credit, falling back to the original uploader */}
                 {showUploader && (
                   <div className="hidden md:block w-32 text-xs text-text-tertiary truncate shrink-0">
                     {author || '—'}

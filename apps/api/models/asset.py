@@ -75,6 +75,9 @@ class AssetVersion(Base):
     # size from the parts already held rather than assuming today's constant.
     chunk_size_bytes: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    # Production credit is distinct from the account that uploaded this version.
+    # Legacy browser uploads may be credited to the node that made the animation.
+    production_credit: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 

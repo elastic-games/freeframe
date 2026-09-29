@@ -1,0 +1,29 @@
+{
+  "project_id": "c3106eda-2752-4aa3-a6a1-805c3c68f45b",
+  "folder_id": "e2a8d626-e7e7-4852-9435-6b203af81926",
+  "worker": "elastic-5090",
+  "display_name": "Elastic 5090",
+  "expected_uploader_email": "vladimir.shumsky@gmail.com",
+  "evidence": "Elastic 5090 local refinement STATUS.md and SVN ChainBreaker_Animations_Astra review notes; exact asset/version IDs checked against the live review-worker listing on 2026-09-28",
+  "versions": [
+    {"clip": "010", "asset_id": "92775b04-b359-4119-8e71-4578109e0208", "version_id": "49264b2e-532f-4dcf-a2f3-f3ac36c4d58a"},
+    {"clip": "011", "asset_id": "bcb75a55-459d-47fe-b4f5-bf9d45b8310d", "version_id": "4732f1ed-9ae9-42ea-ae6f-47b27bd34471"},
+    {"clip": "012", "asset_id": "f2d63dbb-0642-4600-961e-4f4a30dc7f78", "version_id": "0347dae4-cedd-4abb-8b27-120f93c29eb1"},
+    {"clip": "020", "asset_id": "06e4ca31-7ad6-4b26-bb1a-39b59d4c42e8", "version_id": "7d371de5-c7e3-4fb1-9a0c-abb3be68ed7a"},
+    {"clip": "021", "asset_id": "8fa10847-6f86-4900-aab4-c5bc4297bd36", "version_id": "cf44e508-037d-415d-bced-95ede7d48dba"},
+    {"clip": "030", "asset_id": "84cd82bc-f8f3-49bd-bc04-f38c67e1a755", "version_id": "2febc461-a1e2-4f9e-b9f2-9b0a72277e8e"},
+    {"clip": "031", "asset_id": "fd17aa48-5c3b-43b1-8cbe-ab2278875116", "version_id": "a09a56f4-b1b1-4a78-a67a-7622146d2205"},
+    {"clip": "032", "asset_id": "c9a3593c-764f-41cb-aa47-06ab12a9cee0", "version_id": "d340eae3-1304-4474-a5b8-e8c914103434"},
+    {"clip": "040", "asset_id": "c907fcf6-d0a6-4bc6-a89a-efa5e581800f", "version_id": "2f526254-74c6-44bb-8fc9-6a6956aacaac"},
+    {"clip": "041", "asset_id": "11663a5e-67e9-4623-924b-e59a5e5d45e8", "version_id": "773d6616-b219-4546-8d4e-f4ad61951a7d"},
+    {"clip": "050", "asset_id": "ecc8857c-9884-4479-b491-eaac912f914d", "version_id": "ed99f490-83a7-444d-a1e3-de4580b279d3"},
+    {"clip": "051", "asset_id": "0d747df6-ad2c-4014-a5a3-a3463a43cc94", "version_id": "3b5bcf36-6560-4986-9c21-6ee6aef7f793"},
+    {"clip": "064", "asset_id": "aeb7b88c-04a6-40d6-a5f3-a0f295df9e4c", "version_id": "b51860f2-1438-4d99-b527-b0863de74af2"},
+    {"clip": "070", "asset_id": "eed34734-54f6-427e-97c3-28a4d5f9e72f", "version_id": "fcdf031f-81e6-4b8d-8fa4-c68b9804a569"},
+    {"clip": "081", "asset_id": "8dd7f4b7-ca30-4325-91f0-8bfa2f9ab8f4", "version_id": "8dfef3f8-5e01-4fe6-95e5-12e0c703d51e"},
+    {"clip": "111", "asset_id": "aa2feddc-12d0-4673-81e8-385a82b46e00", "version_id": "17d0ad67-b049-4d26-bf36-e4dd148c6132"},
+    {"clip": "112", "asset_id": "c74ded8a-b15c-4f18-b722-da41956ed249", "version_id": "cdf265fb-d9cb-4f49-bdf1-328dfe47a8c5"},
+    {"clip": "122", "asset_id": "157d4b7e-536a-42d2-bf72-a569e156fb48", "version_id": "e2d594d8-ebad-47ed-b270-ceff86e46158"},
+    {"clip": "123", "asset_id": "55037ca1-a073-4b1d-8ac6-9738ad2f8ca1", "version_id": "c499126b-23f0-4762-bfaf-cc3407e2276c"}
+  ]
+}

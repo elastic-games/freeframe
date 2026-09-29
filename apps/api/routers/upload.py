@@ -98,6 +98,7 @@ def _initiate_upload(body: InitiateUploadRequest, db: Session, current_user: Use
         version_number=next_version,
         processing_status=ProcessingStatus.uploading,
         created_by=current_user.id,
+        production_credit=current_user.name if operation is not None else None,
     )
     db.add(version)
     db.flush()

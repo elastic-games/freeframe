@@ -134,6 +134,8 @@ export interface AssetVersion {
   version_number: number;
   processing_status: AssetVersionStatus;
   created_by: string;
+  /** Animation producer, if different from the historical uploader. */
+  production_credit?: string | null;
   created_at: string;
   deleted_at: string | null;
   /** When the upload last moved; see `mergeHistoryAssets`. */

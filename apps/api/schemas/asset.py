@@ -28,6 +28,7 @@ class AssetVersionResponse(BaseModel):
     version_number: int
     processing_status: ProcessingStatus
     created_by: uuid.UUID
+    production_credit: Optional[str] = None
     created_at: datetime
     # When the upload last moved. Lets a client that only has history to go on
     # tell an upload still running on another device from one that stopped.
