@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Share review comments renew an expired Studio review session or request guest identity, keep a drawing available after a failed post, and show the API error instead of a generic message.
 - Embedded Video Reviews now reports project, asset, folder, and comment navigation to the Studio address bar.
 - Bind worker uploads to the clip ID at the start of the portal title and reject mismatched comparison filenames; SVN revision numbers in a title cannot select another clip's asset.
 - Match existing portal review titles with spaces to SVN clip IDs with underscores, so worker uploads reuse the intended review asset.

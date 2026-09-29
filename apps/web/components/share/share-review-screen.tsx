@@ -18,6 +18,7 @@ import { MobileCommentSheet, PEEK_PX, type SheetState } from '@/components/revie
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { useMediaTransport } from '@/hooks/use-media-transport'
 import { formatTimecode } from '@/lib/utils'
+import { ensureShareCommentAccessToken, getUsableShareAccessToken } from '@/lib/auth'
 import type { SharePermission } from '@/types'
 import { handleDownload } from './share-download'
 
@@ -159,7 +160,7 @@ function ShareReviewInner({
       if (stored) setGuestIdentity(JSON.parse(stored))
     } catch {}
   }, [])
-  const isLoggedIn = typeof window !== 'undefined' && !!localStorage.getItem('ff_access_token')
+  const isLoggedIn = typeof window !== 'undefined' && !!getUsableShareAccessToken()
 
   const submitComment = React.useCallback(async (body: string, timecodeStart?: number, timecodeEnd?: number, annotationData?: Record<string, unknown>) => {
     const payload: CreateCommentPayload = { body }
@@ -225,7 +226,7 @@ function ShareReviewInner({
       projectId=""
       assetType={asset.asset_type}
       onSubmit={async (body: string, timecodeStart?: number, timecodeEnd?: number, annotationData?: Record<string, unknown>) => {
-        const hasAuth = !!localStorage.getItem('ff_access_token')
+        const hasAuth = !!(await ensureShareCommentAccessToken())
         const hasGuest = !!localStorage.getItem('ff_guest_identity')
         if (!hasAuth && !hasGuest) {
           pendingCommentRef.current = { body, timecodeStart, timecodeEnd, annotationData }
@@ -405,4 +406,3 @@ function GuestIdentityPrompt({ onSave, onCancel }: { onSave: (name: string, emai
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-

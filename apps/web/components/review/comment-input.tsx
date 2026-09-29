@@ -348,6 +348,7 @@ export function CommentInput({
     setSubmitting(true);
     setError(null);
 
+    let attemptedAnnotation: Record<string, unknown> | undefined;
     try {
       // Grab canvas state: try live canvas first, then store, then prop.
       // In compare, `captureAnnotation` is true ONLY for the active drawing pane,
@@ -390,6 +391,7 @@ export function CommentInput({
           finalAnnotation = annotationData;
         }
       }
+      attemptedAnnotation = finalAnnotation;
 
       // A timecode is included whenever attached (INCLUDING 0 — 0:00 is a
       // valid video time and must never be silently dropped), and is
@@ -427,6 +429,9 @@ export function CommentInput({
       }
       if (replyToId && onCancelReply) onCancelReply();
     } catch (err) {
+      // The canvas has already closed by this point; keep the drawing available
+      // so a failed request can be retried with its annotation intact.
+      if (attemptedAnnotation) setPendingAnnotation(attemptedAnnotation);
       setError(err instanceof Error ? err.message : "Failed to post comment");
     } finally {
       setSubmitting(false);

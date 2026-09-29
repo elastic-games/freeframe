@@ -175,6 +175,28 @@ describe('CommentInput compare drawing props (annotationActive / onToggleAnnotat
     expect(onSubmit.mock.calls[0][3]).toEqual(drawing)
   })
 
+  it('keeps the drawing and comment text after a rejected annotation post', async () => {
+    const drawing = { objects: [{ type: 'path' }] }
+    useReviewStore.getState().setPendingAnnotation(drawing)
+    const onSubmit = vi.fn().mockRejectedValue(new Error('Session expired'))
+    render(
+      <CommentInput
+        assetId="a1"
+        projectId="p1"
+        assetType="video"
+        onSubmit={onSubmit}
+        annotationActive
+        onToggleAnnotation={vi.fn()}
+      />,
+    )
+    const textarea = screen.getByPlaceholderText('Leave your comment...')
+    fireEvent.change(textarea, { target: { value: 'check this frame' } })
+    fireEvent.keyDown(textarea, { key: 'Enter' })
+    await waitFor(() => expect(screen.getByText('Session expired')).toBeInTheDocument())
+    expect(textarea).toHaveValue('check this frame')
+    expect(useReviewStore.getState().pendingAnnotation).toEqual(drawing)
+  })
+
   it('an INACTIVE pane submit leaves the shared drawing state intact (other pane keeps drawing)', async () => {
     // The other pane is mid-draw: global drawing mode on, a drawing pending.
     useReviewStore.getState().setIsDrawingMode(true)

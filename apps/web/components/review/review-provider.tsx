@@ -10,6 +10,7 @@ import React, {
   useState,
 } from "react";
 import { api, ApiError } from "@/lib/api";
+import { getUsableShareAccessToken } from "@/lib/auth";
 import { useReviewStore } from "@/stores/review-store";
 import type { AssetResponse, AssetVersion, Comment } from "@/types";
 
@@ -103,7 +104,7 @@ export function ReviewProvider({
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
         const headers: Record<string, string> = {};
         try {
-          const t = localStorage.getItem("ff_access_token");
+          const t = getUsableShareAccessToken();
           if (t) headers["Authorization"] = `Bearer ${t}`;
         } catch {}
         const streamRes = await fetch(
@@ -352,7 +353,7 @@ export function ReviewProvider({
           "Content-Type": "application/json",
         };
         try {
-          const t = localStorage.getItem("ff_access_token");
+          const t = getUsableShareAccessToken();
           if (t) headers["Authorization"] = `Bearer ${t}`;
         } catch {}
         // Include guest identity if available (for non-authenticated users)
@@ -370,7 +371,11 @@ export function ReviewProvider({
           headers,
           body: JSON.stringify({ ...payload, ...guestFields, asset_id: assetId }),
         });
-        if (!res.ok) throw new Error("Failed to post comment");
+        if (!res.ok) {
+          const data = await res.json().catch(() => null);
+          const detail = typeof data?.detail === "string" ? data.detail : null;
+          throw new Error(detail || `Failed to post comment (${res.status})`);
+        }
         comment = await res.json();
       } else {
         comment = await api.post<Comment>(

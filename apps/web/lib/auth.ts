@@ -14,6 +14,29 @@ export function getAccessToken(): string | null {
   return localStorage.getItem(ACCESS_TOKEN_KEY)
 }
 
+/** Share pages must not treat an expired token left in storage as a login. */
+export function getUsableShareAccessToken(): string | null {
+  const token = getAccessToken()
+  if (!token) return null
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    return payload.type === 'access' && typeof payload.exp === 'number' && payload.exp * 1000 > Date.now() + 30_000
+      ? token
+      : null
+  } catch {
+    return null
+  }
+}
+
+/** Renew Studio SSO before a share comment; external guests can still identify themselves. */
+export async function ensureShareCommentAccessToken(): Promise<string | null> {
+  const token = getUsableShareAccessToken()
+  if (token) return token
+  if (STUDIO_SSO_ENABLED) return signInWithStudio()
+  if (getRefreshToken()) return refreshAccessToken()
+  return null
+}
+
 export function getRefreshToken(): string | null {
   if (typeof window === 'undefined') return null
   if (STUDIO_MANAGED) return null

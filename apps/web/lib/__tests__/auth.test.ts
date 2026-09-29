@@ -1,11 +1,21 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { setTokens, getAccessToken, getRefreshToken, clearTokens } from '../auth'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { setTokens, getAccessToken, getRefreshToken, clearTokens, getUsableShareAccessToken } from '../auth'
+
+const accessToken = (expiresInSeconds: number) =>
+  `header.${btoa(JSON.stringify({ type: 'access', exp: Math.floor(Date.now() / 1000) + expiresInSeconds }))}.signature`
 
 describe('Token management', () => {
   beforeEach(() => {
-    localStorage.clear()
+    const values = new Map<string, string>()
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => { values.set(key, value) },
+      removeItem: (key: string) => { values.delete(key) },
+      clear: () => { values.clear() },
+    })
     vi.clearAllMocks()
   })
+  afterEach(() => vi.unstubAllGlobals())
 
   it('setTokens stores access and refresh tokens in localStorage', () => {
     setTokens('access-123', 'refresh-456')
@@ -20,6 +30,17 @@ describe('Token management', () => {
 
   it('getAccessToken returns null when no token stored', () => {
     expect(getAccessToken()).toBeNull()
+  })
+
+  it('does not treat a stored expired review token as a share-page login', () => {
+    localStorage.setItem('ff_access_token', accessToken(-60))
+    expect(getUsableShareAccessToken()).toBeNull()
+  })
+
+  it('uses a current review token for share comments', () => {
+    const token = accessToken(3600)
+    localStorage.setItem('ff_access_token', token)
+    expect(getUsableShareAccessToken()).toBe(token)
   })
 
   it('getRefreshToken retrieves refresh token from localStorage', () => {
