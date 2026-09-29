@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Creating a project, folder, or video share link now keeps the Share dialog open with the new URL and Copy Link button, including when saving optional settings fails.
 - Redchain review CLI upload and status output now links to the Studio Video Reviews route while keeping its review API endpoint unchanged.
 - Share review comments renew an expired Studio review session or request guest identity, keep a drawing available after a failed post, and show the API error instead of a generic message.
 - Embedded Video Reviews now reports project, asset, folder, and comment navigation to the Studio address bar.

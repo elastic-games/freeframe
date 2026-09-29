@@ -989,19 +989,20 @@ export function ShareCreateDialog({
   const [error, setError] = React.useState<string | null>(null)
   const [createdResult, setCreatedResult] = React.useState<CreatedShareResult | null>(null)
   const [allCreatedResults, setAllCreatedResults] = React.useState<CreatedShareResult[]>([])
+  const wasOpenRef = React.useRef(false)
 
   // Compute default title from a given items map (avoids stale state reads)
-  function computeDefaultTitle(items: Map<string, SelectedItem>): string {
+  const computeDefaultTitle = React.useCallback((items: Map<string, SelectedItem>): string => {
     const list = Array.from(items.values())
     const singleItem = list.length === 1 ? list[0] : null
     if (singleItem) return singleItem.name
     if (currentFolderId) return folders.find(f => f.id === currentFolderId)?.name || 'Shared Folder'
     return 'Shared Project'
-  }
+  }, [currentFolderId, folders])
 
   // Reset state when dialog opens/closes
   React.useEffect(() => {
-    if (open) {
+    if (open && !wasOpenRef.current) {
       const initial = new Map<string, SelectedItem>()
       if (preselectedItem) {
         const key = `${preselectedItem.type}:${preselectedItem.id}`
@@ -1053,7 +1054,8 @@ export function ShareCreateDialog({
       setCreatedResult(initialResult ?? null)
       setAllCreatedResults(initialResult ? [initialResult] : [])
     }
-  }, [open, preselectedItem, preselectedItems, assets])
+    wasOpenRef.current = open
+  }, [open, preselectedItem, preselectedItems, assets, initialResult, computeDefaultTitle])
 
   function handleToggle(item: SelectedItem) {
     const key = `${item.type}:${item.id}`
@@ -1128,11 +1130,28 @@ export function ShareCreateDialog({
         }
         if (config.passphrase) patches.password = config.passphrase
         if (config.expiresAt) patches.expires_at = new Date(config.expiresAt).toISOString()
-        await api.patch(`/share/${shareLink.token}`, patches)
+        try {
+          await api.patch(`/share/${shareLink.token}`, patches)
+        } catch {
+          // The link already exists. Keep its URL available instead of leaving
+          // the user on Create where a retry would make another link.
+          setError('Share link created, but some settings could not be saved. Review them below.')
+        }
       }
 
+      const result: CreatedShareResult = {
+        token: shareLink.token,
+        title: shareLink.title || config.title,
+        itemType,
+        thumbnailUrl: thumbUrl,
+        assetId: shareLink.asset_id,
+        folderId: shareLink.folder_id,
+        projectId: shareLink.project_id ?? projectId,
+      }
+      setCreatedResult(result)
+      setAllCreatedResults([result])
+      setPhase('result')
       onShareCreated()
-      onOpenChange(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create share link')
     } finally {
