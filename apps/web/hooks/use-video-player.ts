@@ -61,6 +61,8 @@ export function useVideoPlayer(
 ): UseVideoPlayerReturn {
   const detached = options?.detached === true
   const reviewClock = options?.reviewClock
+  const reviewClockRef = useRef(reviewClock)
+  const refreshCalibrationRef = useRef<(() => void) | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const hlsRef = useRef<Hls | null>(null)
   const syncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -200,11 +202,13 @@ export function useVideoPlayer(
     setIsLoading(true)
 
     const onLoadedMetadata = () => {
+      const reviewClock = reviewClockRef.current
       setDuration(reviewClock ? rationalNumber(reviewClock.timing.duration) : video.duration)
       setIsLoading(false)
     }
 
     const onTimeUpdate = () => {
+      const reviewClock = reviewClockRef.current
       if (!reviewClock) setCurrentTime(video.currentTime)
       // Update buffered end
       if (video.buffered.length > 0) {
@@ -222,6 +226,7 @@ export function useVideoPlayer(
       setIsMuted(video.muted)
     }
     const onEnded = () => {
+      const reviewClock = reviewClockRef.current
       setIsPlaying(false)
       if (!detached && !reviewClock) setPlayheadTime(video.duration)
     }
@@ -257,6 +262,7 @@ export function useVideoPlayer(
       requestedFrameRef.current=null
     }
     const captureFrame = (_now:number, metadata:VideoFrameCallbackMetadata) => {
+      const reviewClock = reviewClockRef.current
       const calibration=calibrationRef.current
       const frame=reviewClock && calibration ? presentedReviewFrame(reviewClock,calibration,metadata.mediaTime) : null
       if (process.env.NODE_ENV==='development' && reviewClock) setFrameDiagnostic(`Presented media ${metadata.mediaTime.toFixed(9)}s · native frame ${frame?.index ?? 'unverified'} · requested ${requestedFrameRef.current ?? 'none'}`)
@@ -266,8 +272,8 @@ export function useVideoPlayer(
       } else if (reviewClock && !detached) useReviewStore.getState().setPresentedFrame(null,null)
       frameCallback=video.requestVideoFrameCallback(captureFrame)
     }
-    if (reviewClock && typeof video.requestVideoFrameCallback==='function') frameCallback=video.requestVideoFrameCallback(captureFrame)
-    const invalidatePresentedFrame=() => { pendingFrame=null; if (reviewClock && !detached) useReviewStore.getState().setPresentedFrame(null,null) }
+    if (typeof video.requestVideoFrameCallback==='function') frameCallback=video.requestVideoFrameCallback(captureFrame)
+    const invalidatePresentedFrame=() => { pendingFrame=null; if (reviewClockRef.current && !detached) useReviewStore.getState().setPresentedFrame(null,null) }
     const onSeeked=() => {
       if (pendingFrame && (requestedFrameRef.current===null || requestedFrameRef.current===pendingFrame.index)) publishFrame(pendingFrame)
     }
@@ -280,28 +286,45 @@ export function useVideoPlayer(
         lowLatencyMode: false,
       })
       hlsRef.current = hls
-      if (reviewClock) {
-        hls.on(Hls.Events.INIT_PTS_FOUND,(_event,data) => { if (data.id==='main') initPtsRef.current={pts:data.initPTS,scale:data.timescale} })
-        hls.on(Hls.Events.BUFFER_APPENDED,(_event,data) => {
-          const frag=data.frag; const init=initPtsRef.current; const start=frag.elementaryStreams.video?.startPTS
-          if (frag.type!=='main' || typeof frag.sn!=='number' || start===undefined || !init) return
-          const calibration=calibrateHls(reviewClock,frag.level,frag.sn,start,init.pts,init.scale)
-          if (calibration) calibrations.set(frag.level,calibration)
-          if (activeLevel===frag.level || activeLevel===null && calibrationRef.current===null) {
-            calibrationRef.current=calibration
-            if (!detached) useReviewStore.getState().setPlaybackCalibration(calibration)
-          }
-        })
-        hls.on(Hls.Events.FRAG_CHANGED,(_event,data) => {
-          if (activeLevel!==data.frag.level) {
-            activeLevel=data.frag.level; calibrationRef.current=calibrations.get(activeLevel)||null
-            if (!detached) {
-              useReviewStore.getState().setPlaybackCalibration(calibrationRef.current)
-              useReviewStore.getState().setPresentedFrame(null,null)
-            }
-          }
-        })
+      // Capture native HLS observations even when clock evidence arrives later.
+      const observedFragments = new Map<number, { sequence: number; start: number }>()
+      const refreshCalibration = () => {
+        const clock = reviewClockRef.current
+        const init = initPtsRef.current
+        calibrations.clear()
+        if (clock && init) {
+          observedFragments.forEach((fragment, level) => {
+            const calibration = calibrateHls(clock, level, fragment.sequence, fragment.start, init.pts, init.scale)
+            if (calibration) calibrations.set(level, calibration)
+          })
+        }
+        calibrationRef.current = activeLevel === null ? calibrations.values().next().value || null : calibrations.get(activeLevel) || null
+        pendingFrame = null
+        if (!detached) {
+          useReviewStore.getState().setPlaybackCalibration(calibrationRef.current)
+          useReviewStore.getState().setPresentedFrame(null, null)
+        }
       }
+      refreshCalibrationRef.current = refreshCalibration
+      hls.on(Hls.Events.INIT_PTS_FOUND, (_event, data) => {
+        if (data.id === 'main') {
+          initPtsRef.current = { pts: data.initPTS, scale: data.timescale }
+          refreshCalibration()
+        }
+      })
+      hls.on(Hls.Events.BUFFER_APPENDED, (_event, data) => {
+        const frag = data.frag
+        const start = frag.elementaryStreams.video?.startPTS
+        if (frag.type !== 'main' || typeof frag.sn !== 'number' || start === undefined) return
+        observedFragments.set(frag.level, { sequence: frag.sn, start })
+        refreshCalibration()
+      })
+      hls.on(Hls.Events.FRAG_CHANGED, (_event, data) => {
+        if (activeLevel !== data.frag.level) {
+          activeLevel = data.frag.level
+          refreshCalibration()
+        }
+      })
       hls.loadSource(src)
       hls.attachMedia(video)
 
@@ -338,6 +361,7 @@ export function useVideoPlayer(
     return () => {
       // The element outlives this source, so a retry armed for it must not.
       cancelPlayRetry()
+      refreshCalibrationRef.current = null
       if (frameCallback!==null) video.cancelVideoFrameCallback(frameCallback)
       video.removeEventListener('seeking',invalidatePresentedFrame)
       video.removeEventListener('seeked',onSeeked)
@@ -358,7 +382,14 @@ export function useVideoPlayer(
         hlsRef.current = null
       }
     }
-  }, [src, setPlayheadTime, cancelPlayRetry, reviewClock, detached])
+  }, [src, setPlayheadTime, setActiveAnnotation, cancelPlayRetry, detached])
+
+  // Evidence arrival changes calibration, never the media attachment or play intent.
+  useEffect(() => {
+    reviewClockRef.current = reviewClock
+    refreshCalibrationRef.current?.()
+    if (reviewClock) setDuration(rationalNumber(reviewClock.timing.duration))
+  }, [reviewClock])
 
   // ─── Controls ───────────────────────────────────────────────────────────────
 
@@ -379,7 +410,7 @@ export function useVideoPlayer(
   const pause = useCallback(() => {
     cancelPlayRetry()
     videoRef.current?.pause()
-  }, [cancelPlayRetry, reportPlayFailure])
+  }, [cancelPlayRetry])
 
   const togglePlay = useCallback(() => {
     const video = videoRef.current
@@ -389,10 +420,11 @@ export function useVideoPlayer(
     cancelPlayRetry()
     if (video.paused) {
       const intent = playIntentRef.current
-      video.play().catch(() => {
+      video.play().catch((failure) => {
         // Paused, re-toggled, or moved to another source while play() was
         // still pending: this rejection is not a first tap that needs a retry.
         if (intent !== playIntentRef.current) return
+        reportPlayFailure(failure)
         // iOS/ManagedMediaSource: the first gesture often only starts buffering,
         // play() rejects without buffered data. Retry once as soon as
         // data is available, otherwise mobile always needs a second tap.

@@ -23,6 +23,7 @@ const hlsMock = vi.hoisted(() => {
 })
 vi.mock('hls.js', () => ({ default: hlsMock.FakeHls }))
 
+import type { ReviewClockEvidence } from '@/lib/review-clock'
 import { useVideoPlayer, type UseVideoPlayerReturn } from '../use-video-player'
 
 /**
@@ -44,8 +45,8 @@ const V2 = 'http://example.test/v2.m3u8'
 
 let player: UseVideoPlayerReturn
 
-function Harness({ src }: { src: string | null }) {
-  player = useVideoPlayer(src)
+function Harness({ src, clock }: { src: string | null; clock?: ReviewClockEvidence }) {
+  player = useVideoPlayer(src, { reviewClock: clock })
   return <video ref={player.videoRef} data-testid="video" />
 }
 
@@ -281,4 +282,20 @@ describe('useVideoPlayer: the hls.js side of the first tap', () => {
     expect(hlsMock.instances).toHaveLength(1)
     expect((video as HTMLVideoElement & { disableRemotePlayback?: boolean }).disableRemotePlayback).toBeUndefined()
   })
+})
+
+
+it('attaches late clock evidence without replacing a playing HLS source', () => {
+  hlsMock.FakeHls.supported = true
+  const view = mount(() => Promise.resolve(), { paused: false, duration: 60 })
+  view.video.currentTime = 12
+  const active = hlsMock.instances.at(-1)!
+  const count = hlsMock.instances.length
+  const clock = { timing: { duration: '60' }, reviewClock: { hls: { variants: [] } } } as unknown as ReviewClockEvidence
+  view.rerender(<Harness src={V1} clock={clock} />)
+  expect(hlsMock.instances).toHaveLength(count)
+  expect(active.destroy).not.toHaveBeenCalled()
+  expect(view.video.currentTime).toBe(12)
+  expect(view.pause).not.toHaveBeenCalled()
+  expect(player.duration).toBe(60)
 })

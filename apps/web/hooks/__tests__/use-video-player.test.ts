@@ -67,6 +67,8 @@ describe('visible playback failure', () => {
     const { result } = renderHook(() => useVideoPlayer(SRC))
     attach(result.current.videoRef, {
       paused: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
       play: vi.fn().mockRejectedValue(new DOMException('Private media URL must not appear', 'NotAllowedError')),
     })
     await act(async () => result.current.togglePlay())

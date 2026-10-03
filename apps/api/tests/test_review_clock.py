@@ -219,7 +219,10 @@ def test_native_probe_bounds_real_child_output_and_deadline(program,expected):
     from apps.api.services.media_probe import bounded_probe
     started=time.monotonic()
     exception=HTTPException if expected==413 else subprocess.TimeoutExpired if expected=='deadline' else subprocess.CalledProcessError
-    with pytest.raises(exception) as denied:bounded_probe([sys.executable,'-c',program],limit=1024,timeout=.15)
+    # Output/exit cases must permit interpreter startup on a busy build host.
+    # The deadline case retains its deliberately short timeout.
+    timeout = .15 if expected == 'deadline' else 1.5
+    with pytest.raises(exception) as denied:bounded_probe([sys.executable,'-c',program],limit=1024,timeout=timeout)
     if expected==413:assert denied.value.status_code==413
     if expected=='exit':assert denied.value.returncode==3
     assert time.monotonic()-started<2

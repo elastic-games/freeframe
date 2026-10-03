@@ -11,13 +11,14 @@ function managedProject(): string | undefined {
   return window.location.pathname.match(/\/projects\/([0-9a-f]{8}-[0-9a-f-]{27,})\b/i)?.[1]
 }
 
-async function managedRequest(method: string, path: string, body?: unknown): Promise<Response> {
+async function managedRequest(method: string, path: string, body?: unknown, signal?: AbortSignal): Promise<Response> {
   const url = new URL(path, 'https://reviews.elasticlabs.site')
   if (url.origin !== 'https://reviews.elasticlabs.site') throw new ApiError(400, 'Invalid review path')
   const pathProject = url.pathname.match(/^\/projects\/([0-9a-f]{8}-[0-9a-f-]{27,})(?:\/|$)/i)?.[1]
   return fetch(STUDIO_TRANSPORT_URL, {
     method: 'POST',
     credentials: 'include',
+    signal,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       project: managedProject() || pathProject, method, path: url.pathname,
@@ -62,7 +63,7 @@ async function request<T>(
   }
 
   const execute = async (token: string | null): Promise<Response> => {
-    if (STUDIO_MANAGED) return managedRequest(method, path, body)
+    if (STUDIO_MANAGED) return managedRequest(method, path, body, options?.signal)
     return fetch(`${API_URL}${path}`, {
       method,
       signal: options?.signal,

@@ -206,6 +206,7 @@ export function VideoPlayer({
     // the player on the wrong version's stream.
     let ignore = false;
     const clockAbort=new AbortController();
+    let clockTimeout: ReturnType<typeof setTimeout> | undefined;
     setStreamUrl(null);
     setClockEvidence(null);
     if (clockRequired) useReviewStore.getState().setReviewClock(null);
@@ -222,19 +223,22 @@ export function VideoPlayer({
     const streamPath = versionId
       ? `/assets/${assetId}/stream?version_id=${versionId}`
       : `/assets/${assetId}/stream`;
-    Promise.resolve()
-      .then(async () => {
-        let evidence:ReviewClockEvidence|null=null;
-        if (clockRequired && versionId) {
-          const clockTimeout=setTimeout(() => clockAbort.abort(),75_000);
-          try { evidence=await api.get<ReviewClockEvidence>(`/assets/${assetId}/review-clock?version_id=${versionId}`,{signal:clockAbort.signal}) } catch { /* Timed writes require verification; playback remains available. */ } finally {clearTimeout(clockTimeout)}
-        }
+    // Clock verification must not delay playback. Both responses are pinned to
+    // this effect's exact version and discarded when the selection changes.
+    if (clockRequired && versionId) {
+      clockTimeout = setTimeout(() => clockAbort.abort(), 75_000);
+      api.get<ReviewClockEvidence>(`/assets/${assetId}/review-clock?version_id=${versionId}`, { signal: clockAbort.signal })
+        .then((evidence) => {
+          if (ignore) return;
+          setClockEvidence(evidence);
+          useReviewStore.getState().setReviewClock(evidence);
+        })
+        .catch(() => { /* Precise timed writes remain disabled without verified evidence. */ })
+        .finally(() => clearTimeout(clockTimeout));
+    }
+    api.get<StreamUrlResponse>(streamPath)
+      .then((data) => {
         if (ignore) return;
-        const data=await api.get<StreamUrlResponse>(streamPath);
-        if (ignore) return;
-        setClockEvidence(evidence);
-        if (clockRequired) useReviewStore.getState().setReviewClock(evidence);
-        // HLS proxy returns relative paths — prepend API URL
         const url = data.url.startsWith("/")
           ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${data.url}`
           : data.url;
@@ -246,6 +250,7 @@ export function VideoPlayer({
     return () => {
       ignore = true;
       clockAbort.abort();
+      clearTimeout(clockTimeout);
     };
   }, [assetId, initialStreamUrl, versionId,clockRequired]);
 

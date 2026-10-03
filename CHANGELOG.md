@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Load review playback independently from timestamp verification, preserving exact version selection and cancellation.
+- Apply review-clock storage after the existing worker migration so upgrades retain one migration head.
 - Creating a project, folder, or video share link now keeps the Share dialog open with the new URL and Copy Link button, including when saving optional settings fails.
 - Redchain review CLI upload and status output now links to the Studio Video Reviews route while keeping its review API endpoint unchanged.
 - Share review comments renew an expired Studio review session or request guest identity, keep a drawing available after a failed post, and show the API error instead of a generic message.
@@ -23,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Browser playback rejections now show a visible error instead of silently leaving the Play control paused; signed media URLs are excluded from the message.
 
 ### Added
+- Read exact asset review snapshots through the same short-lived, project-bound native delegation used by Studio uploads.
 - Revocable per-node review-worker keys bound to one project and folder, with narrow asset, upload, and comment-reply operations and durable idempotency receipts.
 - Studio-managed Reviews now keeps the original FreeFrame dashboard and project, asset, version, comment, folder, and upload views while Studio checks the active canonical project binding for each request.
 - Project-scoped Studio delegation for native Video Reviews, with bounded media lifetimes.

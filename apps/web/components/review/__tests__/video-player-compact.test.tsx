@@ -1,21 +1,24 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import * as React from 'react'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 
 vi.mock('@/lib/api', () => ({ api: { get: vi.fn(async () => ({ data: {} })) } }))
 vi.mock('../review-provider', () => ({ useReview: () => ({ registerPauseHandler: () => {} }) }))
 vi.mock('@/hooks/use-video-player', () => ({
-  useVideoPlayer: () => ({
+  useVideoPlayer: vi.fn(() => ({
     videoRef: { current: null }, hlsRef: { current: null },
     isPlaying: false, currentTime: 0, duration: 100, buffered: 0,
     volume: 1, isMuted: false, playbackRate: 1,
     qualityLevels: [], currentQuality: -1, isLoading: false, isFullscreen: false, error: null,
     pause: () => {}, togglePlay: () => {}, seek: () => {}, setPlaybackRate: () => {},
     setQuality: () => {}, setVolume: () => {}, toggleMute: () => {}, toggleFullscreen: () => {},
-  }),
+  })),
 }))
 
 import { VideoPlayer } from '../video-player'
+import { api } from '@/lib/api'
+import { useReviewStore } from '@/stores/review-store'
+import { useVideoPlayer } from '@/hooks/use-video-player'
 
 /**
  * `use-media-query` caches each MediaQueryList at module scope, which is right
@@ -84,5 +87,21 @@ describe('the stage on a touch screen', () => {
     // The stage is the click target around the <video>: a tap on it toggles play.
     const stage = container.querySelector('video')?.parentElement
     expect(stage?.className.split(/\s+/)).toContain('touch-manipulation')
+  })
+})
+
+describe('clock and stream loading', () => {
+  it('starts playback while clock verification remains pending', async () => {
+    vi.stubEnv('NEXT_PUBLIC_STUDIO_SSO_ENABLED', 'true')
+    useReviewStore.setState({ currentVersion: { id: 'v1' } as never })
+    vi.mocked(api.get).mockImplementation(((path: string) => path.includes('review-clock')
+      ? new Promise(() => {})
+      : Promise.resolve({ url: 'https://example.test/stream.m3u8' })) as never)
+    const { unmount } = render(<VideoPlayer assetId="a1" />)
+    await waitFor(() => expect(useVideoPlayer).toHaveBeenCalledWith('https://example.test/stream.m3u8', { reviewClock: null }))
+    expect(api.get).toHaveBeenCalledWith('/assets/a1/review-clock?version_id=v1', expect.anything())
+    unmount()
+    vi.unstubAllEnvs()
+    useReviewStore.setState({ currentVersion: null })
   })
 })

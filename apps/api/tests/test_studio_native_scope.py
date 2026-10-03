@@ -212,3 +212,36 @@ async def test_project_member_read_rejects_foreign_project(monkeypatch):
     with pytest.raises(HTTPException) as error:
         await delegated_studio_user(request("GET", path), token("GET", path), MagicMock())
     assert error.value.status_code == 403
+
+@pytest.mark.asyncio
+async def test_native_review_read_binds_exact_body_and_project(monkeypatch):
+    import json
+    from types import SimpleNamespace
+    from apps.api.models.asset import Asset, AssetVersion
+    from apps.api.models.user import UserStatus
+    monkeypatch.setattr(settings, 'studio_sso_enabled', True)
+    monkeypatch.setattr(settings, 'studio_native_secret', SECRET)
+    version_id = uuid.uuid4()
+    body = json.dumps({'project_id': str(PROJECT), 'asset_id': str(ASSET), 'version_id': str(version_id), 'operation': 'authorize'}).encode()
+    def incoming(raw):
+        async def receive(): return {'type': 'http.request', 'body': raw, 'more_body': False}
+        return Request({'type':'http','method':'POST','path':'/studio/review-read','query_string':b'', 'headers':[(b'content-type', b'application/json')]}, receive)
+    claims = jwt.decode(token('POST', '/studio/review-read'), SECRET, algorithms=['HS256'], audience='studio-native-reviews')
+    claims['request_hash'] = hashlib.sha256(b'\n' + body).hexdigest()
+    signed = jwt.encode(claims, SECRET, algorithm='HS256')
+    db = MagicMock()
+    def query(model):
+        result = MagicMock()
+        result.filter.return_value = result
+        result.first.return_value = (SimpleNamespace(id=ASSET, project_id=PROJECT) if model is Asset else SimpleNamespace(id=version_id, asset_id=ASSET) if model is AssetVersion else SimpleNamespace(id=PROJECT))
+        return result
+    db.query.side_effect = query
+    user = SimpleNamespace(id=ACTOR, status=UserStatus.active, preferences={'studio_sso':True})
+    with patch('apps.api.services.studio_native.get_project_member', return_value=SimpleNamespace(role=ProjectRole.owner)), patch('apps.api.services.studio_native.get_user_by_id', return_value=user):
+        assert await delegated_studio_user(incoming(body), signed, db) is user
+        with pytest.raises(HTTPException):
+            await delegated_studio_user(incoming(body.replace(b'authorize', b'snapshot')), signed, db)
+        changed = body.replace(str(PROJECT).encode(), str(OTHER).encode())
+        claims['request_hash'] = hashlib.sha256(b'\n' + changed).hexdigest()
+        with pytest.raises(HTTPException):
+            await delegated_studio_user(incoming(changed), jwt.encode(claims, SECRET, algorithm='HS256'), db)

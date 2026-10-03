@@ -28,6 +28,8 @@ NATIVE_SCOPE: ContextVar[bool] = ContextVar("studio_native_scope", default=False
 
 _UUID = r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
 _ALLOWED = [
+    ("GET", r"/auth/me"),
+    ("POST", r"/studio/review-read"),
     ("GET", rf"/projects/(?P<project>{_UUID})"),
     ("GET", rf"/events/(?P<project>{_UUID})"),
     ("GET", rf"/projects/(?P<project>{_UUID})/assets"),
@@ -44,6 +46,7 @@ _ALLOWED = [
     ("GET", rf"/assets/(?P<asset>{_UUID})/versions"),
     ("POST", rf"/assets/(?P<asset>{_UUID})/versions"),
     ("GET", rf"/assets/(?P<asset>{_UUID})/stream"),
+    ("GET", rf"/assets/(?P<asset>{_UUID})/review-clock"),
     ("GET", rf"/assets/(?P<asset>{_UUID})/comments"),
     ("GET", rf"/assets/(?P<asset>{_UUID})/comments/export"),
     ("POST", rf"/assets/(?P<asset>{_UUID})/comments"),

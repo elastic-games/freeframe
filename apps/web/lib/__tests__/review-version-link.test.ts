@@ -16,7 +16,7 @@ describe('asset review version links', () => {
   })
 
   it('keeps compare settings but removes a comment from the previous version', () => {
-    expect(reviewVersionUrl('/projects/p/assets/a', 'compare=old&mode=sbs&commentId=c1', 'version-1'))
+    expect(reviewVersionUrl('/projects/p/assets/a', 'compare=old&mode=sbs&commentId=c1&version=legacy', 'version-1'))
       .toBe('/projects/p/assets/a?compare=old&mode=sbs&versionId=version-1')
     expect(reviewVersionUrl('/projects/p/assets/a', 'versionId=old&commentId=c1', null))
       .toBe('/projects/p/assets/a')

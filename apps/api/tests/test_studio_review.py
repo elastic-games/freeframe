@@ -92,3 +92,31 @@ def test_membership_rechecked_after_media_download(assertion,monkeypatch):
     monkeypatch.setattr(review,'visible_comments',lambda *_:[]);monkeypatch.setattr(review,'media_evidence',lambda *_:{})
     with pytest.raises(HTTPException,match='Current project membership'):review.read_review(db,user,*ids,'snapshot')
     db.expire_all.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_native_read_route_rejects_credential_fallback(monkeypatch, mock_db):
+    from starlette.requests import Request
+    from starlette.responses import Response
+    from unittest.mock import AsyncMock
+    from apps.api.routers import studio_review as route
+    ids = {name: uuid.uuid4() for name in ('project_id', 'asset_id', 'version_id')}
+    body = route.ReviewRead(**ids, operation='authorize')
+    user = NS(id=uuid.uuid4())
+    native = AsyncMock(return_value=user)
+    read = MagicMock(return_value={'schemaVersion': 1})
+    legacy = MagicMock()
+    monkeypatch.setattr(route, 'delegated_studio_user', native)
+    monkeypatch.setattr(route, 'read_review', read)
+    monkeypatch.setattr(route, 'assertion_user', legacy)
+    def req(value=None):
+        return Request({'type':'http','method':'POST','path':'/studio/review-read','headers':[(b'authorization',value.encode())] if value else []})
+    assert await route.review_read(body, req('Bearer native-token'), Response(), mock_db) == {'schemaVersion':1}
+    native.assert_awaited_once()
+    legacy.assert_not_called()
+    for payload, request in [(body,req()), (body,req('Basic invalid')), (body.model_copy(update={'assertion':'legacy'}),req('Bearer native-token'))]:
+        with pytest.raises(HTTPException): await route.review_read(payload,request,Response(),mock_db)
+    read.assert_called_once()
+    monkeypatch.setattr(route.settings, 'studio_native_only', True)
+    with pytest.raises(HTTPException):
+        await route.review_read(body.model_copy(update={'assertion':'legacy'}), req(), Response(), mock_db)
+    legacy.assert_not_called()
