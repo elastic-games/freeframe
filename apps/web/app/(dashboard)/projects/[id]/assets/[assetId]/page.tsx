@@ -17,6 +17,7 @@ import { CommentInput } from '@/components/review/comment-input'
 // ApprovalBar removed for now
 import { VersionSwitcher } from '@/components/review/version-switcher'
 import { ShareDialog } from '@/components/review/share-dialog'
+import { StudioAssetContextLink } from '@/components/review/studio-asset-context-link'
 import { CompareOverlay } from '@/components/review/compare/compare-overlay'
 import { useReviewStore } from '@/stores/review-store'
 import { useAuthStore } from '@/stores/auth-store'
@@ -650,6 +651,9 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
             }}
           />
           <VersionSwitcher versions={versions} onVersionSelect={(version) => selectVersion(version.id)} />
+          {!versionLinkUnavailable && !versionLinkPending && (
+            <StudioAssetContextLink projectId={projectId} assetId={asset.id} version={currentVersion} />
+          )}
           {asset && canCompare(asset.asset_type, versions) && (
             <button
               onClick={() => {
