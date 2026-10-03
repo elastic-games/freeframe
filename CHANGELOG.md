@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Native GLB inspection with orbit/pan/zoom and animation pose selection. Every 3D note and drawing saves the exact model version/digest, camera projection, object transform and viewport aspect; reopening feedback restores the view and preserves drawing alignment on resize.
+- Additive `model` asset/media enum migration (`ab20261003c2`) and bounded, self-contained GLB validation in the normal upload/processing and Studio review snapshot paths.
+
 ### Fixed
 
 - Forward managed Studio review transport and parent-origin build arguments into the production web image.

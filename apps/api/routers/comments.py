@@ -361,6 +361,23 @@ def create_comment(
     return _create_comment(asset_id, body, db, current_user)
 
 
+def _recheck_model_access(db, asset, version, current_user):
+    """A model validation reads remote bytes; recheck current scope before writing."""
+    from ..models.asset import AssetType, ProcessingStatus
+    from ..models.user import UserStatus
+    if getattr(asset, 'asset_type', None) != AssetType.model:
+        return
+    db.expire_all()
+    db.refresh(current_user)
+    if current_user.deleted_at is not None or current_user.status != UserStatus.active:
+        raise HTTPException(403, 'Current review account unavailable')
+    current = _get_asset(db, asset.id)
+    require_asset_access(db, current, current_user)
+    db.refresh(version)
+    if version.asset_id != current.id or version.deleted_at is not None or version.processing_status != ProcessingStatus.ready:
+        raise HTTPException(409, 'Exact model review version is unavailable')
+
+
 def _create_comment(asset_id, body, db, current_user, operation=None):
     asset = _get_asset(db, asset_id)
     require_asset_access(db, asset, current_user)
@@ -372,6 +389,9 @@ def _create_comment(asset_id, body, db, current_user, operation=None):
     if not version:
         raise HTTPException(status_code=400, detail="version_id does not belong to this asset")
 
+    from ..services.model_review import validate_annotation
+    validate_annotation(db,asset,version,body.annotation)
+    _recheck_model_access(db, asset, version, current_user)
     clock = None
     if body.review_clock is not None:
         from ..services.review_clock import clock_for_asset, normalized_capture
@@ -396,6 +416,9 @@ def _create_comment(asset_id, body, db, current_user, operation=None):
         ).first()
         if not parent:
             raise HTTPException(status_code=400, detail="parent_id does not belong to this asset")
+        from ..models.asset import AssetType
+        if getattr(asset, 'asset_type', None) == AssetType.model and parent.version_id != version.id:
+            raise HTTPException(409, '3D replies must use the parent model version')
 
     comment = Comment(
         asset_id=asset_id,
@@ -472,6 +495,18 @@ def _reply_to_comment(asset_id, comment_id, body, db, current_user, operation=No
     if not parent:
         raise HTTPException(status_code=404, detail="Parent comment not found")
 
+    from ..services.model_review import validate_annotation
+    from ..models.asset import AssetType
+    if getattr(asset,'asset_type',None) == AssetType.model or (body.annotation and '_modelView' in body.annotation.drawing_data):
+        model_version=db.query(AssetVersion).filter(AssetVersion.id==parent.version_id,AssetVersion.asset_id==asset_id,AssetVersion.deleted_at.is_(None)).first()
+        if model_version is None:raise HTTPException(409,'Reply model version is unavailable')
+        if getattr(asset,'asset_type',None) == AssetType.model and body.annotation is None:
+            parent_drawing=db.query(Annotation).filter(Annotation.comment_id==parent.id).first()
+            if parent_drawing:
+                from ..schemas.comment import AnnotationData
+                body.annotation=AnnotationData(drawing_data={'objects':[],'_modelView':parent_drawing.drawing_data.get('_modelView')})
+        validate_annotation(db,asset,model_version,body.annotation)
+        _recheck_model_access(db, asset, model_version, current_user)
     clock = None
     if body.review_clock is not None:
         from ..services.review_clock import clock_for_asset, normalized_capture
@@ -1050,6 +1085,28 @@ def guest_comment(
             version_id = latest.id
         else:
             raise HTTPException(status_code=400, detail="No ready version found for this asset")
+
+    from ..models.asset import AssetVersion, AssetType
+    if getattr(asset,'asset_type',None) == AssetType.model or (body.annotation and '_modelView' in body.annotation.drawing_data):
+        from ..services.model_review import validate_annotation
+        model_version=db.query(AssetVersion).filter(AssetVersion.id==version_id,AssetVersion.asset_id==asset.id,AssetVersion.deleted_at.is_(None)).first()
+        if model_version is None:raise HTTPException(400,'Model version does not belong to this asset')
+        validate_annotation(db,asset,model_version,body.annotation)
+        if getattr(asset, 'asset_type', None) == AssetType.model:
+            db.expire_all()
+            link = validate_share_link_with_session(db, token, share_session=share_session, current_user=current_user)
+            if link.permission == SharePermission.view:
+                raise HTTPException(403, 'This share link does not allow commenting')
+            asset = _get_asset(db, target_asset_id)
+            validate_asset_in_share(db, link, asset)
+            db.refresh(model_version)
+            from ..models.asset import ProcessingStatus
+            if model_version.deleted_at is not None or model_version.processing_status != ProcessingStatus.ready or model_version.asset_id != asset.id:
+                raise HTTPException(409, 'Exact model review version is unavailable')
+            if body.parent_id is not None:
+                parent = db.query(Comment).filter(Comment.id == body.parent_id, Comment.asset_id == asset.id, Comment.version_id == model_version.id, Comment.deleted_at.is_(None), Comment.visibility != 'internal').first()
+                if parent is None:
+                    raise HTTPException(409, '3D replies must use a visible parent on this model version')
 
     # Determine author: logged-in user or guest
     author_id = None

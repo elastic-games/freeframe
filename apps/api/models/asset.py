@@ -15,6 +15,7 @@ class AssetType(str, PyEnum):
     image_carousel = "image_carousel"
     audio = "audio"
     video = "video"
+    model = "model"
 
 class AssetStatus(str, PyEnum):
     draft = "draft"
@@ -82,6 +83,7 @@ class FileType(str, PyEnum):
     image = "image"
     audio = "audio"
     video = "video"
+    model = "model"
 
 class MediaFile(Base):
     __tablename__ = "media_files"

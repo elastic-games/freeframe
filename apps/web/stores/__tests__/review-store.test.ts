@@ -72,10 +72,14 @@ describe('Review store', () => {
     useReviewStore.getState().setActiveAnnotation({ strokes: [] })
     useReviewStore.getState().setFocusedCommentId('c1')
 
+    useReviewStore.setState({ captureModelView: () => ({}) as any, pendingAnnotation: { _modelView: {versionId: 'v1'} }, isDrawingMode: true })
     useReviewStore.getState().setCurrentVersion(v2)
 
     const state = useReviewStore.getState()
     expect(state.currentVersion).toEqual(v2)
+    expect(state.captureModelView).toBeNull()
+    expect(state.pendingAnnotation).toBeNull()
+    expect(state.isDrawingMode).toBe(false)
     expect(state.activeAnnotation).toBeNull()
     expect(state.focusedCommentId).toBeNull()
   })

@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { ModelView } from '@/lib/modelView'
 import type { Asset, AssetVersion } from '@/types'
 import type { PlaybackCalibration, ReviewClockEvidence } from '@/lib/review-clock'
 
@@ -6,6 +7,7 @@ type DrawingTool = 'pen' | 'rectangle' | 'arrow' | 'line'
 export type TimeFormat = 'standard' | 'timecode' | 'frames'
 
 interface ReviewState {
+  captureModelView: (() => ModelView) | null
   currentAsset: Asset | null
   currentVersion: AssetVersion | null
   playheadTime: number
@@ -42,6 +44,7 @@ interface ReviewState {
 }
 
 const initialState = {
+  captureModelView: null as (() => ModelView) | null,
   currentAsset: null,
   currentVersion: null,
   playheadTime: 0,
@@ -70,7 +73,7 @@ export const useReviewStore = create<ReviewState>()((set) => ({
   setCurrentVersion: (version: AssetVersion) => {
     set((state) =>
       state.currentVersion != null && state.currentVersion.id !== version.id
-        ? { currentVersion: version, activeAnnotation: null, focusedCommentId: null, reviewClock:null, playbackCalibration:null, presentedMediaTime:null, reviewFrameIndex:null }
+        ? { currentVersion: version, captureModelView:null, pendingAnnotation:null, isDrawingMode:false, activeAnnotation: null, focusedCommentId: null, reviewClock:null, playbackCalibration:null, presentedMediaTime:null, reviewFrameIndex:null }
         : { currentVersion: version },
     )
   },

@@ -48,6 +48,8 @@ def _initiate_upload(body: InitiateUploadRequest, db: Session, current_user: Use
     # Validate mime type
     if body.mime_type not in ALLOWED_MIME_TYPES:
         raise HTTPException(status_code=400, detail=f"Unsupported file type: {body.mime_type}")
+    if body.mime_type == "model/gltf-binary" and body.file_size_bytes > 16_777_216:
+        raise HTTPException(413, "GLB inspection supports models up to 16 MiB")
     guard_error = upload_guard_error(db, body.file_size_bytes)
     if guard_error:
         raise HTTPException(status_code=400, detail=guard_error)
@@ -63,6 +65,8 @@ def _initiate_upload(body: InitiateUploadRequest, db: Session, current_user: Use
         asset = db.query(Asset).filter(Asset.id == body.asset_id, Asset.deleted_at.is_(None)).first()
         if not asset:
             raise HTTPException(status_code=404, detail="Asset not found")
+        if (asset.asset_type == AssetType.model or body.mime_type == "model/gltf-binary") and asset.asset_type != mime_to_asset_type(body.mime_type):
+            raise HTTPException(400, "Model versions must remain GLB models")
         if asset.project_id != body.project_id:
             raise HTTPException(status_code=400, detail="Asset does not belong to the specified project")
     else:
@@ -120,7 +124,7 @@ def _initiate_upload(body: InitiateUploadRequest, db: Session, current_user: Use
     version.chunk_size_bytes = CHUNK_SIZE_BYTES
 
     # Create MediaFile record
-    file_type_map = {AssetType.image: FileType.image, AssetType.audio: FileType.audio, AssetType.video: FileType.video, AssetType.image_carousel: FileType.image}
+    file_type_map = {AssetType.image: FileType.image, AssetType.audio: FileType.audio, AssetType.video: FileType.video, AssetType.image_carousel: FileType.image, AssetType.model: FileType.model}
     media_file = MediaFile(
         version_id=version.id,
         file_type=file_type_map.get(asset.asset_type, FileType.video),

@@ -70,7 +70,7 @@ export function UploadZone({ onFilesSelected, className }: UploadZoneProps) {
         ref={inputRef}
         type="file"
         multiple
-        accept="video/*,audio/*,image/*"
+        accept="video/*,audio/*,image/*,.glb,model/gltf-binary"
         className="hidden"
         onChange={(e) => handleFiles(e.target.files)}
       />

@@ -126,6 +126,12 @@ def probe_file(path, timeout=60):
 
 def media_evidence(db, version_id):
     files = db.query(MediaFile).filter(MediaFile.version_id == version_id).all()
+    models=[f for f in files if str(getattr(f.file_type,'value',f.file_type))=='model']
+    if models:
+        if len(models)!=1 or len(files)!=1:raise HTTPException(409, 'A single model version is required')
+        from .model_review import read_model
+        raw,_=read_model(models[0]);sha=hashlib.sha256(raw).hexdigest()
+        return {'rawSha256':sha,'reviewSha256':sha,'timing':None,'reviewClock':None}
     videos = [f for f in files if str(getattr(f.file_type, 'value', f.file_type)) == 'video']
     if len(videos) != 1 or not videos[0].s3_key_download:
         raise HTTPException(409, 'A single review MP4 is required for exact timing')

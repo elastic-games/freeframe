@@ -1,6 +1,6 @@
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
-export type AssetType = "image" | "image_carousel" | "audio" | "video";
+export type AssetType = "image" | "image_carousel" | "audio" | "video" | "model";
 
 export type AssetStatus = "draft" | "in_review" | "approved" | "rejected" | "archived";
 
@@ -29,7 +29,7 @@ export type ActivityAction =
   | "approved"
   | "rejected";
 
-export type FileType = "image" | "audio" | "video" | "document";
+export type FileType = "image" | "audio" | "video" | "model" | "document";
 
 export type MetadataFieldType = "text" | "number" | "date" | "select" | "multi_select";
 

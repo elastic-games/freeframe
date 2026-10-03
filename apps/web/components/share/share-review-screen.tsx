@@ -11,6 +11,7 @@
  * (#117, #123).
  */
 import * as React from 'react'
+import { ModelViewer } from '@/components/review/model-viewer'
 import { ArrowLeft, Download, Loader2, PanelRightClose, PanelRightOpen } from 'lucide-react'
 import { useReview, type CreateCommentPayload } from '@/components/review/review-provider'
 import { useReviewStore } from '@/stores/review-store'
@@ -278,7 +279,7 @@ function ShareReviewInner({
         <div
           className="flex-1 flex flex-col bg-bg-primary overflow-hidden min-w-0"
         >
-          {asset.asset_type === 'video' && versionReady && VideoPlayer ? (
+          {asset.asset_type === 'model' && versionReady ? <ModelViewer key={currentVersion?.id} asset={asset} version={currentVersion}/> : asset.asset_type === 'video' && versionReady && VideoPlayer ? (
             <VideoPlayer
               assetId={asset.id}
               comments={comments}

@@ -395,6 +395,11 @@ export function CommentInput({
           finalAnnotation = annotationData;
         }
       }
+      if (assetType === 'model') {
+        const modelView=(finalAnnotation?._modelView as Record<string,unknown> | undefined) ?? useReviewStore.getState().captureModelView?.();
+        if (!modelView) throw new Error('Wait for the exact model to load before adding feedback.');
+        finalAnnotation={...(finalAnnotation ?? {objects:[]}),_modelView:modelView};
+      }
       attemptedAnnotation = finalAnnotation;
 
       // A timecode is included whenever attached (INCLUDING 0 — 0:00 is a
@@ -571,6 +576,7 @@ export function CommentInput({
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>
+            {assetType === 'model' && <button type="button" title="Send (Enter)" aria-label="Save 3D view and comment" onClick={handleSubmit} disabled={!body.trim() || submitting} className="ml-auto h-7 w-7 shrink-0 rounded-full bg-accent flex items-center justify-center disabled:opacity-30">{submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin"/> : <Send className="h-3.5 w-3.5"/>}</button>}
           </div>
         ) : (
           /* ─── Default toolbar (Frame.io style) ─── */

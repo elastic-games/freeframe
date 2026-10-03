@@ -58,7 +58,12 @@ def process_asset(self, asset_id: str, version_id: str):
         s3 = get_s3_client()
 
         try:
-            if asset.asset_type in (AssetType.video,):
+            if asset.asset_type == AssetType.model:
+                from ..services.model_review import read_model
+                read_model(media_file)
+                media_file.s3_key_processed = media_file.s3_key_raw
+                db.flush()
+            elif asset.asset_type in (AssetType.video,):
                 _process_video(db, asset, version, media_file, s3, output_prefix)
             elif asset.asset_type == AssetType.audio:
                 _process_audio(db, asset, version, media_file, s3, output_prefix)

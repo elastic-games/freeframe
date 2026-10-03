@@ -6,6 +6,7 @@ from ..models.asset import AssetType
 from ..config import settings
 
 ALLOWED_MIME_TYPES = {
+    "model/gltf-binary",
     # Images
     "image/jpeg", "image/png", "image/webp", "image/heic", "image/tiff", "image/gif",
     # Audio
@@ -46,6 +47,8 @@ def upload_size_error(file_size_bytes: int) -> str | None:
     return None
 
 def mime_to_asset_type(mime_type: str) -> AssetType:
+    if mime_type == "model/gltf-binary":
+        return AssetType.model
     if mime_type.startswith("image/"):
         return AssetType.image
     elif mime_type.startswith("audio/"):

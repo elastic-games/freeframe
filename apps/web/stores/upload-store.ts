@@ -748,6 +748,7 @@ async function finishAssembledUpload(versionId: string): Promise<boolean> {
 }
 
 function mimeFromAssetType(assetType: string): string {
+  if (assetType === 'model') return 'model/gltf-binary'
   switch (assetType) {
     case 'video': return 'video/mp4'
     case 'audio': return 'audio/mpeg'
@@ -842,6 +843,7 @@ const storeCreator: StateCreator<UploadStore, [['zustand/persist', unknown]]> = 
   togglePanel: () => set((s) => ({ panelOpen: !s.panelOpen })),
 
   startUpload: (file, projectId, assetName, projectName, folderId) => {
+    if(file.name.toLowerCase().endsWith('.glb') && file.type !== 'model/gltf-binary')file=new File([file],file.name,{type:'model/gltf-binary',lastModified:file.lastModified})
     const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`
 
     const entry: UploadFile = {
@@ -952,7 +954,7 @@ const storeCreator: StateCreator<UploadStore, [['zustand/persist', unknown]]> = 
 
         // Upload done — backend now processes (transcode/convert).
         // For non-processable types (or if SSE isn't wired), mark complete directly.
-        const isMedia = file.type.startsWith('video/') || file.type.startsWith('audio/') || file.type.startsWith('image/')
+        const isMedia = file.type.startsWith('video/') || file.type.startsWith('audio/') || file.type.startsWith('image/') || file.type === 'model/gltf-binary'
         if (isMedia) {
           updateFile(id, { progress: 100, status: 'processing', processingProgress: 0 })
         } else {
@@ -1025,6 +1027,7 @@ const storeCreator: StateCreator<UploadStore, [['zustand/persist', unknown]]> = 
   },
 
   startVersionUpload: (file, assetId, assetName, projectId, projectName) => {
+    if(file.name.toLowerCase().endsWith('.glb') && file.type !== 'model/gltf-binary')file=new File([file],file.name,{type:'model/gltf-binary',lastModified:file.lastModified})
     const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`
     const entry: UploadFile = {
       id,
@@ -1081,7 +1084,7 @@ const storeCreator: StateCreator<UploadStore, [['zustand/persist', unknown]]> = 
 
         completionAttempted = true
         await api.post('/upload/complete', { s3_key, upload_id, asset_id: assetId, version_id, parts })
-        const isMedia = file.type.startsWith('video/') || file.type.startsWith('audio/') || file.type.startsWith('image/')
+        const isMedia = file.type.startsWith('video/') || file.type.startsWith('audio/') || file.type.startsWith('image/') || file.type === 'model/gltf-binary'
         updateFile(id, { progress: 100, status: isMedia ? 'processing' : 'complete', processingProgress: 0 })
       } catch (err) {
         // See startUpload for why both of these exist.
@@ -1236,7 +1239,7 @@ const storeCreator: StateCreator<UploadStore, [['zustand/persist', unknown]]> = 
           parts: held.length > 0 ? [] : parts,
         })
 
-        const isMedia = /^(video|audio|image)\//.test(info.mime_type)
+        const isMedia = /^(video|audio|image)\//.test(info.mime_type) || info.mime_type === 'model/gltf-binary'
         updateFile({
           progress: 100,
           status: isMedia ? 'processing' : 'complete',

@@ -9,6 +9,7 @@ import { AudioPlayer } from '@/components/review/audio-player'
 import { MobileCommentSheet, PEEK_PX, type SheetState } from '@/components/review/mobile-comment-sheet'
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { useMediaTransport } from '@/hooks/use-media-transport'
+import { ModelViewer } from '@/components/review/model-viewer'
 import { ImageViewer } from '@/components/review/image-viewer'
 import { AnnotationCanvas } from '@/components/review/annotation-canvas'
 import { AnnotationOverlay } from '@/components/review/annotation-overlay'
@@ -50,6 +51,7 @@ const acceptByType: Record<string, string> = {
   audio: 'audio/*',
   image: 'image/*',
   image_carousel: 'image/*',
+  model: '.glb,model/gltf-binary',
 }
 
 function ReviewScreenInner({ projectId }: { projectId: string }) {
@@ -432,6 +434,8 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
             }
           />
         )
+      case 'model':
+        return <ModelViewer key={currentVersion?.id} asset={asset} version={currentVersion}/>
       case 'audio':
         return (
           <AudioPlayer

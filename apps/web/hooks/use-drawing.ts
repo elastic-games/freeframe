@@ -342,6 +342,8 @@ export function useDrawing(): UseDrawingReturn {
     // the letterboxed container, so the overlay never has to guess. Data without
     // it predates the frame fix and is replayed against the container.
     json._frameSpace = 'media'
+    const modelView=useReviewStore.getState().captureModelView?.()
+    if(modelView)json._modelView=modelView
     if (process.env.NEXT_PUBLIC_STUDIO_SSO_ENABLED==='true' && useReviewStore.getState().currentAsset?.asset_type==='video') {
       json._reviewClockCapture=sharedDrawingClockInvalid ? null : sharedDrawingClock
     }
