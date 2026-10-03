@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+
+- Forward managed Studio review transport and parent-origin build arguments into the production web image.
+
+
+### Fixed
 - Load review playback independently from timestamp verification, preserving exact version selection and cancellation.
 - Apply review-clock storage after the existing worker migration so upgrades retain one migration head.
 - Creating a project, folder, or video share link now keeps the Share dialog open with the new URL and Copy Link button, including when saving optional settings fails.
