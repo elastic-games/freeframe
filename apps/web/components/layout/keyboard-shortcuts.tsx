@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { Keyboard, X } from 'lucide-react'
@@ -85,6 +86,8 @@ export function KeyboardShortcuts({
   onOpenChange,
   standalone = false,
 }: KeyboardShortcutsProps) {
+  const tr = useTranslation()
+
   const [internalOpen, setInternalOpen] = React.useState(false)
 
   const isOpen = standalone ? internalOpen : (controlledOpen ?? false)
@@ -131,14 +134,12 @@ export function KeyboardShortcuts({
           <div className="flex items-center justify-between border-b border-border px-6 py-4">
             <div className="flex items-center gap-2">
               <Keyboard className="h-5 w-5 text-text-tertiary" />
-              <Dialog.Title className="text-base font-semibold text-text-primary">
-                Keyboard Shortcuts
-              </Dialog.Title>
+              <Dialog.Title className="text-base font-semibold text-text-primary">{tr("Keyboard Shortcuts")}</Dialog.Title>
             </div>
             <Dialog.Close asChild>
               <button className="rounded-md p-1 text-text-tertiary transition-colors hover:bg-bg-hover hover:text-text-primary">
                 <X className="h-4 w-4" />
-                <span className="sr-only">Close</span>
+                <span className="sr-only">{tr("Close")}</span>
               </button>
             </Dialog.Close>
           </div>
@@ -149,7 +150,7 @@ export function KeyboardShortcuts({
               {SHORTCUT_GROUPS.map((group) => (
                 <div key={group.title} className="space-y-3">
                   <h3 className="text-2xs font-medium uppercase tracking-wider text-text-tertiary">
-                    {group.title}
+                    {tr(group.title)}
                   </h3>
                   <div className="space-y-2">
                     {group.items.map((item, idx) => (
@@ -158,7 +159,7 @@ export function KeyboardShortcuts({
                         className="flex items-center justify-between gap-4"
                       >
                         <span className="text-sm text-text-secondary">
-                          {item.label}
+                          {tr(item.label)}
                         </span>
                         <div className="flex shrink-0 items-center gap-1">
                           {item.keys.map((key, ki) => (
@@ -175,13 +176,10 @@ export function KeyboardShortcuts({
 
           {/* Footer hint */}
           <div className="border-t border-border px-6 py-3">
-            <p className="text-2xs text-text-tertiary">
-              Press{' '}
+            <p className="text-2xs text-text-tertiary">{tr("Press")}{' '}
               <kbd className="rounded border border-border px-1 py-0.5 font-mono text-2xs">
                 ?
-              </kbd>{' '}
-              anytime to toggle this panel
-            </p>
+              </kbd>{' '}{tr("anytime to toggle this panel")}</p>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
@@ -49,6 +50,8 @@ function RoleDropdown({
   onChange: (role: ProjectRole) => void
   compact?: boolean
 }) {
+  const tr = useTranslation()
+
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
@@ -59,7 +62,7 @@ function RoleDropdown({
             compact ? 'text-xs' : 'text-sm',
           )}
         >
-          {roleLabelFor(value)}
+          {tr(roleLabelFor(value))}
           <ChevronDown className="h-3.5 w-3.5" />
         </button>
       </DropdownMenu.Trigger>
@@ -79,8 +82,8 @@ function RoleDropdown({
               )}
             >
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-text-primary">{r.label}</p>
-                <p className="text-xs text-text-tertiary mt-0.5">{r.description}</p>
+                <p className="text-sm font-medium text-text-primary">{tr(r.label)}</p>
+                <p className="text-xs text-text-tertiary mt-0.5">{tr(r.description)}</p>
               </div>
               {value === r.value && <Check className="h-4 w-4 text-accent shrink-0 mt-0.5" />}
             </DropdownMenu.Item>
@@ -106,6 +109,8 @@ function AddView({
   onSwitchToManage: () => void
   onMemberAdded: () => void
 }) {
+  const tr = useTranslation()
+
   const [query, setQuery] = React.useState('')
   const [role, setRole] = React.useState<ProjectRole>('editor')
   const [suggestions, setSuggestions] = React.useState<User[]>([])
@@ -187,8 +192,7 @@ function AddView({
         <div className="h-8 w-8 rounded-lg bg-accent/20 flex items-center justify-center">
           <Users className="h-4 w-4 text-accent" />
         </div>
-        <Dialog.Title className="text-base font-semibold text-text-primary">
-          Add to {projectName}
+        <Dialog.Title className="text-base font-semibold text-text-primary">{tr("Add to")}{' '}{projectName}
         </Dialog.Title>
       </div>
 
@@ -203,17 +207,17 @@ function AddView({
               setSelectedUser(null)
               setError(null)
             }}
-            placeholder="Name or email"
+            placeholder={tr("Name or email")}
             className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-tertiary outline-none"
           />
           <RoleDropdown value={role} onChange={setRole} />
         </div>
-        <p className="mt-1.5 text-xs text-text-tertiary">Add a new or existing Member</p>
+        <p className="mt-1.5 text-xs text-text-tertiary">{tr("Add a new or existing Member")}</p>
 
         {/* Suggestions dropdown */}
         {showSuggestions && suggestions.length > 0 && (
           <div className="mt-2">
-            <p className="text-xs font-medium text-text-tertiary mb-1.5">Suggested</p>
+            <p className="text-xs font-medium text-text-tertiary mb-1.5">{tr("Suggested")}</p>
             <div className="space-y-0.5">
               {suggestions.map((user) => (
                 <button
@@ -234,7 +238,7 @@ function AddView({
           </div>
         )}
 
-        {error && <p className="mt-2 text-xs text-status-error">{error}</p>}
+        {error && <p className="mt-2 text-xs text-status-error">{tr(error)}</p>}
       </div>
 
       {/* Message field */}
@@ -242,7 +246,7 @@ function AddView({
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Add a message (optional)"
+          placeholder={tr("Add a message (optional)")}
           rows={2}
           className="w-full rounded-lg border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary outline-none focus:border-border-focus resize-none"
         />
@@ -251,16 +255,14 @@ function AddView({
       {/* Actions */}
       <div className="flex items-center justify-end gap-2 px-6 py-4">
         <Dialog.Close asChild>
-          <Button variant="secondary" size="sm">Cancel</Button>
+          <Button variant="secondary" size="sm">{tr("Cancel")}</Button>
         </Dialog.Close>
         <Button
           size="sm"
           disabled={!selectedUser || adding}
           loading={adding}
           onClick={handleAdd}
-        >
-          Add
-        </Button>
+        >{tr("Add")}</Button>
       </div>
 
       {/* Footer: member avatars + count + manage */}
@@ -274,16 +276,14 @@ function AddView({
             </div>
           )}
           <span className="text-sm text-text-secondary font-medium">
-            {membersList.length} Member{membersList.length !== 1 ? 's' : ''}
+            {membersList.length}{' '}{tr("Member")}{membersList.length !== 1 ? 's' : ''}
           </span>
         </div>
         <button
           type="button"
           onClick={onSwitchToManage}
           className="text-sm text-text-secondary hover:text-text-primary font-medium transition-colors"
-        >
-          Manage
-        </button>
+        >{tr("Manage")}</button>
       </div>
     </div>
   )
@@ -308,6 +308,8 @@ function ManageView({
   onBack: () => void
   onMembersChanged: () => void
 }) {
+  const tr = useTranslation()
+
   const [removing, setRemoving] = React.useState<string | null>(null)
 
   async function handleRoleChange(userId: string, newRole: ProjectRole) {
@@ -342,8 +344,7 @@ function ManageView({
         >
           <ArrowLeft className="h-4 w-4 text-text-secondary" />
         </button>
-        <Dialog.Title className="text-base font-semibold text-text-primary">
-          Members of {projectName}
+        <Dialog.Title className="text-base font-semibold text-text-primary">{tr("Members of")}{' '}{projectName}
         </Dialog.Title>
       </div>
 
@@ -363,7 +364,7 @@ function ManageView({
                 <div className="flex items-center gap-1.5">
                   <p className="text-sm font-medium text-text-primary truncate">{m.user.name}</p>
                   {isCurrentUser && (
-                    <span className="text-[10px] text-text-tertiary">(you)</span>
+                    <span className="text-[10px] text-text-tertiary">{tr("(you)")}</span>
                   )}
                 </div>
                 <p className="text-xs text-text-tertiary truncate">{m.user.email}</p>
@@ -383,7 +384,7 @@ function ManageView({
                     isProjectOwner ? 'text-accent' : 'text-text-tertiary',
                   )}>
                     {isProjectOwner && <Crown className="h-3 w-3 inline mr-1" />}
-                    {roleLabelFor(m.role)}
+                    {tr(roleLabelFor(m.role))}
                   </span>
                 )}
 
@@ -407,7 +408,7 @@ function ManageView({
         })}
 
         {members.length === 0 && (
-          <p className="text-sm text-text-tertiary text-center py-8">No members yet</p>
+          <p className="text-sm text-text-tertiary text-center py-8">{tr("No members yet")}</p>
         )}
       </div>
     </div>
@@ -422,6 +423,8 @@ export function ProjectMembersDialog({
   projectId,
   projectName,
 }: ProjectMembersDialogProps) {
+  const tr = useTranslation()
+
   const [view, setView] = React.useState<'add' | 'manage'>('add')
   const [members, setMembers] = React.useState<MemberWithUser[]>([])
   const [loading, setLoading] = React.useState(false)
@@ -472,9 +475,7 @@ export function ProjectMembersDialog({
           <Dialog.Close className="absolute right-4 top-4 text-text-tertiary hover:text-text-primary transition-colors z-10">
             <X className="h-4 w-4" />
           </Dialog.Close>
-          <Dialog.Description className="sr-only">
-            Add or manage project members
-          </Dialog.Description>
+          <Dialog.Description className="sr-only">{tr("Add or manage project members")}</Dialog.Description>
 
           {loading ? (
             <div className="flex items-center justify-center py-16">

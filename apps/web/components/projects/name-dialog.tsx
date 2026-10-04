@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
@@ -27,6 +28,8 @@ export function NameDialog({
   submitLabel = 'Create',
   onSubmit,
 }: NameDialogProps) {
+  const tr = useTranslation()
+
   const [value, setValue] = React.useState(defaultValue)
   const inputRef = React.useRef<HTMLInputElement>(null)
 
@@ -59,11 +62,11 @@ export function NameDialog({
           </Dialog.Close>
 
           <Dialog.Title className="text-sm font-semibold text-text-primary">
-            {title}
+            {tr(title)}
           </Dialog.Title>
           {description && (
             <Dialog.Description className="mt-1 text-xs text-text-tertiary">
-              {description}
+              {tr(description)}
             </Dialog.Description>
           )}
 
@@ -81,11 +84,9 @@ export function NameDialog({
                 variant="secondary"
                 size="sm"
                 onClick={() => onOpenChange(false)}
-              >
-                Cancel
-              </Button>
+              >{tr("Cancel")}</Button>
               <Button type="submit" size="sm" disabled={!value.trim()}>
-                {submitLabel}
+                {tr(submitLabel)}
               </Button>
             </div>
           </form>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import * as Popover from '@radix-ui/react-popover'
 import { ArrowUpDown, Check } from 'lucide-react'
@@ -15,16 +16,18 @@ const sortOptions: { value: SortKey; label: string }[] = [
 ]
 
 export function SortPopover() {
+  const tr = useTranslation()
+
   const { sortKey, setSortKey, sortDirection, toggleSortDirection } = useViewStore()
   const activeLabel = sortOptions.find((o) => o.value === sortKey)?.label ?? 'Custom'
 
   return (
     <Popover.Root>
       <Popover.Trigger asChild>
-        <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors">
+        <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md whitespace-nowrap text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors">
           <ArrowUpDown className="h-4 w-4" />
-          <span>Sorted by</span>
-          <span className="text-text-primary font-medium">{activeLabel}</span>
+          <span>{tr("Sorted by")}</span>
+          <span className="text-text-primary font-medium">{tr(activeLabel)}</span>
         </button>
       </Popover.Trigger>
 
@@ -58,7 +61,7 @@ export function SortPopover() {
               <span className="w-4 shrink-0">
                 {sortKey === opt.value && <Check className="h-3.5 w-3.5" />}
               </span>
-              {opt.label}
+              {tr(opt.label)}
               {sortKey === opt.value && (
                 <span className="ml-auto text-xs text-text-tertiary">
                   {sortDirection === 'asc' ? 'A-Z' : 'Z-A'}

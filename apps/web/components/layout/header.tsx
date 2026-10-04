@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import { usePathname } from 'next/navigation'
 import { Search, ChevronRight, PanelRightClose, PanelRightOpen } from 'lucide-react'
@@ -16,6 +17,9 @@ const LABEL_MAP: Record<string, string> = {
   projects: 'Projects',
   notifications: 'Notifications',
   settings: 'Settings',
+  profile: 'Profile',
+  appearance: 'Appearance',
+  admin: 'Admin',
   new: 'New',
   upload: 'Upload',
 }
@@ -31,7 +35,7 @@ function isUuid(s: string): boolean {
  */
 const SKIP_SEGMENTS = new Set(['assets', 'collections'])
 
-function buildBreadcrumbs(pathname: string, dynamicLabels: Record<string, string>): { label: string; href: string }[] {
+function buildBreadcrumbs(pathname: string, dynamicLabels: Record<string, string>, tr: ReturnType<typeof useTranslation>): { label: string; href: string }[] {
   const segments = pathname.split('/').filter(Boolean)
   const crumbs: { label: string; href: string }[] = []
 
@@ -44,7 +48,7 @@ function buildBreadcrumbs(pathname: string, dynamicLabels: Record<string, string
     if (isUuid(segment) && !dynamicLabels[segment]) continue
     const label =
       dynamicLabels[segment] ??
-      LABEL_MAP[segment] ??
+      (LABEL_MAP[segment] ? tr(LABEL_MAP[segment]) : undefined) ??
       segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ')
     crumbs.push({ label, href: path })
   }
@@ -53,10 +57,12 @@ function buildBreadcrumbs(pathname: string, dynamicLabels: Record<string, string
 }
 
 export function Header({ onSearchOpen }: HeaderProps) {
+  const tr = useTranslation()
+
   const pathname = usePathname()
   const { rightPanelOpen, toggleRightPanel } = useViewStore()
   const { labels, extraCrumbs } = useBreadcrumbStore()
-  const urlCrumbs = buildBreadcrumbs(pathname, labels)
+  const urlCrumbs = buildBreadcrumbs(pathname, labels, tr)
   const breadcrumbs = [...urlCrumbs, ...extraCrumbs.map((c) => ({ label: c.label, href: c.href ?? '' }))]
 
   return (
@@ -95,7 +101,7 @@ export function Header({ onSearchOpen }: HeaderProps) {
           className="flex items-center gap-1.5 rounded-md border border-border bg-bg-secondary/60 px-2.5 py-1 text-xs text-text-tertiary hover:border-border-focus hover:text-text-secondary transition-colors"
         >
           <Search className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Search</span>
+          <span className="hidden sm:inline">{tr("Search")}</span>
           <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-border bg-bg-tertiary/50 px-1 py-0.5 font-mono text-[10px] text-text-tertiary">
             <span>⌘</span>K
           </kbd>
@@ -111,7 +117,7 @@ export function Header({ onSearchOpen }: HeaderProps) {
                 ? 'text-text-primary bg-accent-muted'
                 : 'text-text-tertiary hover:bg-bg-hover hover:text-text-primary',
             )}
-            title={rightPanelOpen ? 'Hide panel' : 'Show panel'}
+            title={rightPanelOpen ? tr("Hide panel") : tr("Show panel")}
           >
             {rightPanelOpen ? (
               <PanelRightClose className="h-4 w-4" />

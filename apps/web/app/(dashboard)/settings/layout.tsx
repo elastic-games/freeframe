@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -26,6 +27,8 @@ export default function SettingsLayout({
 }: {
   children: React.ReactNode
 }) {
+  const tr = useTranslation()
+
   const pathname = usePathname()
   const { user, isSuperAdmin } = useAuthStore()
 
@@ -34,7 +37,7 @@ export default function SettingsLayout({
       {/* Settings Sidebar */}
       <aside className="w-56 border-r border-border bg-bg-secondary shrink-0">
         <div className="p-4 border-b border-border">
-          <h2 className="text-sm font-semibold text-text-primary">Settings</h2>
+          <h2 className="text-sm font-semibold text-text-primary">{tr("Settings")}</h2>
           <p className="text-xs text-text-tertiary mt-0.5">
             {user?.name ?? 'User'}
           </p>
@@ -60,7 +63,7 @@ export default function SettingsLayout({
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />
-                <span>{item.label}</span>
+                <span>{tr(item.label)}</span>
               </Link>
             )
           })}

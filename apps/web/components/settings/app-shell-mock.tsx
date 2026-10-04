@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import { Layers, Upload, Search, Bell, ChevronsLeft } from 'lucide-react'
 import { PoweredByBadge } from '@/components/shared/powered-by-badge'
@@ -31,6 +32,8 @@ interface MockProps {
  * which is the whole reason to look before saving.
  */
 export function AppShellMock({ orgName, logoUrl, onLogoError }: MockProps) {
+  const tr = useTranslation()
+
   return (
     <div
       className="relative flex bg-bg-primary text-text-primary"
@@ -61,11 +64,11 @@ export function AppShellMock({ orgName, logoUrl, onLogoError }: MockProps) {
         <nav className="flex-1 space-y-0.5 px-2 py-2">
           <div className="flex h-9 items-center gap-2.5 rounded-md bg-bg-hover px-2.5 text-text-primary">
             <Layers className="h-[18px] w-[18px] shrink-0" strokeWidth={2} />
-            <span className="text-[13px] font-medium">Projects</span>
+            <span className="text-[13px] font-medium">{tr("Projects")}</span>
           </div>
           <div className="flex h-9 items-center gap-2.5 rounded-md px-2.5 text-text-secondary">
             <Upload className="h-[18px] w-[18px] shrink-0" strokeWidth={1.5} />
-            <span className="text-[13px]">Uploads</span>
+            <span className="text-[13px]">{tr("Uploads")}</span>
           </div>
         </nav>
 
@@ -82,7 +85,7 @@ export function AppShellMock({ orgName, logoUrl, onLogoError }: MockProps) {
           </div>
           <div className="flex items-center gap-2 pt-1 text-text-tertiary">
             <ChevronsLeft className="h-4 w-4" />
-            <span className="text-xs">Collapse</span>
+            <span className="text-xs">{tr("Collapse")}</span>
           </div>
         </div>
       </aside>
@@ -98,7 +101,7 @@ export function AppShellMock({ orgName, logoUrl, onLogoError }: MockProps) {
                 surface it actually paints. */}
             <div className="flex h-7 items-center gap-1.5 rounded-md bg-accent px-2.5">
               <Upload className="h-3.5 w-3.5 text-text-inverse" strokeWidth={2} />
-              <span className="text-xs font-medium text-text-inverse">Upload</span>
+              <span className="text-xs font-medium text-text-inverse">{tr("Upload")}</span>
             </div>
             <Bell className="h-4 w-4 text-text-tertiary" strokeWidth={1.5} />
             <div className="h-6 w-6 rounded-full bg-bg-tertiary" />
@@ -143,6 +146,8 @@ export function AppShellMock({ orgName, logoUrl, onLogoError }: MockProps) {
  * pretending to be a pixel-accurate render.
  */
 export function EmailMock({ orgName, logoUrl, onLogoError }: MockProps) {
+  const tr = useTranslation()
+
   const year = new Date().getFullYear()
   return (
     <div
@@ -165,8 +170,7 @@ export function EmailMock({ orgName, logoUrl, onLogoError }: MockProps) {
 
         <div className="space-y-4 px-6 py-6">
           <div className="h-3 w-56 rounded bg-bg-tertiary" />
-          <p className="text-sm text-text-secondary">
-            Use this code to sign in to {orgName}:
+          <p className="text-sm text-text-secondary">{tr("Use this code to sign in to")}{' '}{orgName}:
           </p>
           <div className="flex justify-center py-1">
             <span className="rounded-md border border-border bg-bg-primary px-5 py-2.5 font-mono text-xl tracking-[0.3em] text-text-primary">
@@ -178,10 +182,8 @@ export function EmailMock({ orgName, logoUrl, onLogoError }: MockProps) {
 
         <div className="space-y-1.5 border-t border-border px-6 py-5 text-center">
           <p className="text-xs text-text-tertiary">
-            © {year} {orgName}. All rights reserved.
-          </p>
-          <p className="text-2xs text-text-tertiary">
-            You&apos;re receiving this email because you have an account on {orgName}.
+            © {year} {orgName}{tr(". All rights reserved.")}</p>
+          <p className="text-2xs text-text-tertiary">{tr("You're receiving this email because you have an account on")}{' '}{orgName}.
           </p>
         </div>
       </div>
@@ -198,6 +200,8 @@ export function EmailMock({ orgName, logoUrl, onLogoError }: MockProps) {
  * signed in actually see, and it uses the dedicated login logo when one is set.
  */
 export function LoginScreenMock({ orgName, logoUrl, onLogoError }: MockProps) {
+  const tr = useTranslation()
+
   return (
     <div
       className="relative flex flex-col items-center justify-center bg-bg-primary px-4"
@@ -239,9 +243,7 @@ export function LoginScreenMock({ orgName, logoUrl, onLogoError }: MockProps) {
         <PoweredByBadge className="justify-center" />
       </div>
 
-      <p className="relative mt-8 text-2xs text-text-tertiary">
-        Collaborative media review &amp; approval
-      </p>
+      <p className="relative mt-8 text-2xs text-text-tertiary">{tr("Collaborative media review & approval")}</p>
     </div>
   )
 }

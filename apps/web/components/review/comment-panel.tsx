@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from "react";
 import {
   CheckCircle2,
@@ -199,6 +200,8 @@ function CommentMenu({
   onEdit: () => void;
   onDelete: (commentId: string) => Promise<void>;
 }) {
+  const tr = useTranslation()
+
   const [open, setOpen] = React.useState(false);
 
   // Only show menu for own comments — others only get emoji reactions
@@ -208,7 +211,7 @@ function CommentMenu({
     <div className="relative">
       <button
         onClick={() => setOpen((p) => !p)}
-        title="Comment actions"
+        title={tr("Comment actions")}
         className="h-7 w-7 flex items-center justify-center rounded-full text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary transition-colors"
       >
         <MoreHorizontal className="h-4 w-4" />
@@ -223,9 +226,7 @@ function CommentMenu({
           className="flex w-full items-center gap-2.5 px-3 py-2 text-[13px] text-text-secondary hover:bg-bg-tertiary transition-colors"
           onClick={() => { onEdit(); setOpen(false) }}
         >
-          <Pencil className="h-3.5 w-3.5" />
-          Edit
-        </button>
+          <Pencil className="h-3.5 w-3.5" />{tr("Edit")}</button>
         <button
           className="flex w-full items-center gap-2.5 px-3 py-2 text-[13px] text-text-secondary hover:bg-bg-tertiary transition-colors"
           onClick={() => {
@@ -243,9 +244,7 @@ function CommentMenu({
             setOpen(false)
           }}
         >
-          <Link2 className="h-3.5 w-3.5" />
-          Copy Link
-        </button>
+          <Link2 className="h-3.5 w-3.5" />{tr("Copy Link")}</button>
         <button
           className="flex w-full items-center gap-2.5 px-3 py-2 text-[13px] text-red-400 hover:bg-bg-tertiary transition-colors"
           onClick={() => {
@@ -253,9 +252,7 @@ function CommentMenu({
             setOpen(false);
           }}
         >
-          <Trash2 className="h-3.5 w-3.5" />
-          Delete
-        </button>
+          <Trash2 className="h-3.5 w-3.5" />{tr("Delete")}</button>
       </Dropdown>
     </div>
   );
@@ -272,6 +269,8 @@ function InlineReplyInput({
   onSubmit: (parentId: string, body: string) => Promise<void>;
   onCancel: () => void;
 }) {
+  const tr = useTranslation()
+
   const [body, setBody] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
   const [emojiOpen, setEmojiOpen] = React.useState(false);
@@ -315,7 +314,7 @@ function InlineReplyInput({
         ref={inputRef}
         type="text"
         className="w-full rounded-lg border border-border bg-bg-tertiary px-3 py-2 text-[16px] [@media(hover:hover)]:text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20"
-        placeholder="Leave your reply here..."
+        placeholder={tr("Leave your reply here...")}
         value={body}
         onChange={(e) => setBody(e.target.value)}
         onKeyDown={(e) => {
@@ -335,7 +334,7 @@ function InlineReplyInput({
             <button
               onClick={() => setEmojiOpen((p) => !p)}
               className="h-7 w-7 flex items-center justify-center rounded-md text-text-tertiary hover:bg-bg-tertiary hover:text-text-secondary transition-colors"
-              title="Add emoji"
+              title={tr("Add emoji")}
             >
               <Smile className="h-4 w-4" />
             </button>
@@ -364,9 +363,7 @@ function InlineReplyInput({
           <button
             onClick={onCancel}
             className="px-3 py-1 text-[12px] font-medium text-text-secondary hover:text-text-primary rounded-md border border-border hover:bg-bg-tertiary transition-colors"
-          >
-            Cancel
-          </button>
+          >{tr("Cancel")}</button>
           <button
             onClick={handleSubmit}
             disabled={!body.trim() || submitting}
@@ -417,6 +414,8 @@ function CommentItem({
   onSeekToTimecode,
   onShowAnnotation,
 }: CommentItemProps) {
+  const tr = useTranslation()
+
   const storeSeekTo = useReviewStore((s) => s.seekTo);
   const seekTo=(time:number,pause?:boolean,clock?:'canonical'|'legacy') => {
     if (onSeekToTimecode) onSeekToTimecode(time,pause);
@@ -528,7 +527,7 @@ function CommentItem({
               {authorName}
             </span>
             <span className="text-[11px] text-text-tertiary leading-none">
-              {formatRelativeTime(comment.created_at)}
+              {formatRelativeTime(comment.created_at, tr.locale)}
             </span>
             <div className="ml-auto flex items-center gap-1.5">
               {commentNumber !== undefined && depth === 0 && (
@@ -557,10 +556,10 @@ function CommentItem({
                       showAnnotation(comment.annotation.drawing_data);
                     }
                   }}
-                  title={comment.review_clock ? 'Jump to verified reviewed frame' : 'Unverified legacy playback time; preserves the original clock'}
+                  title={comment.review_clock ? tr("Jump to verified reviewed frame") : tr("Unverified legacy playback time; preserves the original clock")}
                 >
                   <Clock className="h-2.5 w-2.5" />
-                  {comment.review_clock?.schema==='freeframe-annotation-clock/v1' ? `Reviewed frame ${comment.review_clock.reviewIndex}` : `${formatTime(comment.timecode_start)} · unverified legacy time`}
+                  {comment.review_clock?.schema==='freeframe-annotation-clock/v1' ? tr("Reviewed frame {value0}", { value0: comment.review_clock.reviewIndex }) : tr("{value0} · unverified legacy time", { value0: formatTime(comment.timecode_start) })}
                   {comment.timecode_end !== null &&
                     comment.timecode_end !== undefined && (
                       <> — {formatTime(comment.timecode_end)}</>
@@ -580,7 +579,7 @@ function CommentItem({
                     seekTo(comment.timecode_start, true, comment.review_clock?.schema==='freeframe-annotation-clock/v1' ? 'canonical' : 'legacy');
                   }
                 }}
-                title="Show annotation"
+                title={tr("Show annotation")}
               >
                 <Pencil className="h-3 w-3" />
               </button>
@@ -612,14 +611,12 @@ function CommentItem({
                   }}
                   className="rounded-md bg-accent px-2.5 py-1 text-xs font-medium text-white hover:bg-accent/90 disabled:opacity-50 transition-colors"
                 >
-                  {saving ? 'Saving...' : 'Save'}
+                  {saving ? tr("Saving...") : tr("Save")}
                 </button>
                 <button
                   onClick={() => { setEditing(false); setEditBody(comment.body); }}
                   className="rounded-md px-2.5 py-1 text-xs text-text-tertiary hover:text-text-primary transition-colors"
-                >
-                  Cancel
-                </button>
+                >{tr("Cancel")}</button>
               </div>
             </div>
           ) : (
@@ -655,9 +652,7 @@ function CommentItem({
               <button
                 className="text-[13px] font-medium text-text-tertiary hover:text-text-secondary transition-colors"
                 onClick={() => onReply(comment.id)}
-              >
-                Reply
-              </button>
+              >{tr("Reply")}</button>
             )}
 
             <div className="ml-auto flex items-center gap-0.5">
@@ -666,7 +661,7 @@ function CommentItem({
                 <button
                   className="h-7 w-7 flex items-center justify-center rounded-full text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary transition-colors"
                   onClick={() => setShowEmojiPicker((p) => !p)}
-                  title="Add reaction"
+                  title={tr("Add reaction")}
                 >
                   <Smile className="h-4 w-4" />
                 </button>
@@ -703,7 +698,7 @@ function CommentItem({
                   className="h-6 w-6 flex items-center justify-center rounded-full bg-emerald-500 text-text-inverse hover:bg-emerald-600 transition-colors disabled:opacity-50"
                   onClick={handleResolve}
                   disabled={resolving}
-                  title="Unresolve"
+                  title={tr("Unresolve")}
                 >
                   <Check className="h-3 w-3" strokeWidth={3} />
                 </button>
@@ -712,7 +707,7 @@ function CommentItem({
                   className="h-6 w-6 flex items-center justify-center rounded-full text-text-tertiary hover:text-emerald-400 hover:bg-bg-tertiary transition-colors disabled:opacity-50 opacity-0 group-hover/comment:opacity-100"
                   onClick={handleResolve}
                   disabled={resolving}
-                  title="Resolve"
+                  title={tr("Resolve")}
                 >
                   <CheckCircle2 className="h-4 w-4" />
                 </button>
@@ -816,6 +811,8 @@ export function CommentPanel({
   canExport = true,
   className,
 }: CommentPanelProps) {
+  const tr = useTranslation()
+
   const focusedCommentId = useReviewStore((s) => s.focusedCommentId);
   const setFocusedCommentId = useReviewStore((s) => s.setFocusedCommentId);
   const setActiveAnnotation = useReviewStore((s) => s.setActiveAnnotation);
@@ -1010,7 +1007,7 @@ export function CommentPanel({
               setSortOpen(false);
             }}
           >
-            {visLabel}
+            {tr(visLabel)}
             <ChevronDown className="h-3.5 w-3.5" />
           </button>
           <Dropdown
@@ -1048,7 +1045,7 @@ export function CommentPanel({
                   setVisOpen(false);
                 }}
               >
-                {item.label}
+                {tr(item.label)}
                 <span className="text-[12px] text-text-tertiary tabular-nums">
                   {item.count}
                 </span>
@@ -1068,7 +1065,7 @@ export function CommentPanel({
                   ? "text-accent bg-accent/10"
                   : "text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary",
               )}
-              title="Filter"
+              title={tr("Filter")}
               onClick={() => {
                 setFilterOpen((p) => !p);
                 setVisOpen(false);
@@ -1083,9 +1080,7 @@ export function CommentPanel({
               align="right"
               className="w-56"
             >
-              <div className="px-3 py-2 text-[11px] text-text-tertiary uppercase tracking-wider font-medium">
-                Filter by...
-              </div>
+              <div className="px-3 py-2 text-[11px] text-text-tertiary uppercase tracking-wider font-medium">{tr("Filter by...")}</div>
               {[
                 {
                   key: "annotations" as const,
@@ -1121,7 +1116,7 @@ export function CommentPanel({
                 >
                   <div className="flex items-center gap-2.5">
                     <Icon className="h-4 w-4" />
-                    {label}
+                    {tr(label)}
                   </div>
                   <div
                     className={cn(
@@ -1139,14 +1134,10 @@ export function CommentPanel({
               ))}
               <div className="border-t border-border mt-1 pt-1">
                 <button className="flex w-full items-center gap-2.5 px-3 py-2 text-[13px] text-text-secondary hover:bg-bg-tertiary transition-colors">
-                  <Hash className="h-4 w-4" />
-                  Hashtag
-                  <ChevronRight className="h-3.5 w-3.5 ml-auto" />
+                  <Hash className="h-4 w-4" />{tr("Hashtag")}<ChevronRight className="h-3.5 w-3.5 ml-auto" />
                 </button>
                 <button className="flex w-full items-center gap-2.5 px-3 py-2 text-[13px] text-text-secondary hover:bg-bg-tertiary transition-colors">
-                  <User className="h-4 w-4" />
-                  Person
-                  <ChevronRight className="h-3.5 w-3.5 ml-auto" />
+                  <User className="h-4 w-4" />{tr("Person")}<ChevronRight className="h-3.5 w-3.5 ml-auto" />
                 </button>
               </div>
               {hasActiveFilters && (
@@ -1154,9 +1145,7 @@ export function CommentPanel({
                   <button
                     className="w-full py-1.5 text-[13px] text-text-secondary bg-bg-tertiary hover:bg-bg-hover rounded-lg transition-colors font-medium"
                     onClick={() => setFilters(EMPTY_FILTERS)}
-                  >
-                    Clear Filters
-                  </button>
+                  >{tr("Clear Filters")}</button>
                 </div>
               )}
             </Dropdown>
@@ -1171,7 +1160,7 @@ export function CommentPanel({
                   ? "text-accent bg-accent/10"
                   : "text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary",
               )}
-              title="Sort"
+              title={tr("Sort")}
               onClick={() => {
                 setSortOpen((p) => !p);
                 setVisOpen(false);
@@ -1186,9 +1175,7 @@ export function CommentPanel({
               align="right"
               className="w-52"
             >
-              <div className="px-3 py-2 text-[11px] text-text-tertiary uppercase tracking-wider font-medium">
-                Sort thread by...
-              </div>
+              <div className="px-3 py-2 text-[11px] text-text-tertiary uppercase tracking-wider font-medium">{tr("Sort thread by...")}</div>
               {[
                 { id: "timecode" as const, label: "Timecode (Default)" },
                 { id: "oldest" as const, label: "Oldest" },
@@ -1209,7 +1196,7 @@ export function CommentPanel({
                     setSortOpen(false);
                   }}
                 >
-                  {item.label}
+                  {tr(item.label)}
                   {sortMode === item.id && (
                     <Check className="h-4 w-4 text-accent" />
                   )}
@@ -1226,7 +1213,7 @@ export function CommentPanel({
                 ? "text-accent bg-accent/10"
                 : "text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary",
             )}
-            title="Search"
+            title={tr("Search")}
             onClick={() => {
               setSearchOpen((p) => !p);
               if (searchOpen) setSearchQuery("");
@@ -1245,7 +1232,7 @@ export function CommentPanel({
                     ? "text-accent bg-accent/10"
                     : "text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary",
                 )}
-                title="Export comments"
+                title={tr("Export comments")}
                 onClick={() => {
                   // Opening the menu is the start of a new attempt, so the
                   // previous refusal stops being the answer to anything.
@@ -1264,9 +1251,7 @@ export function CommentPanel({
                 align="right"
                 className="w-56"
               >
-                <div className="px-3 py-2 text-[11px] text-text-tertiary uppercase tracking-wider font-medium">
-                  Export comments
-                </div>
+                <div className="px-3 py-2 text-[11px] text-text-tertiary uppercase tracking-wider font-medium">{tr("Export comments")}</div>
                 {currentAsset?.asset_type === "video" && (
                   <>
                     <button
@@ -1316,7 +1301,7 @@ export function CommentPanel({
               ref={searchRef}
               type="text"
               className="flex-1 bg-transparent text-[16px] [@media(hover:hover)]:text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none"
-              placeholder="Search..."
+              placeholder={tr("Search...")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -1334,9 +1319,7 @@ export function CommentPanel({
                 setSearchQuery("");
               }}
               className="text-[12px] text-text-tertiary hover:text-text-secondary font-medium"
-            >
-              Cancel
-            </button>
+            >{tr("Cancel")}</button>
           </div>
         </div>
       )}
@@ -1354,12 +1337,8 @@ export function CommentPanel({
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-bg-tertiary text-text-tertiary mb-3">
               <MessageSquare className="h-6 w-6" />
             </div>
-            <p className="text-sm text-text-secondary font-medium">
-              No comments yet
-            </p>
-            <p className="text-xs text-text-tertiary mt-1">
-              Leave a comment below to start the review
-            </p>
+            <p className="text-sm text-text-secondary font-medium">{tr("No comments yet")}</p>
+            <p className="text-xs text-text-tertiary mt-1">{tr("Leave a comment below to start the review")}</p>
           </div>
         )}
 

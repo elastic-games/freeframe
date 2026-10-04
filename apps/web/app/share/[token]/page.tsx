@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import {
   Lock,
@@ -128,6 +129,8 @@ interface PasswordGateProps {
 }
 
 function PasswordGate({ onSubmit, error, loading }: PasswordGateProps) {
+  const tr = useTranslation()
+
   const [password, setPassword] = React.useState('')
 
   function handleSubmit(e: React.FormEvent) {
@@ -160,7 +163,7 @@ function PasswordGate({ onSubmit, error, loading }: PasswordGateProps) {
           )}
           <div className="text-center">
             <h1 className="text-sm font-semibold text-text-primary">{orgName}</h1>
-            <p className="text-xs text-text-tertiary mt-1">Password required to access this link</p>
+            <p className="text-xs text-text-tertiary mt-1">{tr("Password required to access this link")}</p>
           </div>
         </div>
         <form onSubmit={handleSubmit} className="space-y-3">
@@ -168,14 +171,12 @@ function PasswordGate({ onSubmit, error, loading }: PasswordGateProps) {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter password…"
+            placeholder={tr("Enter password…")}
             autoFocus
             className="flex h-9 w-full rounded-md border border-border bg-bg-tertiary px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-border-focus"
           />
-          {error && <p className="text-xs text-status-error">{error}</p>}
-          <Button type="submit" size="sm" className="w-full" loading={loading}>
-            Access link
-          </Button>
+          {error && <p className="text-xs text-status-error">{tr(error)}</p>}
+          <Button type="submit" size="sm" className="w-full" loading={loading}>{tr("Access link")}</Button>
         </form>
         <PoweredByBadge className="mt-6 text-center justify-center" />
       </div>
@@ -190,6 +191,8 @@ interface ErrorStateProps {
 }
 
 function ErrorState({ expired }: ErrorStateProps) {
+  const tr = useTranslation()
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg-primary p-4">
@@ -204,12 +207,12 @@ function ErrorState({ expired }: ErrorStateProps) {
           </div>
         </div>
         <h1 className="text-sm font-semibold text-text-primary">
-          {expired ? 'Link expired' : 'Link not found'}
+          {expired ? tr("Link expired") : tr("Link not found")}
         </h1>
         <p className="mt-1 text-xs text-text-tertiary">
           {expired
-            ? 'This share link has expired and is no longer accessible.'
-            : 'This share link is invalid or has been removed.'}
+            ? tr("This share link has expired and is no longer accessible.")
+            : tr("This share link is invalid or has been removed.")}
         </p>
         <PoweredByBadge className="mt-6" showOrgName />
       </div>
@@ -245,6 +248,8 @@ export default function SharePage({
 }: {
   params: { token: string }
 }) {
+  const tr = useTranslation()
+
   const { token } = params
 
   type PageState =
@@ -407,15 +412,11 @@ export default function SharePage({
           <h1 className="text-lg font-semibold text-text-primary">
             {state.title || 'Secure Share Link'}
           </h1>
-          <p className="mt-2 text-sm text-text-tertiary">
-            This link is private. Please sign in to view the shared content.
-          </p>
+          <p className="mt-2 text-sm text-text-tertiary">{tr("This link is private. Please sign in to view the shared content.")}</p>
           <a
             href={withBasePath('/login')}
             className="mt-4 inline-flex w-full items-center justify-center rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-text-primary hover:bg-accent/90 transition-colors"
-          >
-            Sign in to continue
-          </a>
+          >{tr("Sign in to continue")}</a>
         </div>
       </div>
     )

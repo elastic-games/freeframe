@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import {
   Bell,
@@ -25,29 +26,31 @@ const notificationIcons: Record<NotificationType, React.ElementType> = {
   approval: CheckCircle,
 }
 
-function getNotificationText(n: Notification): { title: string; subtitle: string | null } {
-  const actor = n.actor_name || 'Someone'
-  const asset = n.asset_name || 'an asset'
+function getNotificationText(n: Notification, tr: ReturnType<typeof useTranslation>): { title: string; subtitle: string | null } {
+  const actor = n.actor_name || tr('Someone')
+  const asset = n.asset_name || tr('an asset')
   switch (n.type) {
     case 'mention':
-      return { title: `${actor} mentioned you on ${asset}`, subtitle: n.comment_preview || null }
+      return { title: tr('{actor} mentioned you on {asset}', {actor, asset}), subtitle: n.comment_preview || null }
     case 'comment':
-      return { title: `${actor} commented on ${asset}`, subtitle: n.comment_preview || null }
+      return { title: tr('{actor} commented on {asset}', {actor, asset}), subtitle: n.comment_preview || null }
     case 'assignment':
-      return { title: `${actor} assigned you to ${asset}`, subtitle: null }
+      return { title: tr('{actor} assigned you to {asset}', {actor, asset}), subtitle: null }
     case 'approval':
-      return { title: `${actor} updated approval on ${asset}`, subtitle: null }
+      return { title: tr('{actor} updated approval on {asset}', {actor, asset}), subtitle: null }
     case 'due_soon':
-      return { title: `${asset} is due soon`, subtitle: null }
+      return { title: tr('{asset} is due soon', {asset}), subtitle: null }
     default:
       return { title: 'New notification', subtitle: null }
   }
 }
 
 function NotificationItem({ notification, onClose }: { notification: Notification; onClose: () => void }) {
+  const tr = useTranslation()
+
   const { markAsRead } = useNotificationStore()
   const Icon = notificationIcons[notification.type]
-  const { title, subtitle } = getNotificationText(notification)
+  const { title, subtitle } = getNotificationText(notification, tr)
 
   function handleClick() {
     if (!notification.read) markAsRead(notification.id)
@@ -80,11 +83,11 @@ function NotificationItem({ notification, onClose }: { notification: Notificatio
         <Icon className="h-3.5 w-3.5" />
       </div>
       <div className="flex flex-1 flex-col gap-0.5 min-w-0">
-        <p className="text-sm text-text-primary font-medium">{title}</p>
+        <p className="text-sm text-text-primary font-medium">{tr(title)}</p>
         {subtitle && (
           <p className="text-xs text-text-secondary line-clamp-2">{subtitle}</p>
         )}
-        <p className="text-2xs text-text-tertiary mt-0.5">{formatRelativeTime(notification.created_at)}</p>
+        <p className="text-2xs text-text-tertiary mt-0.5">{formatRelativeTime(notification.created_at, tr.locale)}</p>
       </div>
       {!notification.read && (
         <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-accent" />
@@ -99,6 +102,8 @@ interface NotificationDrawerProps {
 }
 
 export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
+  const tr = useTranslation()
+
   const embedded = useThemeStore((s) => s.hostTheme !== null)
   const { notifications, isLoading, fetchNotifications, markAllRead, unreadCount } =
     useNotificationStore()
@@ -121,13 +126,13 @@ export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
       <div className={cn('fixed left-safe z-50 w-[380px] border-r border-border bg-bg-primary shadow-2xl flex flex-col pb-safe animate-in slide-in-from-left-2 duration-150', embedded ? '[--ff-left:0px] top-11 h-[calc(100dvh-44px)] max-w-full' : '[--ff-left:52px] top-0 h-full')}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 h-12 border-b border-border shrink-0">
-          <span className="text-sm font-semibold text-text-primary">Notifications</span>
+          <span className="text-sm font-semibold text-text-primary">{tr("Notifications")}</span>
           <div className="flex items-center gap-1">
             <Link
               href="/settings/notifications"
               onClick={onClose}
               className="flex items-center justify-center h-7 w-7 rounded-md text-text-tertiary hover:text-text-primary hover:bg-bg-hover transition-colors"
-              title="Notification settings"
+              title={tr("Notification settings")}
             >
               <Settings className="h-4 w-4" />
             </Link>
@@ -149,26 +154,20 @@ export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
                 'text-sm font-medium transition-colors',
                 tab === 'all' ? 'text-text-primary' : 'text-text-tertiary hover:text-text-secondary',
               )}
-            >
-              All
-            </button>
+            >{tr("All")}</button>
             <button
               onClick={() => setTab('unread')}
               className={cn(
                 'text-sm font-medium transition-colors',
                 tab === 'unread' ? 'text-text-primary' : 'text-text-tertiary hover:text-text-secondary',
               )}
-            >
-              Unread
-            </button>
+            >{tr("Unread")}</button>
           </div>
           {unreadCount > 0 && (
             <button
               onClick={markAllRead}
               className="text-xs text-text-tertiary hover:text-text-primary transition-colors"
-            >
-              Mark all as read
-            </button>
+            >{tr("Mark all as read")}</button>
           )}
         </div>
 
@@ -185,8 +184,8 @@ export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
               <div className="h-14 w-14 rounded-full bg-bg-tertiary flex items-center justify-center mb-3">
                 <Bell className="h-7 w-7 text-text-tertiary" />
               </div>
-              <p className="text-sm font-medium text-text-primary">No Updates Yet</p>
-              <p className="text-xs text-text-tertiary mt-1">New activity on your account will show here.</p>
+              <p className="text-sm font-medium text-text-primary">{tr("No Updates Yet")}</p>
+              <p className="text-xs text-text-tertiary mt-1">{tr("New activity on your account will show here.")}</p>
             </div>
           ) : (
             <div className="p-1 space-y-0.5">

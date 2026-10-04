@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import * as RadixAvatar from '@radix-ui/react-avatar'
 import { cn } from '@/lib/utils'
@@ -27,6 +28,8 @@ function getInitials(name?: string | null): string {
 }
 
 export function Avatar({ src, name, size = 'md', className }: AvatarProps) {
+  const tr = useTranslation()
+
   return (
     <RadixAvatar.Root
       className={cn(
@@ -38,7 +41,7 @@ export function Avatar({ src, name, size = 'md', className }: AvatarProps) {
       {src && (
         <RadixAvatar.Image
           src={src}
-          alt={name ?? 'Avatar'}
+          alt={name ?? tr("Avatar")}
           className="h-full w-full object-cover"
         />
       )}

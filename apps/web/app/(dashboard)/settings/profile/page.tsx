@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import { User } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth-store'
@@ -10,6 +11,8 @@ import { Avatar } from '@/components/shared/avatar'
 import { setTokens } from '@/lib/auth'
 
 export default function ProfilePage() {
+  const tr = useTranslation()
+
   const { user, fetchUser } = useAuthStore()
 
   const [name, setName] = React.useState(user?.name ?? '')
@@ -100,18 +103,14 @@ export default function ProfilePage() {
           <User className="h-5 w-5 text-text-primary" />
         </div>
         <div>
-          <h1 className="text-lg font-semibold text-text-primary">Profile</h1>
-          <p className="text-sm text-text-secondary">
-            Manage your profile and account settings
-          </p>
+          <h1 className="text-lg font-semibold text-text-primary">{tr("Profile")}</h1>
+          <p className="text-sm text-text-secondary">{tr("Manage your profile and account settings")}</p>
         </div>
       </div>
 
       {/* Profile section */}
       <section className="space-y-4">
-        <h2 className="text-sm font-semibold text-text-primary border-b border-border pb-2">
-          Profile
-        </h2>
+        <h2 className="text-sm font-semibold text-text-primary border-b border-border pb-2">{tr("Profile")}</h2>
 
         <div className="flex items-center gap-4">
           <Avatar src={user?.avatar_url} name={user?.name} size="lg" />
@@ -125,96 +124,80 @@ export default function ProfilePage() {
 
         <form onSubmit={handleProfileSave} className="space-y-4">
           <div className="space-y-1.5">
-            <label htmlFor="name" className="text-xs font-medium text-text-secondary">
-              Full Name
-            </label>
+            <label htmlFor="name" className="text-xs font-medium text-text-secondary">{tr("Full Name")}</label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Your name"
+              placeholder={tr("Your name")}
             />
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="email" className="text-xs font-medium text-text-secondary">
-              Email
-            </label>
+            <label htmlFor="email" className="text-xs font-medium text-text-secondary">{tr("Email")}</label>
             <Input
               id="email"
               value={user?.email ?? ''}
               disabled
               className="opacity-60 cursor-not-allowed"
             />
-            <p className="text-2xs text-text-tertiary">
-              Email cannot be changed. Contact your admin for help.
-            </p>
+            <p className="text-2xs text-text-tertiary">{tr("Email cannot be changed. Contact your admin for help.")}</p>
           </div>
 
           {profileError && (
-            <p className="text-xs text-status-error">{profileError}</p>
+            <p className="text-xs text-status-error">{tr(profileError)}</p>
           )}
           {profileSuccess && (
-            <p className="text-xs text-status-success">Profile saved successfully.</p>
+            <p className="text-xs text-status-success">{tr("Profile saved successfully.")}</p>
           )}
 
-          <Button type="submit" variant="primary" size="sm" loading={isSavingProfile}>
-            Save Profile
-          </Button>
+          <Button type="submit" variant="primary" size="sm" loading={isSavingProfile}>{tr("Save Profile")}</Button>
         </form>
       </section>
 
       {/* Password section */}
       <section className="space-y-4">
-        <h2 className="text-sm font-semibold text-text-primary border-b border-border pb-2">
-          Change Password
-        </h2>
+        <h2 className="text-sm font-semibold text-text-primary border-b border-border pb-2">{tr("Change Password")}</h2>
 
         <form onSubmit={handlePasswordSave} className="space-y-4">
           <div className="space-y-1.5">
-            <label htmlFor="currentPassword" className="text-xs font-medium text-text-secondary">
-              Current Password
-            </label>
+            <label htmlFor="currentPassword" className="text-xs font-medium text-text-secondary">{tr("Current Password")}</label>
             <Input
               id="currentPassword"
               type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="Enter current password"
+              placeholder={tr("Enter current password")}
             />
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="newPassword" className="text-xs font-medium text-text-secondary">
-              New Password
-            </label>
+            <label htmlFor="newPassword" className="text-xs font-medium text-text-secondary">{tr("New Password")}</label>
             <Input
               id="newPassword"
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Min 8 characters"
+              placeholder={tr("Min 8 characters")}
             />
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="confirmPassword" className="text-xs font-medium text-text-secondary">
-              Confirm New Password
-            </label>
+            <label htmlFor="confirmPassword" className="text-xs font-medium text-text-secondary">{tr("Confirm New Password")}</label>
             <Input
               id="confirmPassword"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Repeat new password"
+              placeholder={tr("Repeat new password")}
             />
           </div>
 
           {passwordError && (
-            <p className="text-xs text-status-error">{passwordError}</p>
+            <p className="text-xs text-status-error">{tr(passwordError)}</p>
           )}
           {passwordSuccess && (
-            <p className="text-xs text-status-success">Password changed successfully.</p>
+            <p className="text-xs text-status-success">{tr("Password changed successfully.")}</p>
           )}
 
           <Button
@@ -222,9 +205,7 @@ export default function ProfilePage() {
             variant="secondary"
             size="sm"
             loading={isSavingPassword}
-          >
-            Change Password
-          </Button>
+          >{tr("Change Password")}</Button>
         </form>
       </section>
     </div>

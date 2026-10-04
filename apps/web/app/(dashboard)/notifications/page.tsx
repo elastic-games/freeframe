@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import {
   Bell,
@@ -33,6 +34,7 @@ const notificationLabels: Record<NotificationType, string> = {
 }
 
 function NotificationItem({ notification }: { notification: Notification }) {
+  const tr = useTranslation()
   const { markAsRead } = useNotificationStore()
   const Icon = notificationIcons[notification.type]
 
@@ -59,10 +61,10 @@ function NotificationItem({ notification }: { notification: Notification }) {
 
       <div className="flex flex-1 flex-col gap-0.5 min-w-0">
         <p className="text-sm text-text-primary">
-          {notificationLabels[notification.type]}
+          {tr(notificationLabels[notification.type])}
         </p>
         <p className="text-xs text-text-tertiary">
-          {formatRelativeTime(notification.created_at)}
+          {formatRelativeTime(notification.created_at, tr.locale)}
         </p>
       </div>
 
@@ -74,6 +76,8 @@ function NotificationItem({ notification }: { notification: Notification }) {
 }
 
 export default function NotificationsPage() {
+  const tr = useTranslation()
+
   usePageTitle('Notifications')
   const { notifications, isLoading, fetchNotifications, markAllRead, unreadCount } =
     useNotificationStore()
@@ -87,17 +91,14 @@ export default function NotificationsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-text-primary">Notifications</h1>
+          <h1 className="text-lg font-semibold text-text-primary">{tr("Notifications")}</h1>
           {unreadCount > 0 && (
             <p className="text-sm text-text-secondary mt-0.5">
-              {unreadCount} unread
-            </p>
+              {unreadCount}{' '}{tr("unread")}</p>
           )}
         </div>
         {unreadCount > 0 && (
-          <Button variant="ghost" size="sm" onClick={markAllRead}>
-            Mark all read
-          </Button>
+          <Button variant="ghost" size="sm" onClick={markAllRead}>{tr("Mark all read")}</Button>
         )}
       </div>
 
@@ -114,8 +115,8 @@ export default function NotificationsPage() {
       ) : notifications.length === 0 ? (
         <EmptyState
           icon={Bell}
-          title="No Updates Yet"
-          description="New activity on your account will show here."
+          title={tr("No Updates Yet")}
+          description={tr("New activity on your account will show here.")}
         />
       ) : (
         <div className="space-y-0.5">

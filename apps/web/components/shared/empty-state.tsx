@@ -1,3 +1,6 @@
+'use client'
+
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -21,6 +24,7 @@ export function EmptyState({
   action,
   className,
 }: EmptyStateProps) {
+  const tr = useTranslation()
   return (
     <div
       className={cn(
@@ -34,14 +38,14 @@ export function EmptyState({
         </div>
       )}
       <div className="flex flex-col gap-1">
-        <p className="text-sm font-medium text-text-primary">{title}</p>
+        <p className="text-sm font-medium text-text-primary">{tr(title)}</p>
         {description && (
-          <p className="text-xs text-text-secondary max-w-xs">{description}</p>
+          <p className="text-xs text-text-secondary max-w-xs">{tr(description)}</p>
         )}
       </div>
       {action && (
         <Button variant="secondary" size="sm" onClick={action.onClick}>
-          {action.label}
+          {tr(action.label)}
         </Button>
       )}
     </div>

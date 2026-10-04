@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { Box, Film, Music, Image as ImageIcon, Images, MessageSquare, MoreHorizontal, Check, Share2, Download, Link as LinkIcon, Pencil, Trash2 } from 'lucide-react'
@@ -84,6 +85,8 @@ export function AssetCard({
   thumbnailScale = 'fit',
   className,
 }: AssetCardProps) {
+  const tr = useTranslation()
+
   const TypeIcon = assetTypeIcons[asset.asset_type]
   const lineClamp = titleLines === '1' ? 'line-clamp-1' : titleLines === '2' ? 'line-clamp-2' : 'line-clamp-3'
   const [imgError, setImgError] = React.useState(false)
@@ -184,17 +187,13 @@ export function AssetCard({
                     onSelect={onShare}
                     className="flex items-center gap-2.5 mx-1 px-2.5 py-2 rounded-lg text-sm text-text-secondary hover:bg-bg-hover hover:text-text-primary cursor-pointer outline-none transition-colors"
                   >
-                    <Share2 className="h-3.5 w-3.5 text-text-tertiary" />
-                    Create Share Link
-                  </DropdownMenu.Item>
+                    <Share2 className="h-3.5 w-3.5 text-text-tertiary" />{tr("Create Share Link")}</DropdownMenu.Item>
                   <DropdownMenu.Separator className="my-1 h-px bg-border mx-1" />
                   <DropdownMenu.Item
                     onSelect={onDownload}
                     className="flex items-center gap-2.5 mx-1 px-2.5 py-2 rounded-lg text-sm text-text-secondary hover:bg-bg-hover hover:text-text-primary cursor-pointer outline-none transition-colors"
                   >
-                    <Download className="h-3.5 w-3.5 text-text-tertiary" />
-                    Download
-                  </DropdownMenu.Item>
+                    <Download className="h-3.5 w-3.5 text-text-tertiary" />{tr("Download")}</DropdownMenu.Item>
                   <DropdownMenu.Item
                     onSelect={() => {
                       const url = `${window.location.origin}/projects/${asset.project_id}/assets/${asset.id}`
@@ -202,24 +201,18 @@ export function AssetCard({
                     }}
                     className="flex items-center gap-2.5 mx-1 px-2.5 py-2 rounded-lg text-sm text-text-secondary hover:bg-bg-hover hover:text-text-primary cursor-pointer outline-none transition-colors"
                   >
-                    <LinkIcon className="h-3.5 w-3.5 text-text-tertiary" />
-                    Copy Asset URL
-                  </DropdownMenu.Item>
+                    <LinkIcon className="h-3.5 w-3.5 text-text-tertiary" />{tr("Copy Asset URL")}</DropdownMenu.Item>
                   <DropdownMenu.Separator className="my-1 h-px bg-border mx-1" />
                   <DropdownMenu.Item
                     onSelect={onRename}
                     className="flex items-center gap-2.5 mx-1 px-2.5 py-2 rounded-lg text-sm text-text-secondary hover:bg-bg-hover hover:text-text-primary cursor-pointer outline-none transition-colors"
                   >
-                    <Pencil className="h-3.5 w-3.5 text-text-tertiary" />
-                    Rename
-                  </DropdownMenu.Item>
+                    <Pencil className="h-3.5 w-3.5 text-text-tertiary" />{tr("Rename")}</DropdownMenu.Item>
                   <DropdownMenu.Item
                     onSelect={onDelete}
                     className="flex items-center gap-2.5 mx-1 px-2.5 py-2 rounded-lg text-sm text-status-error hover:bg-status-error/10 cursor-pointer outline-none transition-colors"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Delete
-                  </DropdownMenu.Item>
+                    <Trash2 className="h-3.5 w-3.5" />{tr("Delete")}</DropdownMenu.Item>
                 </DropdownMenu.Content>
               </DropdownMenu.Portal>
             </DropdownMenu.Root>
@@ -228,7 +221,7 @@ export function AssetCard({
           {/* Author + date + file size row */}
           <p className="text-2xs text-text-tertiary line-clamp-1">
             {showUploader && authorName && <span>{authorName} &bull; </span>}
-            {formatRelativeTime(asset.created_at)}
+            {formatRelativeTime(asset.created_at, tr.locale)}
             {showFileSize && fileSize ? <span> &bull; {formatBytes(fileSize)}</span> : null}
           </p>
         </div>

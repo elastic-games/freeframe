@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
@@ -69,6 +70,8 @@ import type {
 } from "@/types";
 
 export default function ProjectDetailPage() {
+  const tr = useTranslation()
+
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -439,9 +442,7 @@ export default function ProjectDetailPage() {
         {/* Assets section */}
         <div className="p-3 space-y-0.5">
           <div className="flex items-center justify-between px-2 mb-1">
-            <span className="text-2xs font-semibold text-text-tertiary uppercase tracking-wider">
-              Assets
-            </span>
+            <span className="text-2xs font-semibold text-text-tertiary uppercase tracking-wider">{tr("Assets")}</span>
             {canCreateFolder && (
               <button
                 className="text-text-tertiary hover:text-text-primary transition-colors"
@@ -449,7 +450,7 @@ export default function ProjectDetailPage() {
                   setFolderDialogParentId(currentFolderId);
                   setFolderDialogOpen(true);
                 }}
-                title="New folder"
+                title={tr("New folder")}
               >
                 <Plus className="h-3.5 w-3.5" />
               </button>
@@ -504,9 +505,7 @@ export default function ProjectDetailPage() {
             <span
               className="text-2xs font-semibold text-text-tertiary uppercase tracking-wider cursor-pointer"
               onClick={() => setShareLinksExpanded(!shareLinksExpanded)}
-            >
-              Share Links
-            </span>
+            >{tr("Share Links")}</span>
             <div className="flex items-center gap-1">
               <button
                 onClick={(e) => {
@@ -516,7 +515,7 @@ export default function ProjectDetailPage() {
                   openShareDialog([], []);
                 }}
                 className="text-text-tertiary hover:text-text-primary transition-colors"
-                title="Create share link"
+                title={tr("Create share link")}
               >
                 <Plus className="h-3.5 w-3.5" />
               </button>
@@ -551,7 +550,7 @@ export default function ProjectDetailPage() {
                 )}
               >
                 <LinkIcon className="h-4 w-4" />
-                <span>All Share Links ({shareLinks.length})</span>
+                <span>{tr("All Share Links (")}{shareLinks.length})</span>
               </button>
               {shareLinks.map((link) => (
                 <div
@@ -603,9 +602,7 @@ export default function ProjectDetailPage() {
                             )
                           }
                         >
-                          <ExternalLink className="h-4 w-4 text-text-tertiary" />
-                          Open Share
-                        </DropdownMenu.Item>
+                          <ExternalLink className="h-4 w-4 text-text-tertiary" />{tr("Open Share")}</DropdownMenu.Item>
                         <DropdownMenu.Item
                           className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-text-secondary hover:bg-bg-hover hover:text-text-primary cursor-pointer outline-none transition-colors"
                           onSelect={() =>
@@ -614,9 +611,7 @@ export default function ProjectDetailPage() {
                             )
                           }
                         >
-                          <LinkIcon className="h-4 w-4 text-text-tertiary" />
-                          Copy Link
-                        </DropdownMenu.Item>
+                          <LinkIcon className="h-4 w-4 text-text-tertiary" />{tr("Copy Link")}</DropdownMenu.Item>
                         <DropdownMenu.Separator className="my-1 h-px bg-border" />
                         <DropdownMenu.Item
                           className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-text-secondary hover:bg-bg-hover hover:text-text-primary cursor-pointer outline-none transition-colors"
@@ -625,7 +620,7 @@ export default function ProjectDetailPage() {
                           }
                         >
                           <MinusCircle className="h-4 w-4 text-text-tertiary" />
-                          {link.is_enabled ? "Disable Access" : "Enable Access"}
+                          {link.is_enabled ? tr("Disable Access") : tr("Enable Access")}
                         </DropdownMenu.Item>
                         <DropdownMenu.Item
                           className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-status-error hover:bg-status-error/10 cursor-pointer outline-none transition-colors"
@@ -635,9 +630,7 @@ export default function ProjectDetailPage() {
                               setSelectedShareLink(null);
                           }}
                         >
-                          <Trash2 className="h-4 w-4" />
-                          Delete
-                        </DropdownMenu.Item>
+                          <Trash2 className="h-4 w-4" />{tr("Delete")}</DropdownMenu.Item>
                       </DropdownMenu.Content>
                     </DropdownMenu.Portal>
                   </DropdownMenu.Root>
@@ -693,11 +686,9 @@ export default function ProjectDetailPage() {
             />
           ) : showTrash ? (
             <div className="flex-1 overflow-y-auto">
-              <h2 className="text-sm font-medium text-text-primary mb-3">
-                Recently Deleted
-              </h2>
+              <h2 className="text-sm font-medium text-text-primary mb-3">{tr("Recently Deleted")}</h2>
               {trash.folders.length === 0 && trash.assets.length === 0 ? (
-                <p className="text-xs text-text-tertiary">No deleted items</p>
+                <p className="text-xs text-text-tertiary">{tr("No deleted items")}</p>
               ) : (
                 <div className="space-y-1">
                   {trash.folders.map((item) => (
@@ -710,9 +701,7 @@ export default function ProjectDetailPage() {
                         <span className="text-sm text-text-primary truncate">
                           {item.name}
                         </span>
-                        <span className="text-xs text-text-tertiary">
-                          Folder
-                        </span>
+                        <span className="text-xs text-text-tertiary">{tr("Folder")}</span>
                       </div>
                       <button
                         className="text-xs text-accent hover:underline shrink-0"
@@ -722,9 +711,7 @@ export default function ProjectDetailPage() {
                           mutateAssets();
                           mutateSubfolders();
                         }}
-                      >
-                        Restore
-                      </button>
+                      >{tr("Restore")}</button>
                     </div>
                   ))}
                   {trash.assets.map((item) => (
@@ -748,9 +735,7 @@ export default function ProjectDetailPage() {
                           mutateAssets();
                           mutateSubfolders();
                         }}
-                      >
-                        Restore
-                      </button>
+                      >{tr("Restore")}</button>
                     </div>
                   ))}
                 </div>
@@ -898,9 +883,7 @@ export default function ProjectDetailPage() {
                       size="sm"
                       onClick={() => openShareDialog([], [])}
                     >
-                      <Share2 className="h-4 w-4" />
-                      Share
-                    </Button>
+                      <Share2 className="h-4 w-4" />{tr("Share")}</Button>
                   )}
                   {canCreateFolder && (
                     <button
@@ -910,15 +893,11 @@ export default function ProjectDetailPage() {
                         setFolderDialogOpen(true);
                       }}
                     >
-                      <FolderPlus className="h-4 w-4" />
-                      New Folder
-                    </button>
+                      <FolderPlus className="h-4 w-4" />{tr("New Folder")}</button>
                   )}
                   {canUpload && (
                     <Button size="sm" onClick={() => setUploadOpen(true)}>
-                      <Upload className="h-4 w-4" />
-                      Upload
-                    </Button>
+                      <Upload className="h-4 w-4" />{tr("Upload")}</Button>
                   )}
                 </>
               }
@@ -933,12 +912,8 @@ export default function ProjectDetailPage() {
                 <Dialog.Close className="absolute right-4 top-4 text-text-tertiary hover:text-text-primary transition-colors">
                   <X className="h-4 w-4" />
                 </Dialog.Close>
-                <Dialog.Title className="text-base font-semibold text-text-primary">
-                  Upload asset
-                </Dialog.Title>
-                <Dialog.Description className="mt-1 text-sm text-text-secondary">
-                  Add new media to this project.
-                </Dialog.Description>
+                <Dialog.Title className="text-base font-semibold text-text-primary">{tr("Upload asset")}</Dialog.Title>
+                <Dialog.Description className="mt-1 text-sm text-text-secondary">{tr("Add new media to this project.")}</Dialog.Description>
                 <div className="mt-4 space-y-4">
                   {pendingFiles.length === 0 ? (
                     <UploadZone onFilesSelected={handleFilesSelected} />
@@ -946,8 +921,7 @@ export default function ProjectDetailPage() {
                     <>
                       <div className="rounded-lg border border-border bg-bg-tertiary">
                         <div className="px-3 py-2 text-xs font-medium text-text-tertiary border-b border-border">
-                          {pendingFiles.length} file{pendingFiles.length !== 1 ? "s" : ""} selected
-                        </div>
+                          {pendingFiles.length}{' '}{tr("file")}{pendingFiles.length !== 1 ? "s" : ""}{' '}{tr("selected")}</div>
                         <div className="max-h-40 overflow-y-auto divide-y divide-border">
                           {pendingFiles.map((f, i) => (
                             <div key={i} className="flex items-center justify-between px-3 py-1.5">
@@ -963,10 +937,10 @@ export default function ProjectDetailPage() {
                       </div>
                       {pendingFiles.length === 1 && (
                         <Input
-                          label="Asset name"
+                          label={tr("Asset name")}
                           value={assetName}
                           onChange={(e) => setAssetName(e.target.value)}
-                          placeholder="e.g. Hero Video Final"
+                          placeholder={tr("e.g. Hero Video Final")}
                         />
                       )}
                       <div className="flex justify-end gap-2">
@@ -975,12 +949,8 @@ export default function ProjectDetailPage() {
                           variant="secondary"
                           size="sm"
                           onClick={() => setPendingFiles([])}
-                        >
-                          Change files
-                        </Button>
-                        <Button size="sm" onClick={handleStartUpload}>
-                          Start upload
-                        </Button>
+                        >{tr("Change files")}</Button>
+                        <Button size="sm" onClick={handleStartUpload}>{tr("Start upload")}</Button>
                       </div>
                     </>
                   )}
@@ -995,9 +965,7 @@ export default function ProjectDetailPage() {
         // pointer swallows the dragleave and the drop underneath it, so the
         // marking would stick and the drop would never arrive.
         <div className="pointer-events-none absolute inset-2 z-30 flex items-center justify-center rounded-xl border-2 border-accent bg-accent/10">
-          <span className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-white shadow-lg">
-            Drop to upload
-          </span>
+          <span className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-white shadow-lg">{tr("Drop to upload")}</span>
         </div>
       )}
       </div>
@@ -1020,9 +988,7 @@ export default function ProjectDetailPage() {
                       : "border-transparent text-text-tertiary hover:text-text-secondary",
                   )}
                 >
-                  <MessageSquare className="h-4 w-4" />
-                  Comments
-                </button>
+                  <MessageSquare className="h-4 w-4" />{tr("Comments")}</button>
                 <button
                   onClick={() => setRightTab("fields")}
                   className={cn(
@@ -1031,9 +997,7 @@ export default function ProjectDetailPage() {
                       ? "border-accent text-text-primary"
                       : "border-transparent text-text-tertiary hover:text-text-secondary",
                   )}
-                >
-                  Fields
-                </button>
+                >{tr("Fields")}</button>
                 {selectedAsset && (
                   <button
                     onClick={() => setSelectedAsset(null)}
@@ -1076,13 +1040,8 @@ export default function ProjectDetailPage() {
                           <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-bg-tertiary flex items-center justify-center">
                             <MessageSquare className="h-6 w-6 text-text-tertiary/50" />
                           </div>
-                          <p className="text-sm text-text-secondary">
-                            No comments yet
-                          </p>
-                          <p className="text-xs text-text-tertiary mt-1">
-                            Double-click the asset to open the viewer and leave
-                            comments.
-                          </p>
+                          <p className="text-sm text-text-secondary">{tr("No comments yet")}</p>
+                          <p className="text-xs text-text-tertiary mt-1">{tr("Double-click the asset to open the viewer and leave comments.")}</p>
                         </div>
                       </div>
                     )}
@@ -1091,9 +1050,7 @@ export default function ProjectDetailPage() {
                       <Link
                         href={`/projects/${projectId}/assets/${selectedAsset.id}`}
                       >
-                        <div className="rounded-lg border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-tertiary cursor-pointer hover:border-border-focus transition-colors text-center">
-                          Open in viewer to comment
-                        </div>
+                        <div className="rounded-lg border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-tertiary cursor-pointer hover:border-border-focus transition-colors text-center">{tr("Open in viewer to comment")}</div>
                       </Link>
                     </div>
                   </div>
@@ -1122,24 +1079,20 @@ export default function ProjectDetailPage() {
 
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-text-tertiary">Type</span>
+                        <span className="text-xs text-text-tertiary">{tr("Type")}</span>
                         <span className="text-xs text-text-primary capitalize">
                           {selectedAsset.asset_type.replace("_", " ")}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-text-tertiary">
-                          Uploaded
-                        </span>
+                        <span className="text-xs text-text-tertiary">{tr("Uploaded")}</span>
                         <span className="text-xs text-text-primary">
-                          {formatRelativeTime(selectedAsset.created_at)}
+                          {formatRelativeTime(selectedAsset.created_at, tr.locale)}
                         </span>
                       </div>
                       {authorNames[selectedAsset.created_by] && (
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-text-tertiary">
-                            Uploaded by
-                          </span>
+                          <span className="text-xs text-text-tertiary">{tr("Uploaded by")}</span>
                           <span className="text-xs text-text-primary">
                             {authorNames[selectedAsset.created_by]}
                           </span>
@@ -1147,9 +1100,7 @@ export default function ProjectDetailPage() {
                       )}
                       {fileSizes[selectedAsset.id] != null && (
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-text-tertiary">
-                            File size
-                          </span>
+                          <span className="text-xs text-text-tertiary">{tr("File size")}</span>
                           <span className="text-xs text-text-primary">
                             {formatBytes(fileSizes[selectedAsset.id])}
                           </span>
@@ -1157,9 +1108,7 @@ export default function ProjectDetailPage() {
                       )}
                       {selectedAsset.latest_version && (
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-text-tertiary">
-                            Version
-                          </span>
+                          <span className="text-xs text-text-tertiary">{tr("Version")}</span>
                           <span className="text-xs text-text-primary">
                             v{selectedAsset.latest_version.version_number}
                           </span>
@@ -1168,9 +1117,7 @@ export default function ProjectDetailPage() {
                       {selectedAsset.assignee_id &&
                         assigneesMap[selectedAsset.assignee_id] && (
                           <div className="flex items-center justify-between">
-                            <span className="text-xs text-text-tertiary">
-                              Assignee
-                            </span>
+                            <span className="text-xs text-text-tertiary">{tr("Assignee")}</span>
                             <div className="flex items-center gap-1.5">
                               <Avatar size="sm" className="h-5 w-5" />
                               <span className="text-xs text-text-primary">
@@ -1185,9 +1132,7 @@ export default function ProjectDetailPage() {
                       <Button asChild className="w-full col-span-2" size="sm">
                         <Link
                           href={`/projects/${projectId}/assets/${selectedAsset.id}`}
-                        >
-                          Open in Player
-                        </Link>
+                        >{tr("Open in Player")}</Link>
                       </Button>
                       <Button
                         variant="secondary"
@@ -1202,8 +1147,7 @@ export default function ProjectDetailPage() {
                           setShareDialogOpen(true);
                         }}
                       >
-                        <LinkIcon className="h-3.5 w-3.5" /> Share
-                      </Button>
+                        <LinkIcon className="h-3.5 w-3.5" />{' '}{tr("Share")}</Button>
                       <Button
                         variant="secondary"
                         size="sm"
@@ -1225,8 +1169,7 @@ export default function ProjectDetailPage() {
                           }
                         }}
                       >
-                        <Download className="h-3.5 w-3.5" /> Download
-                      </Button>
+                        <Download className="h-3.5 w-3.5" />{' '}{tr("Download")}</Button>
                     </div>
                   </div>
                 )
@@ -1237,9 +1180,7 @@ export default function ProjectDetailPage() {
                     <div className="mx-auto mb-3 h-16 w-16 rounded-full bg-bg-tertiary flex items-center justify-center">
                       <MessageSquare className="h-8 w-8 text-text-tertiary/50" />
                     </div>
-                    <p className="text-sm text-text-secondary">
-                      Select an asset to view comments
-                    </p>
+                    <p className="text-sm text-text-secondary">{tr("Select an asset to view comments")}</p>
                   </div>
                 </div>
               )}
@@ -1252,8 +1193,8 @@ export default function ProjectDetailPage() {
       <NameDialog
         open={folderDialogOpen}
         onOpenChange={setFolderDialogOpen}
-        title="New Folder"
-        placeholder="Folder name"
+        title={tr("New Folder")}
+        placeholder={tr("Folder name")}
         submitLabel="Create"
         onSubmit={async (name) => {
           await createFolder(name, folderDialogParentId);
@@ -1302,8 +1243,8 @@ export default function ProjectDetailPage() {
         onOpenChange={(open) => {
           if (!open) setPendingBulkDelete(null);
         }}
-        title={`Delete ${(pendingBulkDelete?.assetIds.length ?? 0) + (pendingBulkDelete?.folderIds.length ?? 0)} item${(pendingBulkDelete?.assetIds.length ?? 0) + (pendingBulkDelete?.folderIds.length ?? 0) !== 1 ? "s" : ""}?`}
-        description="This will move the selected items to the trash. You can restore them later from Recently Deleted."
+        title={tr("Delete {value0} item{value1}?", { value0: (pendingBulkDelete?.assetIds.length ?? 0) + (pendingBulkDelete?.folderIds.length ?? 0), value1: tr.locale === 'en' ? ((pendingBulkDelete?.assetIds.length ?? 0) + (pendingBulkDelete?.folderIds.length ?? 0) !== 1 ? "s" : "") : '' })}
+        description={tr("This will move the selected items to the trash. You can restore them later from Recently Deleted.")}
         confirmLabel="Delete"
         variant="danger"
         onConfirm={async () => {
@@ -1322,9 +1263,9 @@ export default function ProjectDetailPage() {
       <NameDialog
         open={assetToRename !== null}
         onOpenChange={(open) => { if (!open) setAssetToRename(null); }}
-        title="Rename asset"
+        title={tr("Rename asset")}
         defaultValue={assetToRename?.name ?? ""}
-        placeholder="Asset name..."
+        placeholder={tr("Asset name...")}
         submitLabel="Rename"
         onSubmit={async (name) => {
           if (!assetToRename) return;
@@ -1340,8 +1281,8 @@ export default function ProjectDetailPage() {
       <ConfirmDialog
         open={assetToDelete !== null}
         onOpenChange={(open) => { if (!open) setAssetToDelete(null); }}
-        title={`Delete "${assetToDelete?.name}"?`}
-        description="This will move the asset to the trash. You can restore it later from Recently Deleted."
+        title={tr("Delete \"{value0}\"?", { value0: assetToDelete?.name ?? '' })}
+        description={tr("This will move the asset to the trash. You can restore it later from Recently Deleted.")}
         confirmLabel="Delete"
         variant="danger"
         onConfirm={async () => {

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import useSWR from 'swr'
@@ -55,6 +56,8 @@ const acceptByType: Record<string, string> = {
 }
 
 function ReviewScreenInner({ projectId }: { projectId: string }) {
+  const tr = useTranslation()
+
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -313,14 +316,12 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
         <div className="max-w-sm text-center">
           <Info className="mx-auto h-8 w-8 text-text-tertiary" />
           <h2 className="mt-3 text-sm font-medium text-text-primary">
-            {denied ? 'Review access unavailable' : 'Review temporarily unavailable'}
+            {denied ? tr("Review access unavailable") : tr("Review temporarily unavailable")}
           </h2>
           <p className="mt-2 text-xs text-text-tertiary">
-            {denied ? 'Your access to this project or asset may have changed.' : 'The asset could not be loaded. Please try again.'}
+            {denied ? tr("Your access to this project or asset may have changed.") : tr("The asset could not be loaded. Please try again.")}
           </p>
-          <button type="button" onClick={retry} className="mt-4 rounded-md bg-accent px-4 py-2 text-xs font-medium text-white">
-            Retry
-          </button>
+          <button type="button" onClick={retry} className="mt-4 rounded-md bg-accent px-4 py-2 text-xs font-medium text-white">{tr("Retry")}</button>
         </div>
       </div>
     )
@@ -330,7 +331,7 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
       <div className="flex h-full items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
-          <span className="text-xs text-text-tertiary">Loading asset...</span>
+          <span className="text-xs text-text-tertiary">{tr("Loading asset...")}</span>
         </div>
       </div>
     )
@@ -379,10 +380,8 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
                   <Loader2 className="h-6 w-6 animate-spin text-accent" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-text-primary">Processing asset</p>
-                  <p className="text-xs text-text-tertiary mt-1">
-                    This may take a few minutes depending on file size.
-                  </p>
+                  <p className="text-sm font-medium text-text-primary">{tr("Processing asset")}</p>
+                  <p className="text-xs text-text-tertiary mt-1">{tr("This may take a few minutes depending on file size.")}</p>
                 </div>
               </>
             ) : currentVersion?.processing_status === 'failed' ? (
@@ -391,10 +390,8 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
                   <Info className="h-6 w-6 text-status-error" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-text-primary">Processing failed</p>
-                  <p className="text-xs text-text-tertiary mt-1">
-                    Try uploading a new version of this asset.
-                  </p>
+                  <p className="text-sm font-medium text-text-primary">{tr("Processing failed")}</p>
+                  <p className="text-xs text-text-tertiary mt-1">{tr("Try uploading a new version of this asset.")}</p>
                 </div>
               </>
             ) : (
@@ -403,10 +400,8 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
                   <Info className="h-6 w-6 text-text-tertiary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-text-primary">Version not ready</p>
-                  <p className="text-xs text-text-tertiary mt-1">
-                    This version is still being prepared.
-                  </p>
+                  <p className="text-sm font-medium text-text-primary">{tr("Version not ready")}</p>
+                  <p className="text-xs text-text-tertiary mt-1">{tr("This version is still being prepared.")}</p>
                 </div>
               </>
             )}
@@ -485,9 +480,7 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
                 ? 'bg-bg-hover text-text-primary shadow-sm'
                 : 'text-text-tertiary hover:text-text-secondary',
             )}
-          >
-            Comments
-          </button>
+          >{tr("Comments")}</button>
           <button
             onClick={() => setActiveTab('fields')}
             className={cn(
@@ -496,9 +489,7 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
                 ? 'bg-bg-hover text-text-primary shadow-sm'
                 : 'text-text-tertiary hover:text-text-secondary',
             )}
-          >
-            Fields
-          </button>
+          >{tr("Fields")}</button>
         </div>
       </div>
     </>
@@ -531,22 +522,22 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-text-tertiary">Name</span>
+          <span className="text-xs text-text-tertiary">{tr("Name")}</span>
           <span className="text-xs text-text-primary font-medium truncate ml-4">{asset.name}</span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-xs text-text-tertiary">Type</span>
+          <span className="text-xs text-text-tertiary">{tr("Type")}</span>
           <span className="text-xs text-text-primary capitalize">{asset.asset_type.replace('_', ' ')}</span>
         </div>
         {currentVersion && (
           <div className="flex items-center justify-between">
-            <span className="text-xs text-text-tertiary">Version</span>
+            <span className="text-xs text-text-tertiary">{tr("Version")}</span>
             <span className="text-xs text-text-primary">v{currentVersion.version_number}</span>
           </div>
         )}
         {currentVersion && (
           <div className="flex items-center justify-between">
-            <span className="text-xs text-text-tertiary">Processing</span>
+            <span className="text-xs text-text-tertiary">{tr("Processing")}</span>
             <span className={cn(
               'text-xs capitalize',
               currentVersion.processing_status === 'ready' && 'text-status-success',
@@ -615,18 +606,18 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
                 onClick={() => prevAsset && navigateAsset(prevAsset.id)}
                 disabled={!prevAsset}
                 className="flex items-center justify-center h-7 w-7 rounded-md text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                title="Previous asset (←)"
+                title={tr("Previous asset (←)")}
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <span className="text-xs text-text-secondary tabular-nums px-1">
-                {currentIndex + 1} of {totalAssets}
+                {currentIndex + 1}{' '}{tr("of")}{' '}{totalAssets}
               </span>
               <button
                 onClick={() => nextAsset && navigateAsset(nextAsset.id)}
                 disabled={!nextAsset}
                 className="flex items-center justify-center h-7 w-7 rounded-md text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                title="Next asset (→)"
+                title={tr("Next asset (→)")}
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -673,20 +664,16 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
                 router.replace(`${pathname}?${p.toString()}`, { scroll: false })
               }}
               className="inline-flex items-center gap-1.5 rounded-md px-2.5 h-8 text-xs font-medium border border-border text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors"
-              title="Compare versions"
+              title={tr("Compare versions")}
             >
-              <GitCompareArrows className="h-3.5 w-3.5" />
-              Compare
-            </button>
+              <GitCompareArrows className="h-3.5 w-3.5" />{tr("Compare")}</button>
           )}
           <button
             onClick={() => versionFileInputRef.current?.click()}
             className="inline-flex items-center gap-1.5 rounded-md px-2.5 h-8 text-xs font-medium border border-border text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors"
-            title="Upload new version"
+            title={tr("Upload new version")}
           >
-            <Upload className="h-3.5 w-3.5" />
-            New Version
-          </button>
+            <Upload className="h-3.5 w-3.5" />{tr("New Version")}</button>
           {process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS !== 'true' &&
             <ShareDialog assetId={asset.id} assetName={asset.name} projectId={projectId} asset={asset} />}
           <button
@@ -702,7 +689,7 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
                 ? 'bg-bg-hover text-text-primary'
                 : 'text-text-tertiary hover:text-text-primary hover:bg-bg-hover',
             )}
-            title="Toggle sidebar"
+            title={tr("Toggle sidebar")}
           >
             <Columns2 className="h-4 w-4" />
           </button>
@@ -715,26 +702,22 @@ function ReviewScreenInner({ projectId }: { projectId: string }) {
           <Info className="h-7 w-7 text-text-tertiary" />
           <p className="text-sm font-medium text-text-primary">
             {versionLinkUnavailable
-              ? error ? 'Could not verify this version' : 'This version is unavailable'
-              : 'Opening requested version...'}
+              ? error ? tr("Could not verify this version") : tr("This version is unavailable")
+              : tr("Opening requested version...")}
           </p>
           {versionLinkUnavailable && (
             <>
               <p className="max-w-md text-xs text-text-tertiary">
                 {error
-                  ? 'The version list could not be loaded. Try reloading the page.'
-                  : 'The linked version does not belong to this asset, is no longer available, or is not ready for review.'}
+                  ? tr("The version list could not be loaded. Try reloading the page.")
+                  : tr("The linked version does not belong to this asset, is no longer available, or is not ready for review.")}
               </p>
               {error ? (
-                <button onClick={() => window.location.reload()} className="rounded-md bg-accent px-3 py-2 text-xs font-medium text-white">
-                  Reload page
-                </button>
+                <button onClick={() => window.location.reload()} className="rounded-md bg-accent px-3 py-2 text-xs font-medium text-white">{tr("Reload page")}</button>
               ) : latestReadyVersion ? (
-                <button onClick={() => selectVersion(null)} className="rounded-md bg-accent px-3 py-2 text-xs font-medium text-white">
-                  Open latest available version
-                </button>
+                <button onClick={() => selectVersion(null)} className="rounded-md bg-accent px-3 py-2 text-xs font-medium text-white">{tr("Open latest available version")}</button>
               ) : (
-                <p className="text-xs text-text-tertiary">No ready versions are available.</p>
+                <p className="text-xs text-text-tertiary">{tr("No ready versions are available.")}</p>
               )}
             </>
           )}

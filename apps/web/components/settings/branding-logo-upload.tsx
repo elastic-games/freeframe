@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import { Upload, X, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -54,6 +55,8 @@ export function BrandingLogoUpload({
   onUpload,
   onRemove,
 }: BrandingLogoUploadProps) {
+  const tr = useTranslation()
+
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
@@ -140,23 +143,23 @@ export function BrandingLogoUpload({
       >
         {currentUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={currentUrl} alt={label} className="h-full w-full object-contain p-1" />
+          <img src={currentUrl} alt={tr(label)} className="h-full w-full object-contain p-1" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={defaultUrl || `/logo-icon.png`}
-            alt="Default"
+            alt={tr("Default")}
             className="h-full w-full object-contain p-1 opacity-40"
           />
         )}
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-text-primary">{label}</p>
-        <p className="text-xs text-text-tertiary mt-0.5 mb-3">{description}</p>
+        <p className="text-sm font-medium text-text-primary">{tr(label)}</p>
+        <p className="text-xs text-text-tertiary mt-0.5 mb-3">{tr(description)}</p>
 
         {error && (
-          <p className="text-xs text-status-error mb-2">{error}</p>
+          <p className="text-xs text-status-error mb-2">{tr(error)}</p>
         )}
 
         <div className="flex items-center gap-2 flex-wrap">
@@ -179,7 +182,7 @@ export function BrandingLogoUpload({
             ) : (
               <Upload className="h-3.5 w-3.5" />
             )}
-            {hasLogo ? 'Replace' : 'Upload'}
+            {hasLogo ? tr("Replace") : tr("Upload")}
           </Button>
           {hasLogo && (
             <Button
@@ -189,15 +192,12 @@ export function BrandingLogoUpload({
               disabled={disabled || uploading}
               className="text-status-error hover:text-status-error hover:bg-status-error/10"
             >
-              <X className="h-3.5 w-3.5" />
-              Remove
-            </Button>
+              <X className="h-3.5 w-3.5" />{tr("Remove")}</Button>
           )}
         </div>
 
         <p className="text-2xs text-text-tertiary mt-2">
-          {acceptedFormats.join(' · ')} · {minResolution} · max 2 MB
-        </p>
+          {acceptedFormats.join(' · ')} · {minResolution}{' '}{tr("· max 2 MB")}</p>
       </div>
     </div>
   )

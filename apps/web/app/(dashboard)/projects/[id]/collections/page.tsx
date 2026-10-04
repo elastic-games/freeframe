@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from "react";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
@@ -74,11 +75,13 @@ function FilterRuleRow({
   onChange: (patch: Partial<FilterRule>) => void;
   onRemove: () => void;
 }) {
+  const tr = useTranslation()
+
   return (
     <div className="flex items-center gap-2">
       <input
         type="text"
-        placeholder="field name"
+        placeholder={tr("field name")}
         value={rule.field}
         onChange={(e) => onChange({ field: e.target.value })}
         className="flex h-8 w-28 rounded-md border border-border bg-bg-secondary px-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-border-focus"
@@ -92,13 +95,13 @@ function FilterRuleRow({
       >
         {OPERATORS.map((op) => (
           <option key={op.value} value={op.value}>
-            {op.label}
+            {tr(op.label)}
           </option>
         ))}
       </select>
       <input
         type="text"
-        placeholder="value"
+        placeholder={tr("value")}
         value={rule.value}
         onChange={(e) => onChange({ value: e.target.value })}
         className="flex h-8 flex-1 rounded-md border border-border bg-bg-secondary px-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-border-focus"
@@ -107,7 +110,7 @@ function FilterRuleRow({
         type="button"
         onClick={onRemove}
         className="text-text-tertiary hover:text-status-error transition-colors"
-        aria-label="Remove rule"
+        aria-label={tr("Remove rule")}
       >
         <Trash2 className="h-4 w-4" />
       </button>
@@ -128,6 +131,8 @@ function CollectionShareDialog({
   open,
   onOpenChange,
 }: CollectionShareDialogProps) {
+  const tr = useTranslation()
+
   const [permission, setPermission] = React.useState<SharePermission>("view");
   const [expiresAt, setExpiresAt] = React.useState("");
   const [generating, setGenerating] = React.useState(false);
@@ -191,19 +196,14 @@ function CollectionShareDialog({
             <X className="h-4 w-4" />
           </Dialog.Close>
 
-          <Dialog.Title className="text-sm font-semibold text-text-primary">
-            Share collection
-          </Dialog.Title>
-          <Dialog.Description className="mt-0.5 text-xs text-text-tertiary">
-            Generate a public link to share &quot;{collection.name}&quot;.
+          <Dialog.Title className="text-sm font-semibold text-text-primary">{tr("Share collection")}</Dialog.Title>
+          <Dialog.Description className="mt-0.5 text-xs text-text-tertiary">{tr("Generate a public link to share \"")}{collection.name}{tr('".')}
           </Dialog.Description>
 
           <div className="mt-4 space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-text-secondary">
-                  Permission
-                </label>
+                <label className="text-xs font-medium text-text-secondary">{tr("Permission")}</label>
                 <select
                   value={permission}
                   onChange={(e) =>
@@ -211,15 +211,13 @@ function CollectionShareDialog({
                   }
                   className="flex h-9 rounded-md border border-border bg-bg-tertiary px-3 text-sm text-text-primary focus:outline-none focus:border-border-focus"
                 >
-                  <option value="view">View</option>
-                  <option value="comment">Comment</option>
-                  <option value="approve">Approve</option>
+                  <option value="view">{tr("View")}</option>
+                  <option value="comment">{tr("Comment")}</option>
+                  <option value="approve">{tr("Approve")}</option>
                 </select>
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-text-secondary">
-                  Expiry (optional)
-                </label>
+                <label className="text-xs font-medium text-text-secondary">{tr("Expiry (optional)")}</label>
                 <input
                   type="datetime-local"
                   value={expiresAt}
@@ -229,7 +227,7 @@ function CollectionShareDialog({
               </div>
             </div>
 
-            {error && <p className="text-xs text-status-error">{error}</p>}
+            {error && <p className="text-xs text-status-error">{tr(error)}</p>}
 
             <Button
               size="sm"
@@ -237,9 +235,7 @@ function CollectionShareDialog({
               loading={generating}
               className="w-full"
             >
-              <Share2 className="h-4 w-4" />
-              Generate link
-            </Button>
+              <Share2 className="h-4 w-4" />{tr("Generate link")}</Button>
 
             {generatedUrl && (
               <div className="flex items-center gap-2 rounded-md border border-border bg-bg-tertiary px-3 py-2">
@@ -255,7 +251,7 @@ function CollectionShareDialog({
                   ) : (
                     <Copy className="h-3.5 w-3.5" />
                   )}
-                  {copied ? "Copied!" : "Copy"}
+                  {copied ? tr("Copied!") : tr("Copy")}
                 </button>
               </div>
             )}
@@ -263,13 +259,11 @@ function CollectionShareDialog({
             {/* Existing shares */}
             {(loadingShares || shares.length > 0) && (
               <div className="space-y-2 pt-1">
-                <p className="text-xs font-medium text-text-secondary">
-                  Existing links
-                </p>
+                <p className="text-xs font-medium text-text-secondary">{tr("Existing links")}</p>
                 {loadingShares ? (
                   <div className="flex items-center gap-2 py-2">
                     <Loader2 className="h-4 w-4 animate-spin text-text-tertiary" />
-                    <span className="text-xs text-text-tertiary">Loading…</span>
+                    <span className="text-xs text-text-tertiary">{tr("Loading…")}</span>
                   </div>
                 ) : (
                   <div className="space-y-1.5 max-h-36 overflow-y-auto">
@@ -285,18 +279,17 @@ function CollectionShareDialog({
                               {share.permission}
                             </span>
                             {share.expires_at && (
-                              <span className="ml-2 text-text-tertiary">
-                                expires{" "}
+                              <span className="ml-2 text-text-tertiary">{tr("expires")}{" "}
                                 {new Date(
                                   share.expires_at,
-                                ).toLocaleDateString()}
+                                ).toLocaleDateString(tr.locale)}
                               </span>
                             )}
                           </div>
                           <button
                             onClick={() => handleCopy(url)}
                             className="text-text-tertiary hover:text-text-primary transition-colors shrink-0"
-                            title="Copy link"
+                            title={tr("Copy link")}
                           >
                             <Copy className="h-3.5 w-3.5" />
                           </button>
@@ -317,6 +310,8 @@ function CollectionShareDialog({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CollectionsPage() {
+  const tr = useTranslation()
+
   const params = useParams();
   const projectId = params.id as string;
 
@@ -400,9 +395,7 @@ export default function CollectionsPage() {
         <Link
           href="/projects"
           className="hover:text-text-primary transition-colors"
-        >
-          Projects
-        </Link>
+        >{tr("Projects")}</Link>
         <ChevronRight className="h-3 w-3" />
         <Link
           href={`/projects/${projectId}`}
@@ -411,19 +404,16 @@ export default function CollectionsPage() {
           {project?.name ?? "..."}
         </Link>
         <ChevronRight className="h-3 w-3" />
-        <span className="text-text-secondary">Collections</span>
+        <span className="text-text-secondary">{tr("Collections")}</span>
       </nav>
 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-text-primary">
-            Collections
-          </h1>
+          <h1 className="text-lg font-semibold text-text-primary">{tr("Collections")}</h1>
           {collections && (
             <p className="mt-0.5 text-sm text-text-secondary">
-              {collections.length} collection
-              {collections.length !== 1 ? "s" : ""}
+              {tr.locale === "ru" ? `${tr("Collections")}: ${collections.length}` : `${collections.length} ${tr(collections.length === 1 ? "collection" : "Collections").toLowerCase()}`}
             </p>
           )}
         </div>
@@ -437,9 +427,7 @@ export default function CollectionsPage() {
         >
           <Dialog.Trigger asChild>
             <Button size="sm">
-              <Plus className="h-4 w-4" />
-              New Collection
-            </Button>
+              <Plus className="h-4 w-4" />{tr("New Collection")}</Button>
           </Dialog.Trigger>
 
           <Dialog.Portal>
@@ -449,30 +437,23 @@ export default function CollectionsPage() {
                 <X className="h-4 w-4" />
               </Dialog.Close>
 
-              <Dialog.Title className="text-base font-semibold text-text-primary">
-                New Collection
-              </Dialog.Title>
-              <Dialog.Description className="mt-1 text-sm text-text-secondary">
-                Smart collections automatically group assets based on metadata
-                filter rules.
-              </Dialog.Description>
+              <Dialog.Title className="text-base font-semibold text-text-primary">{tr("New Collection")}</Dialog.Title>
+              <Dialog.Description className="mt-1 text-sm text-text-secondary">{tr("Smart collections automatically group assets based on metadata filter rules.")}</Dialog.Description>
 
               <form onSubmit={handleCreate} className="mt-5 space-y-4">
                 <Input
-                  label="Collection name"
-                  placeholder="e.g. Approved Videos"
+                  label={tr("Collection name")}
+                  placeholder={tr("e.g. Approved Videos")}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
                 />
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-text-secondary">
-                    Description
-                  </label>
+                  <label className="text-sm font-medium text-text-secondary">{tr("Description")}</label>
                   <textarea
                     rows={2}
-                    placeholder="Optional description..."
+                    placeholder={tr("Optional description...")}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     className="flex w-full rounded-md border border-border bg-bg-secondary px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary resize-none focus:outline-none focus:border-border-focus focus:ring-1 focus:ring-border-focus"
@@ -482,23 +463,17 @@ export default function CollectionsPage() {
                 {/* Filter rules */}
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-text-secondary">
-                      Filter rules
-                    </label>
+                    <label className="text-sm font-medium text-text-secondary">{tr("Filter rules")}</label>
                     <button
                       type="button"
                       onClick={addRule}
                       className="flex items-center gap-1 text-xs text-accent hover:text-accent-hover transition-colors"
                     >
-                      <Plus className="h-3 w-3" />
-                      Add rule
-                    </button>
+                      <Plus className="h-3 w-3" />{tr("Add rule")}</button>
                   </div>
 
                   {rules.length === 0 ? (
-                    <p className="text-xs text-text-tertiary">
-                      No filter rules — collection will include all assets.
-                    </p>
+                    <p className="text-xs text-text-tertiary">{tr("No filter rules — collection will include all assets.")}</p>
                   ) : (
                     <div className="space-y-2">
                       {rules.map((rule) => (
@@ -514,18 +489,14 @@ export default function CollectionsPage() {
                 </div>
 
                 {formError && (
-                  <p className="text-sm text-status-error">{formError}</p>
+                  <p className="text-sm text-status-error">{tr(formError)}</p>
                 )}
 
                 <div className="flex justify-end gap-2 pt-2">
                   <Dialog.Close asChild>
-                    <Button type="button" variant="secondary" size="sm">
-                      Cancel
-                    </Button>
+                    <Button type="button" variant="secondary" size="sm">{tr("Cancel")}</Button>
                   </Dialog.Close>
-                  <Button type="submit" size="sm" loading={isCreating}>
-                    Create collection
-                  </Button>
+                  <Button type="submit" size="sm" loading={isCreating}>{tr("Create collection")}</Button>
                 </div>
               </form>
             </Dialog.Content>
@@ -547,8 +518,8 @@ export default function CollectionsPage() {
         <div className="rounded-lg border border-border bg-bg-secondary">
           <EmptyState
             icon={Filter}
-            title="No collections yet"
-            description="Create a smart collection to automatically group assets by metadata rules."
+            title={tr("No collections yet")}
+            description={tr("Create a smart collection to automatically group assets by metadata rules.")}
             action={{
               label: "New Collection",
               onClick: () => setDialogOpen(true),
@@ -570,7 +541,7 @@ export default function CollectionsPage() {
                   "absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-md border border-border bg-bg-secondary text-text-tertiary",
                   "opacity-0 group-hover/card:opacity-100 hover:text-text-primary hover:bg-bg-hover transition-all",
                 )}
-                title="Share collection"
+                title={tr("Share collection")}
               >
                 <Share2 className="h-3.5 w-3.5" />
               </button>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import useSWR from 'swr'
 import { CheckCircle2, XCircle, Clock, Loader2 } from 'lucide-react'
@@ -59,6 +60,8 @@ interface RejectNoteProps {
 }
 
 function RejectNoteDialog({ onConfirm, onCancel }: RejectNoteProps) {
+  const tr = useTranslation()
+
   const [note, setNote] = React.useState('')
   const [submitting, setSubmitting] = React.useState(false)
 
@@ -74,29 +77,23 @@ function RejectNoteDialog({ onConfirm, onCancel }: RejectNoteProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-full max-w-sm rounded-xl border border-border bg-bg-elevated p-5 shadow-xl animate-slide-up">
-        <h3 className="text-sm font-semibold text-text-primary mb-1">Reject with note</h3>
-        <p className="text-xs text-text-tertiary mb-3">
-          Optionally add a note explaining why this version is being rejected.
-        </p>
+        <h3 className="text-sm font-semibold text-text-primary mb-1">{tr("Reject with note")}</h3>
+        <p className="text-xs text-text-tertiary mb-3">{tr("Optionally add a note explaining why this version is being rejected.")}</p>
         <textarea
           className="w-full resize-none rounded-md border border-border bg-bg-secondary px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-border-focus min-h-[80px]"
-          placeholder="Optional rejection note…"
+          placeholder={tr("Optional rejection note…")}
           value={note}
           onChange={(e) => setNote(e.target.value)}
           autoFocus
         />
         <div className="mt-3 flex items-center justify-end gap-2">
-          <Button variant="ghost" size="sm" onClick={onCancel} disabled={submitting}>
-            Cancel
-          </Button>
+          <Button variant="ghost" size="sm" onClick={onCancel} disabled={submitting}>{tr("Cancel")}</Button>
           <Button
             variant="destructive"
             size="sm"
             onClick={handleConfirm}
             loading={submitting}
-          >
-            Reject
-          </Button>
+          >{tr("Reject")}</Button>
         </div>
       </div>
     </div>
@@ -106,6 +103,8 @@ function RejectNoteDialog({ onConfirm, onCancel }: RejectNoteProps) {
 // ─── Approval bar ─────────────────────────────────────────────────────────────
 
 export function ApprovalBar({ assetId, versionId, currentUserId, className }: ApprovalBarProps) {
+  const tr = useTranslation()
+
   const swrKey = assetId ? `/assets/${assetId}/approvals?version_id=${versionId}` : null
 
   const { data, isLoading, mutate } = useSWR<ApprovalsResponse>(
@@ -171,14 +170,14 @@ export function ApprovalBar({ assetId, versionId, currentUserId, className }: Ap
         {isLoading && (
           <div className="flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin text-text-tertiary" />
-            <span className="text-xs text-text-tertiary">Loading approvals…</span>
+            <span className="text-xs text-text-tertiary">{tr("Loading approvals…")}</span>
           </div>
         )}
 
         {/* Reviewer list */}
         {!isLoading && approvals.length > 0 && (
           <div className="flex items-center gap-2 flex-1 min-w-0 overflow-x-auto">
-            <span className="text-2xs text-text-tertiary shrink-0">Reviews:</span>
+            <span className="text-2xs text-text-tertiary shrink-0">{tr("Reviews:")}</span>
             <div className="flex items-center gap-1.5">
               {approvals.map((approval) => {
                 const config = statusConfig[approval.status]
@@ -186,7 +185,7 @@ export function ApprovalBar({ assetId, versionId, currentUserId, className }: Ap
                   <div
                     key={approval.id}
                     className="flex items-center gap-1 rounded-full border border-border bg-bg-tertiary px-2 py-0.5"
-                    title={`${approval.user?.name ?? 'Unknown'}: ${config.label}`}
+                    title={`${approval.user?.name ?? tr("Unknown")}: ${tr(config.label)}`}
                   >
                     <Avatar
                       src={approval.user?.avatar_url}
@@ -205,25 +204,22 @@ export function ApprovalBar({ assetId, versionId, currentUserId, className }: Ap
             <div className="flex items-center gap-2 ml-2 shrink-0">
               {approvedCount > 0 && (
                 <span className="text-2xs text-status-success font-medium">
-                  {approvedCount} approved
-                </span>
+                  {approvedCount}{' '}{tr("approved")}</span>
               )}
               {rejectedCount > 0 && (
                 <span className="text-2xs text-status-error font-medium">
-                  {rejectedCount} rejected
-                </span>
+                  {rejectedCount}{' '}{tr("rejected")}</span>
               )}
               {pendingCount > 0 && (
                 <span className="text-2xs text-text-tertiary">
-                  {pendingCount} pending
-                </span>
+                  {pendingCount}{' '}{tr("pending")}</span>
               )}
             </div>
           </div>
         )}
 
         {!isLoading && approvals.length === 0 && (
-          <span className="text-xs text-text-tertiary flex-1">No review requests yet</span>
+          <span className="text-xs text-text-tertiary flex-1">{tr("No review requests yet")}</span>
         )}
 
         {/* Error */}
@@ -236,15 +232,11 @@ export function ApprovalBar({ assetId, versionId, currentUserId, className }: Ap
           <div className="flex items-center gap-2 shrink-0 ml-auto">
             {myApproval?.status === 'approved' && (
               <span className="inline-flex items-center gap-1 text-xs text-status-success font-medium">
-                <CheckCircle2 className="h-4 w-4" />
-                You approved
-              </span>
+                <CheckCircle2 className="h-4 w-4" />{tr("You approved")}</span>
             )}
             {myApproval?.status === 'rejected' && (
               <span className="inline-flex items-center gap-1 text-xs text-status-error font-medium">
-                <XCircle className="h-4 w-4" />
-                You rejected
-              </span>
+                <XCircle className="h-4 w-4" />{tr("You rejected")}</span>
             )}
             {(!myApproval || myApproval.status === 'pending') && (
               <>
@@ -255,9 +247,7 @@ export function ApprovalBar({ assetId, versionId, currentUserId, className }: Ap
                   disabled={approving}
                   className="text-status-error border-status-error/30 hover:border-status-error/60 hover:bg-status-error/10"
                 >
-                  <XCircle className="h-4 w-4" />
-                  Reject
-                </Button>
+                  <XCircle className="h-4 w-4" />{tr("Reject")}</Button>
                 <Button
                   variant="primary"
                   size="sm"
@@ -265,9 +255,7 @@ export function ApprovalBar({ assetId, versionId, currentUserId, className }: Ap
                   loading={approving}
                   className="bg-status-success hover:opacity-90"
                 >
-                  <CheckCircle2 className="h-4 w-4" />
-                  Approve
-                </Button>
+                  <CheckCircle2 className="h-4 w-4" />{tr("Approve")}</Button>
               </>
             )}
           </div>

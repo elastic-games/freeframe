@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -123,12 +124,14 @@ interface ToastContainerProps {
 }
 
 function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
+  const tr = useTranslation()
+
   if (toasts.length === 0) return null
 
   return (
     <div
       aria-live="polite"
-      aria-label="Notifications"
+      aria-label={tr("Notifications")}
       className="pointer-events-none fixed bottom-4 right-4 z-[9999] flex flex-col-reverse gap-2"
     >
       {toasts.map((t) => (
@@ -146,6 +149,8 @@ interface ToastTileProps {
 }
 
 function ToastTile({ toast, onDismiss }: ToastTileProps) {
+  const tr = useTranslation()
+
   const config = TOAST_CONFIG[toast.type]
   const Icon = config.icon
 
@@ -159,11 +164,11 @@ function ToastTile({ toast, onDismiss }: ToastTileProps) {
       )}
     >
       <Icon className={cn('mt-0.5 h-4 w-4 shrink-0', config.iconClass)} />
-      <p className="flex-1 text-sm text-text-primary">{toast.message}</p>
+      <p className="flex-1 text-sm text-text-primary">{tr(toast.message)}</p>
       <button
         onClick={() => onDismiss(toast.id)}
         className="mt-0.5 shrink-0 rounded p-0.5 text-text-tertiary transition-colors hover:bg-bg-hover hover:text-text-primary"
-        aria-label="Dismiss notification"
+        aria-label={tr("Dismiss notification")}
       >
         <X className="h-3.5 w-3.5" />
       </button>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import useSWR, { mutate as globalMutate } from 'swr'
 import { Star, ChevronDown, Check, CalendarDays, Tag, X } from 'lucide-react'
@@ -66,6 +67,8 @@ function CustomFieldInput({
   value: unknown
   onChange: (v: unknown) => void
 }) {
+  const tr = useTranslation()
+
   const type = field.field_type as MetadataFieldType
 
   if (type === 'text') {
@@ -75,7 +78,7 @@ function CustomFieldInput({
         value={(value as string) ?? ''}
         onChange={(e) => onChange(e.target.value)}
         className="flex h-8 w-full rounded-md border border-border bg-bg-secondary px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-border-focus focus:ring-1 focus:ring-border-focus transition-colors"
-        placeholder={`Enter ${field.name.toLowerCase()}`}
+        placeholder={tr("Enter {value0}", { value0: field.name.toLowerCase() })}
       />
     )
   }
@@ -109,7 +112,7 @@ function CustomFieldInput({
     return (
       <Select.Root value={current} onValueChange={onChange}>
         <Select.Trigger className="inline-flex items-center justify-between gap-2 rounded-md border border-border bg-bg-secondary px-3 h-8 text-sm text-text-primary hover:bg-bg-tertiary transition-colors focus:outline-none focus:ring-1 focus:ring-border-focus w-full">
-          <Select.Value placeholder={`Select ${field.name}`} />
+          <Select.Value placeholder={tr("Select {value0}", { value0: field.name })} />
           <ChevronDown className="h-3.5 w-3.5 text-text-tertiary shrink-0" />
         </Select.Trigger>
         <Select.Portal>
@@ -177,6 +180,8 @@ interface AssetMetadataEditorProps {
 }
 
 export function AssetMetadataEditor({ asset, projectId, onUpdated }: AssetMetadataEditorProps) {
+  const tr = useTranslation()
+
   const assetKey = `/assets/${asset.id}`
 
   // Built-in fields
@@ -251,18 +256,18 @@ export function AssetMetadataEditor({ asset, projectId, onUpdated }: AssetMetada
     <div className="space-y-4">
       {/* Rating */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium text-text-tertiary uppercase tracking-wide">Rating</label>
+        <label className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{tr("Rating")}</label>
         <StarRating value={rating} onChange={setRating} />
       </div>
 
       {/* Assignee */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium text-text-tertiary uppercase tracking-wide">Assignee</label>
+        <label className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{tr("Assignee")}</label>
         <input
           type="text"
           value={assigneeId}
           onChange={(e) => setAssigneeId(e.target.value)}
-          placeholder="User ID"
+          placeholder={tr("User ID")}
           className="flex h-8 w-full rounded-md border border-border bg-bg-secondary px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-border-focus focus:ring-1 focus:ring-border-focus transition-colors"
         />
       </div>
@@ -270,9 +275,7 @@ export function AssetMetadataEditor({ asset, projectId, onUpdated }: AssetMetada
       {/* Due date */}
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-medium text-text-tertiary uppercase tracking-wide flex items-center gap-1">
-          <CalendarDays className="h-3 w-3" />
-          Due Date
-        </label>
+          <CalendarDays className="h-3 w-3" />{tr("Due Date")}</label>
         <input
           type="date"
           value={dueDate}
@@ -284,9 +287,7 @@ export function AssetMetadataEditor({ asset, projectId, onUpdated }: AssetMetada
       {/* Keywords */}
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-medium text-text-tertiary uppercase tracking-wide flex items-center gap-1">
-          <Tag className="h-3 w-3" />
-          Keywords
-        </label>
+          <Tag className="h-3 w-3" />{tr("Keywords")}</label>
         <div className="flex flex-wrap gap-1.5 mb-1">
           {keywords.map((kw) => (
             <span
@@ -315,19 +316,17 @@ export function AssetMetadataEditor({ asset, projectId, onUpdated }: AssetMetada
                 handleAddKeyword()
               }
             }}
-            placeholder="Add keyword..."
+            placeholder={tr("Add keyword...")}
             className="flex h-8 flex-1 rounded-md border border-border bg-bg-secondary px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-border-focus focus:ring-1 focus:ring-border-focus transition-colors"
           />
-          <Button type="button" variant="secondary" size="sm" onClick={handleAddKeyword}>
-            Add
-          </Button>
+          <Button type="button" variant="secondary" size="sm" onClick={handleAddKeyword}>{tr("Add")}</Button>
         </div>
       </div>
 
       {/* Custom fields */}
       {metadataFields && metadataFields.length > 0 && (
         <div className="space-y-3 border-t border-border pt-4">
-          <p className="text-xs font-medium text-text-tertiary uppercase tracking-wide">Custom Fields</p>
+          <p className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{tr("Custom Fields")}</p>
           {metadataFields.map((field) => (
             <div key={field.id} className="flex flex-col gap-1.5">
               <label className="text-sm text-text-secondary flex items-center gap-1">
@@ -350,9 +349,7 @@ export function AssetMetadataEditor({ asset, projectId, onUpdated }: AssetMetada
       <div className="flex items-center justify-between pt-2 border-t border-border">
         {msg && <p className="text-xs text-text-secondary">{msg}</p>}
         <div className="ml-auto">
-          <Button size="sm" loading={saving} onClick={handleSave}>
-            Save
-          </Button>
+          <Button size="sm" loading={saving} onClick={handleSave}>{tr("Save")}</Button>
         </div>
       </div>
     </div>

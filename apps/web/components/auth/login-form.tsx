@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import { useState, useRef, useEffect, KeyboardEvent, ClipboardEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { api, ApiError } from '@/lib/api'
@@ -13,6 +14,8 @@ import type { VerifyCodeResponse, AuthTokens } from '@/types'
 type Step = 'email' | 'code' | 'password' | 'classic'
 
 export function LoginForm() {
+  const tr = useTranslation()
+
   const router = useRouter()
   const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
@@ -239,8 +242,8 @@ export function LoginForm() {
     return (
       <div className="animate-slide-up">
         <div className="mb-8">
-          <h1 className="text-xl font-semibold text-text-primary mb-1">Sign in</h1>
-          <p className="text-sm text-text-secondary">Enter your email and password to continue.</p>
+          <h1 className="text-xl font-semibold text-text-primary mb-1">{tr("Sign in")}</h1>
+          <p className="text-sm text-text-secondary">{tr("Enter your email and password to continue.")}</p>
         </div>
 
         <form onSubmit={handleClassicLogin} className="flex flex-col gap-4">
@@ -251,7 +254,7 @@ export function LoginForm() {
           )}
 
           <Input
-            label="Email address"
+            label={tr("Email address")}
             type="email"
             placeholder="you@example.com"
             autoComplete="email"
@@ -260,17 +263,15 @@ export function LoginForm() {
           />
 
           <Input
-            label="Password"
+            label={tr("Password")}
             type="password"
-            placeholder="Your password"
+            placeholder={tr("Your password")}
             autoComplete="current-password"
             value={classicPassword}
             onChange={(e) => setClassicPassword(e.target.value)}
           />
 
-          <Button type="submit" size="lg" loading={loading} className="mt-2 w-full">
-            Sign in
-          </Button>
+          <Button type="submit" size="lg" loading={loading} className="mt-2 w-full">{tr("Sign in")}</Button>
         </form>
 
         <div className="mt-6 text-center">
@@ -278,9 +279,7 @@ export function LoginForm() {
             type="button"
             onClick={() => { setStep('email'); setClassicError('') }}
             className="text-base text-text-tertiary hover:text-text-secondary transition-colors"
-          >
-            Sign in with magic code instead
-          </button>
+          >{tr("Sign in with magic code instead")}</button>
         </div>
       </div>
     )
@@ -290,10 +289,8 @@ export function LoginForm() {
     return (
       <div className="animate-slide-up">
         <div className="mb-8">
-          <h1 className="text-xl font-semibold text-text-primary mb-1">Create your password</h1>
-          <p className="text-sm text-text-secondary">
-            Set a password to secure your account going forward.
-          </p>
+          <h1 className="text-xl font-semibold text-text-primary mb-1">{tr("Create your password")}</h1>
+          <p className="text-sm text-text-secondary">{tr("Set a password to secure your account going forward.")}</p>
         </div>
 
         <form onSubmit={handleSetPassword} className="flex flex-col gap-4">
@@ -304,27 +301,25 @@ export function LoginForm() {
           )}
 
           <Input
-            label="Password"
+            label={tr("Password")}
             type="password"
-            placeholder="Min. 8 characters"
+            placeholder={tr("Min. 8 characters")}
             autoComplete="new-password"
             value={password}
             onChange={(e) => { setPassword(e.target.value); setPasswordError('') }}
-            error={passwordError}
+            error={tr(passwordError)}
           />
 
           <Input
-            label="Confirm password"
+            label={tr("Confirm password")}
             type="password"
-            placeholder="Repeat password"
+            placeholder={tr("Repeat password")}
             autoComplete="new-password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
 
-          <Button type="submit" size="lg" loading={loading} className="mt-2 w-full">
-            Set password &amp; continue
-          </Button>
+          <Button type="submit" size="lg" loading={loading} className="mt-2 w-full">{tr("Set password & continue")}</Button>
         </form>
       </div>
     )
@@ -334,18 +329,16 @@ export function LoginForm() {
     return (
       <div className="animate-slide-up">
         <div className="mb-8">
-          <h1 className="text-xl font-semibold text-text-primary mb-1">Check your email</h1>
+          <h1 className="text-xl font-semibold text-text-primary mb-1">{tr("Check your email")}</h1>
           {/* The API answers identically whether or not the address has an
               account, deliberately, so that this endpoint cannot be used to
               enumerate registered emails. Claiming "we sent a code" asserts
               something it never told us, and for an unknown address it is
               simply untrue: the person then waits for mail that cannot
               arrive. Say only what the server guarantees. (#248) */}
-          <p className="text-sm text-text-secondary">
-            If{' '}
+          <p className="text-sm text-text-secondary">{tr("If")}{' '}
             <span className="text-text-primary font-medium">{email}</span>
-            {' '}has an account, a 6-digit code is on its way.
-          </p>
+            {' '}{tr("has an account, a 6-digit code is on its way.")}</p>
         </div>
 
         <form onSubmit={handleVerifyCode} className="flex flex-col gap-6">
@@ -377,14 +370,10 @@ export function LoginForm() {
             // A mistyped address is the common case behind "no code arrived",
             // and it is the one thing the person can check without us telling
             // them whether the account exists.
-            <p className="text-sm text-text-tertiary -mt-3">
-              Didn&apos;t get a code? Check the address for typos.
-            </p>
+            <p className="text-sm text-text-tertiary -mt-3">{tr("Didn't get a code? Check the address for typos.")}</p>
           )}
 
-          <Button type="submit" size="lg" loading={loading} className="w-full">
-            Verify code
-          </Button>
+          <Button type="submit" size="lg" loading={loading} className="w-full">{tr("Verify code")}</Button>
         </form>
 
         <div className="mt-6 text-center space-y-2">
@@ -392,9 +381,7 @@ export function LoginForm() {
             type="button"
             onClick={() => { setStep('email'); setCode(['', '', '', '', '', '']); setCodeError('') }}
             className="block w-full rounded-md border border-border bg-bg-secondary px-4 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:border-border-focus hover:text-text-primary"
-          >
-            Use a different email
-          </button>
+          >{tr("Use a different email")}</button>
         </div>
       </div>
     )
@@ -404,10 +391,8 @@ export function LoginForm() {
   return (
     <div className="animate-slide-up">
       <div className="mb-8">
-        <h1 className="text-xl font-semibold text-text-primary mb-1">Magic code sign-in</h1>
-        <p className="text-sm text-text-secondary">
-          Enter your email and we&apos;ll send you a sign-in code.
-        </p>
+        <h1 className="text-xl font-semibold text-text-primary mb-1">{tr("Magic code sign-in")}</h1>
+        <p className="text-sm text-text-secondary">{tr("Enter your email and we'll send you a sign-in code.")}</p>
       </div>
 
       <form onSubmit={handleSendCode} className="flex flex-col gap-4">
@@ -418,7 +403,7 @@ export function LoginForm() {
         )}
 
         <Input
-          label="Email address"
+          label={tr("Email address")}
           type="email"
           placeholder="you@example.com"
           autoComplete="email"
@@ -427,9 +412,7 @@ export function LoginForm() {
           error={emailError}
         />
 
-        <Button type="submit" size="lg" loading={loading} className="mt-2 w-full">
-          Send magic code
-        </Button>
+        <Button type="submit" size="lg" loading={loading} className="mt-2 w-full">{tr("Send magic code")}</Button>
       </form>
 
       <div className="mt-6 text-center">
@@ -437,9 +420,7 @@ export function LoginForm() {
           type="button"
           onClick={() => { setStep('classic'); setGeneralError('') }}
           className="text-base text-text-tertiary hover:text-text-secondary transition-colors"
-        >
-          Back to password sign-in
-        </button>
+        >{tr("Back to password sign-in")}</button>
       </div>
     </div>
   )

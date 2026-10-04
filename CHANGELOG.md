@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- English and Russian review UI, a standalone language selector, and secure live language synchronization with Elastic Labs Studio. Language changes preserve the loaded media, 3D camera/object/animation pose, and draft annotations.
 - Native GLB inspection with orbit/pan/zoom and animation pose selection. Every 3D note and drawing saves the exact model version/digest, camera projection, object transform and viewport aspect; reopening feedback restores the view and preserves drawing alignment on resize.
 - Additive `model` asset/media enum migration (`ab20261003c2`) and bounded, self-contained GLB validation in the normal upload/processing and Studio review snapshot paths.
 

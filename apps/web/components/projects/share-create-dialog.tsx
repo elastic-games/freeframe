@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import {
@@ -80,6 +81,8 @@ function AssetTypeIcon({ type, className }: { type: string; className?: string }
 // ─── Copy button ─────────────────────────────────────────────────────────────
 
 function CopyButton({ text, label }: { text: string; label?: string }) {
+  const tr = useTranslation()
+
   const [status, setStatus] = React.useState<'idle' | 'copied' | 'failed'>('idle')
 
   async function handleCopy() {
@@ -96,18 +99,18 @@ function CopyButton({ text, label }: { text: string; label?: string }) {
   return (
     <>
       <div className="sr-only" aria-live="polite" role="status">
-        {status === 'copied' ? 'URL copied to clipboard' : status === 'failed' ? 'Copy failed' : ''}
+        {status === 'copied' ? tr("URL copied to clipboard") : status === 'failed' ? tr("Copy failed") : ''}
       </div>
       <Button variant="secondary" size="sm" onClick={handleCopy}>
         {status === 'copied' ? (
           <>
             <Check className="h-3.5 w-3.5 text-status-success" />
-            {label ? 'Copied!' : ''}
+            {label ? tr("Copied!") : ''}
           </>
         ) : status === 'failed' ? (
           <>
             <X className="h-3.5 w-3.5 text-status-error" />
-            {label ? 'Failed' : ''}
+            {label ? tr("Failed") : ''}
           </>
         ) : (
           <>
@@ -125,6 +128,8 @@ function CopyButton({ text, label }: { text: string; label?: string }) {
 interface InviteUser { id: string; name: string; email: string }
 
 function ShareInviteInput({ token, shareLink }: { token: string; shareLink: { asset_id: string | null; folder_id: string | null; project_id?: string | null; permission: string } }) {
+  const tr = useTranslation()
+
   const [query, setQuery] = React.useState('')
   const [suggestions, setSuggestions] = React.useState<InviteUser[]>([])
   const [showDrop, setShowDrop] = React.useState(false)
@@ -208,7 +213,7 @@ function ShareInviteInput({ token, shareLink }: { token: string; shareLink: { as
         onKeyDown={(e) => {
           if (e.key === 'Enter' && query.includes('@') && !showDrop) invite(undefined, query.trim())
         }}
-        placeholder="Send to name or email"
+        placeholder={tr("Send to name or email")}
         className="flex h-9 w-full rounded-md border border-border bg-bg-secondary px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent"
       />
       {showDrop && (
@@ -230,8 +235,8 @@ function ShareInviteInput({ token, shareLink }: { token: string; shareLink: { as
           ))}
         </div>
       )}
-      {sent && <p className="text-2xs text-status-success mt-1">Invited {sent}</p>}
-      {!sent && !invitedUsers.length && <p className="text-2xs text-text-tertiary mt-1">Type to search or enter email</p>}
+      {sent && <p className="text-2xs text-status-success mt-1">{tr("Invited")}{' '}{sent}</p>}
+      {!sent && !invitedUsers.length && <p className="text-2xs text-text-tertiary mt-1">{tr("Type to search or enter email")}</p>}
 
       {/* Invited users list */}
       {invitedUsers.length > 0 && (
@@ -246,7 +251,7 @@ function ShareInviteInput({ token, shareLink }: { token: string; shareLink: { as
               <button
                 onClick={() => setInvitedUsers(prev => prev.filter(p => p.id !== u.id))}
                 className="text-text-tertiary hover:text-status-error transition-colors shrink-0"
-                title="Remove"
+                title={tr("Remove")}
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -280,6 +285,8 @@ interface ConfigurePhaseProps {
 }
 
 function ConfigurePhase({ defaultTitle, onBack, onCreate, creating }: ConfigurePhaseProps) {
+  const tr = useTranslation()
+
   const [title, setTitle] = React.useState(defaultTitle)
   // Comments on, downloads off, matching ShareLinkCreate on the API. Both have to
   // move together or a link created through the API keeps the old behaviour while
@@ -313,9 +320,7 @@ function ConfigurePhase({ defaultTitle, onBack, onCreate, creating }: ConfigureP
           <button onClick={onBack} className="text-text-tertiary hover:text-text-primary transition-colors shrink-0">
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <Dialog.Title className="text-sm font-semibold text-text-primary truncate">
-            Configure Share Link
-          </Dialog.Title>
+          <Dialog.Title className="text-sm font-semibold text-text-primary truncate">{tr("Configure Share Link")}</Dialog.Title>
         </div>
         <Dialog.Close className="text-text-tertiary hover:text-text-primary transition-colors">
           <X className="h-4 w-4" />
@@ -326,7 +331,7 @@ function ConfigurePhase({ defaultTitle, onBack, onCreate, creating }: ConfigureP
       <div className="px-5 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
         {/* Link name */}
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-text-secondary">Link name</label>
+          <label className="text-xs font-medium text-text-secondary">{tr("Link name")}</label>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -340,15 +345,15 @@ function ConfigurePhase({ defaultTitle, onBack, onCreate, creating }: ConfigureP
           <div className="flex items-center justify-between py-2.5">
             <div className="flex items-center gap-2.5">
               <Globe className="h-4 w-4 text-text-tertiary" />
-              <span className="text-sm text-text-primary">Visibility</span>
+              <span className="text-sm text-text-primary">{tr("Visibility")}</span>
             </div>
             <select
               value={visibility}
               onChange={(e) => setVisibility(e.target.value as 'public' | 'secure')}
               className="shrink-0 rounded-full border border-border bg-bg-secondary px-2 py-0.5 text-2xs font-medium text-text-primary outline-none cursor-pointer"
             >
-              <option value="public">🌐 Public</option>
-              <option value="secure">🔒 Secure</option>
+              <option value="public">{tr("🌐 Public")}</option>
+              <option value="secure">{tr("🔒 Secure")}</option>
             </select>
           </div>
 
@@ -356,7 +361,7 @@ function ConfigurePhase({ defaultTitle, onBack, onCreate, creating }: ConfigureP
           <div className="flex items-center justify-between py-2.5">
             <div className="flex items-center gap-2.5">
               <MessageSquare className="h-4 w-4 text-text-tertiary" />
-              <span className="text-sm text-text-primary">Allow comments</span>
+              <span className="text-sm text-text-primary">{tr("Allow comments")}</span>
             </div>
             <Switch.Root
               checked={allowComments}
@@ -371,7 +376,7 @@ function ConfigurePhase({ defaultTitle, onBack, onCreate, creating }: ConfigureP
           <div className="flex items-center justify-between py-2.5">
             <div className="flex items-center gap-2.5">
               <Download className="h-4 w-4 text-text-tertiary" />
-              <span className="text-sm text-text-primary">Allow downloads</span>
+              <span className="text-sm text-text-primary">{tr("Allow downloads")}</span>
             </div>
             <Switch.Root
               checked={allowDownloads}
@@ -387,7 +392,7 @@ function ConfigurePhase({ defaultTitle, onBack, onCreate, creating }: ConfigureP
             <div className="flex items-center justify-between py-2.5">
               <div className="flex items-center gap-2.5">
                 <Key className="h-4 w-4 text-text-tertiary" />
-                <span className="text-sm text-text-primary">Passphrase</span>
+                <span className="text-sm text-text-primary">{tr("Passphrase")}</span>
               </div>
               <Switch.Root
                 checked={passphrase}
@@ -407,7 +412,7 @@ function ConfigurePhase({ defaultTitle, onBack, onCreate, creating }: ConfigureP
                   type={showPassphraseInput ? 'text' : 'password'}
                   value={passphraseValue}
                   onChange={(e) => setPassphraseValue(e.target.value)}
-                  placeholder="Enter passphrase"
+                  placeholder={tr("Enter passphrase")}
                   className="w-full rounded-md border border-border bg-bg-secondary px-3 py-2 pr-14 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent"
                 />
                 <button
@@ -415,7 +420,7 @@ function ConfigurePhase({ defaultTitle, onBack, onCreate, creating }: ConfigureP
                   onClick={() => setShowPassphraseInput(!showPassphraseInput)}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-2xs text-text-tertiary hover:text-text-primary transition-colors px-1 py-0.5"
                 >
-                  {showPassphraseInput ? 'Hide' : 'Show'}
+                  {showPassphraseInput ? tr("Hide") : tr("Show")}
                 </button>
               </div>
             )}
@@ -425,7 +430,7 @@ function ConfigurePhase({ defaultTitle, onBack, onCreate, creating }: ConfigureP
           <div className="flex items-center justify-between py-2.5">
             <div className="flex items-center gap-2.5">
               <Clock className="h-4 w-4 text-text-tertiary" />
-              <span className="text-sm text-text-primary">Expiration date</span>
+              <span className="text-sm text-text-primary">{tr("Expiration date")}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <input
@@ -446,7 +451,7 @@ function ConfigurePhase({ defaultTitle, onBack, onCreate, creating }: ConfigureP
           <div className="flex items-center justify-between py-2.5">
             <div className="flex items-center gap-2.5">
               <Droplets className="h-4 w-4 text-text-tertiary" />
-              <span className="text-sm text-text-primary">Watermark</span>
+              <span className="text-sm text-text-primary">{tr("Watermark")}</span>
             </div>
             <Switch.Root
               checked={watermark}
@@ -461,12 +466,8 @@ function ConfigurePhase({ defaultTitle, onBack, onCreate, creating }: ConfigureP
 
       {/* Footer */}
       <div className="flex items-center justify-end border-t border-border px-5 py-3 gap-2">
-        <Button variant="secondary" size="sm" onClick={onBack}>
-          Back
-        </Button>
-        <Button size="sm" onClick={handleCreate} loading={creating} disabled={creating}>
-          Create
-        </Button>
+        <Button variant="secondary" size="sm" onClick={onBack}>{tr("Back")}</Button>
+        <Button size="sm" onClick={handleCreate} loading={creating} disabled={creating}>{tr("Create")}</Button>
       </div>
     </>
   )
@@ -493,6 +494,8 @@ function SelectionPhase({
   onCancel,
   onCreate,
 }: SelectionPhaseProps) {
+  const tr = useTranslation()
+
   const hasItems = folders.length > 0 || assets.length > 0
   const totalItems = folders.length + assets.length
   const folderCount = folders.length
@@ -502,9 +505,7 @@ function SelectionPhase({
     <>
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-5 py-4">
-        <Dialog.Title className="text-sm font-semibold text-text-primary">
-          Create Share Link
-        </Dialog.Title>
+        <Dialog.Title className="text-sm font-semibold text-text-primary">{tr("Create Share Link")}</Dialog.Title>
         <Dialog.Close className="text-text-tertiary hover:text-text-primary transition-colors">
           <X className="h-4 w-4" />
         </Dialog.Close>
@@ -519,11 +520,9 @@ function SelectionPhase({
             </div>
             <div>
               <p className="text-sm font-semibold text-text-primary">
-                {currentFolderId ? 'Share this folder' : 'Share project'}
+                {currentFolderId ? tr("Share this folder") : tr("Share project")}
               </p>
-              <p className="text-xs text-text-tertiary">
-                One link with all contents included
-              </p>
+              <p className="text-xs text-text-tertiary">{tr("One link with all contents included")}</p>
             </div>
           </div>
 
@@ -532,32 +531,28 @@ function SelectionPhase({
             {folderCount > 0 && (
               <span className="flex items-center gap-1">
                 <FolderIcon className="h-3.5 w-3.5 text-text-tertiary" />
-                {folderCount} folder{folderCount !== 1 ? 's' : ''}
+                {folderCount}{' '}{tr("folder")}{folderCount !== 1 ? 's' : ''}
               </span>
             )}
             {assetCount > 0 && (
               <span className="flex items-center gap-1">
                 <Image className="h-3.5 w-3.5 text-text-tertiary" />
-                {assetCount} asset{assetCount !== 1 ? 's' : ''}
+                {assetCount}{' '}{tr("asset")}{assetCount !== 1 ? 's' : ''}
               </span>
             )}
-            {totalItems === 0 && <span>Empty — no items to share</span>}
+            {totalItems === 0 && <span>{tr("Empty — no items to share")}</span>}
           </div>
         </div>
       </div>
 
       {/* Footer */}
       <div className="flex items-center justify-end border-t border-border px-5 py-3 gap-2">
-        <Button variant="secondary" size="sm" onClick={onCancel}>
-          Cancel
-        </Button>
+        <Button variant="secondary" size="sm" onClick={onCancel}>{tr("Cancel")}</Button>
         <Button
           size="sm"
           onClick={onCreate}
           disabled={totalItems === 0}
-        >
-          Next
-        </Button>
+        >{tr("Next")}</Button>
       </div>
     </>
   )
@@ -574,6 +569,8 @@ interface LinkCreatedPhaseProps {
 }
 
 function LinkCreatedPhase({ result, allResults, onSelectResult, onDone, onAdvancedSettings }: LinkCreatedPhaseProps) {
+  const tr = useTranslation()
+
   const [title, setTitle] = React.useState(result.title)
   const [editingTitle, setEditingTitle] = React.useState(false)
   const [savingTitle, setSavingTitle] = React.useState(false)
@@ -685,7 +682,7 @@ function LinkCreatedPhase({ result, allResults, onSelectResult, onDone, onAdvanc
             />
           ) : (
             <Dialog.Title className="text-sm font-semibold text-text-primary truncate">
-              {title}
+              {tr(title)}
             </Dialog.Title>
           )}
           {!editingTitle && (
@@ -708,8 +705,7 @@ function LinkCreatedPhase({ result, allResults, onSelectResult, onDone, onAdvanc
         {allResults && allResults.length > 1 && (
           <div className="space-y-1">
             <p className="text-2xs font-medium text-text-tertiary uppercase tracking-wider">
-              {allResults.length} share links created
-            </p>
+              {allResults.length}{' '}{tr("share links created")}</p>
             <div className="flex flex-wrap gap-1.5">
               {allResults.map((r) => (
                 <button
@@ -744,7 +740,7 @@ function LinkCreatedPhase({ result, allResults, onSelectResult, onDone, onAdvanc
               }
             }}
             className="text-text-tertiary hover:text-text-primary transition-colors shrink-0"
-            aria-label={urlCopyFailed ? 'Copy failed' : 'Copy share URL'}
+            aria-label={urlCopyFailed ? tr("Copy failed") : tr("Copy share URL")}
           >
             {urlCopied ? (
               <Check className="h-3.5 w-3.5 text-status-success" />
@@ -763,8 +759,8 @@ function LinkCreatedPhase({ result, allResults, onSelectResult, onDone, onAdvanc
             }}
             className="shrink-0 rounded-full border border-border bg-bg-secondary px-2 py-0.5 text-2xs font-medium text-text-primary outline-none cursor-pointer"
           >
-            <option value="public">🌐 Public</option>
-            <option value="secure">🔒 Secure</option>
+            <option value="public">{tr("🌐 Public")}</option>
+            <option value="secure">{tr("🔒 Secure")}</option>
           </select>
         </div>
 
@@ -778,7 +774,7 @@ function LinkCreatedPhase({ result, allResults, onSelectResult, onDone, onAdvanc
             {result.thumbnailUrl ? (
               <div className="rounded-lg border border-border bg-bg-tertiary overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={result.thumbnailUrl} alt={title} className="w-full h-32 object-cover" />
+                <img src={result.thumbnailUrl} alt={tr(title)} className="w-full h-32 object-cover" />
               </div>
             ) : (
               <div className="rounded-lg border border-border bg-bg-tertiary h-32 flex items-center justify-center">
@@ -796,9 +792,8 @@ function LinkCreatedPhase({ result, allResults, onSelectResult, onDone, onAdvanc
               className="w-full flex items-center justify-between rounded-lg border border-border bg-bg-tertiary px-4 py-3 hover:bg-bg-hover transition-colors"
             >
               <div className="text-left">
-                <p className="text-sm font-medium text-text-primary">Settings</p>
-                <p className="text-xs text-text-tertiary">
-                  Anyone with the link can {settingsSummary.join(', ')}.
+                <p className="text-sm font-medium text-text-primary">{tr("Settings")}</p>
+                <p className="text-xs text-text-tertiary">{tr("Anyone with the link can")}{' '}{settingsSummary.join(', ')}.
                 </p>
               </div>
               <ChevronRight className="h-4 w-4 text-text-tertiary" />
@@ -811,16 +806,14 @@ function LinkCreatedPhase({ result, allResults, onSelectResult, onDone, onAdvanc
               onClick={() => setShowSettings(false)}
               className="flex items-center gap-1 text-sm font-medium text-text-primary hover:text-accent transition-colors"
             >
-              <ChevronLeft className="h-4 w-4" />
-              Back
-            </button>
+              <ChevronLeft className="h-4 w-4" />{tr("Back")}</button>
 
             <div className="space-y-1">
               {/* Layout */}
               <div className="flex items-center justify-between py-2.5">
                 <div className="flex items-center gap-2.5">
                   <LayoutGrid className="h-4 w-4 text-text-tertiary" />
-                  <span className="text-sm text-text-primary">Layout</span>
+                  <span className="text-sm text-text-primary">{tr("Layout")}</span>
                 </div>
                 <div className="flex items-center gap-1 rounded-lg border border-border bg-bg-tertiary p-0.5">
                   {(['grid', 'list'] as const).map((l) => (
@@ -837,7 +830,7 @@ function LinkCreatedPhase({ result, allResults, onSelectResult, onDone, onAdvanc
               <div className="flex items-center justify-between py-2.5">
                 <div className="flex items-center gap-2.5">
                   <MessageSquare className="h-4 w-4 text-text-tertiary" />
-                  <span className="text-sm text-text-primary">Allow comments</span>
+                  <span className="text-sm text-text-primary">{tr("Allow comments")}</span>
                 </div>
                 <Switch.Root
                   checked={allowComments}
@@ -852,7 +845,7 @@ function LinkCreatedPhase({ result, allResults, onSelectResult, onDone, onAdvanc
               <div className="flex items-center justify-between py-2.5">
                 <div className="flex items-center gap-2.5">
                   <Download className="h-4 w-4 text-text-tertiary" />
-                  <span className="text-sm text-text-primary">Allow downloads</span>
+                  <span className="text-sm text-text-primary">{tr("Allow downloads")}</span>
                 </div>
                 <Switch.Root
                   checked={allowDownloads}
@@ -868,7 +861,7 @@ function LinkCreatedPhase({ result, allResults, onSelectResult, onDone, onAdvanc
                 <div className="flex items-center justify-between py-2.5">
                   <div className="flex items-center gap-2.5">
                     <Key className="h-4 w-4 text-text-tertiary" />
-                    <span className="text-sm text-text-primary">Passphrase</span>
+                    <span className="text-sm text-text-primary">{tr("Passphrase")}</span>
                   </div>
                   <Switch.Root
                     checked={passphrase}
@@ -888,7 +881,7 @@ function LinkCreatedPhase({ result, allResults, onSelectResult, onDone, onAdvanc
                       type={showPassphraseInput ? 'text' : 'password'}
                       value={passphraseValue}
                       onChange={(e) => { setPassphraseValue(e.target.value); debouncedPatch({ password: e.target.value || null }) }}
-                      placeholder={passphrase && !passphraseValue ? '••••••••' : 'Enter passphrase'}
+                      placeholder={passphrase && !passphraseValue ? '••••••••' : tr("Enter passphrase")}
                       className="w-full rounded-md border border-border bg-bg-secondary px-3 py-2 pr-14 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent"
                     />
                     <button
@@ -896,7 +889,7 @@ function LinkCreatedPhase({ result, allResults, onSelectResult, onDone, onAdvanc
                       onClick={() => setShowPassphraseInput(!showPassphraseInput)}
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-2xs text-text-tertiary hover:text-text-primary transition-colors px-1 py-0.5"
                     >
-                      {showPassphraseInput ? 'Hide' : 'Show'}
+                      {showPassphraseInput ? tr("Hide") : tr("Show")}
                     </button>
                   </div>
                 )}
@@ -906,7 +899,7 @@ function LinkCreatedPhase({ result, allResults, onSelectResult, onDone, onAdvanc
               <div className="flex items-center justify-between py-2.5">
                 <div className="flex items-center gap-2.5">
                   <Clock className="h-4 w-4 text-text-tertiary" />
-                  <span className="text-sm text-text-primary">Expiration date</span>
+                  <span className="text-sm text-text-primary">{tr("Expiration date")}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <input
@@ -927,7 +920,7 @@ function LinkCreatedPhase({ result, allResults, onSelectResult, onDone, onAdvanc
               <div className="flex items-center justify-between py-2.5">
                 <div className="flex items-center gap-2.5">
                   <Droplets className="h-4 w-4 text-text-tertiary" />
-                  <span className="text-sm text-text-primary">Watermark</span>
+                  <span className="text-sm text-text-primary">{tr("Watermark")}</span>
                 </div>
                 <Switch.Root
                   checked={watermark}
@@ -950,15 +943,11 @@ function LinkCreatedPhase({ result, allResults, onSelectResult, onDone, onAdvanc
             onDone()
           }}
           className="text-xs text-text-tertiary hover:text-text-secondary transition-colors flex items-center gap-1"
-        >
-          Advanced settings
-          <ExternalLink className="h-3 w-3" />
+        >{tr("Advanced settings")}<ExternalLink className="h-3 w-3" />
         </button>
         <div className="flex items-center gap-2">
-          <CopyButton text={shareUrl} label="Copy Link" />
-          <Button size="sm" onClick={onDone}>
-            Done
-          </Button>
+          <CopyButton text={shareUrl} label={tr("Copy Link")} />
+          <Button size="sm" onClick={onDone}>{tr("Done")}</Button>
         </div>
       </div>
     </>
@@ -980,6 +969,8 @@ export function ShareCreateDialog({
   onShareCreated,
   onAdvancedSettings,
 }: ShareCreateDialogProps) {
+  const tr = useTranslation()
+
   type Phase = 'selection' | 'configure' | 'result'
 
   const [selectedItems, setSelectedItems] = React.useState<Map<string, SelectedItem>>(new Map())
@@ -1177,13 +1168,11 @@ export function ShareCreateDialog({
             'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
           )}
         >
-          <Dialog.Description className="sr-only">
-            Select items to share and create a public share link.
-          </Dialog.Description>
+          <Dialog.Description className="sr-only">{tr("Select items to share and create a public share link.")}</Dialog.Description>
 
           {error && (
             <div className="mx-5 mt-4 rounded-md border border-status-error/30 bg-status-error/10 px-3 py-2">
-              <p className="text-xs text-status-error">{error}</p>
+              <p className="text-xs text-status-error">{tr(error)}</p>
             </div>
           )}
 

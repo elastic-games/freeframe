@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { AlertCircle, Loader2, CheckCircle2, ChevronDown } from 'lucide-react'
@@ -40,6 +41,8 @@ interface VersionSwitcherProps {
 }
 
 export function VersionSwitcher({ versions, className, onVersionSelect }: VersionSwitcherProps) {
+  const tr = useTranslation()
+
   const currentVersion = useReviewStore((s) => s.currentVersion)
   const setCurrentVersion = useReviewStore((s) => s.setCurrentVersion)
 
@@ -61,7 +64,7 @@ export function VersionSwitcher({ versions, className, onVersionSelect }: Versio
 
   return (
     <div className={cn('flex items-center gap-1.5', className)}>
-      <span className="text-xs text-text-tertiary shrink-0">Version:</span>
+      <span className="text-xs text-text-tertiary shrink-0">{tr("Version:")}</span>
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild>
           <button className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 bg-accent text-white text-xs font-medium hover:bg-accent/90 transition-colors outline-none">
@@ -70,10 +73,10 @@ export function VersionSwitcher({ versions, className, onVersionSelect }: Versio
               <span
                 data-testid="version-status-indicator"
                 className="inline-flex items-center gap-1 text-[11px] text-white/90"
-                title={`v${latest.version_number} — ${inFlightCfg.label}`}
+                title={`v${latest.version_number} — ${tr(inFlightCfg.label)}`}
               >
                 {inFlightCfg.icon}
-                {inFlightCfg.label}
+                {tr(inFlightCfg.label)}
               </span>
             )}
             {sorted.length > 1 && <ChevronDown className="h-3 w-3 opacity-70" />}
@@ -113,10 +116,10 @@ export function VersionSwitcher({ versions, className, onVersionSelect }: Versio
                     <span>v{version.version_number}</span>
                     <span
                       className={cn('inline-flex items-center gap-1 text-[11px]', statusCfg.className)}
-                      title={statusCfg.label}
+                      title={tr(statusCfg.label)}
                     >
                       {statusCfg.icon}
-                      {statusCfg.label}
+                      {tr(statusCfg.label)}
                     </span>
                   </DropdownMenu.Item>
                 )

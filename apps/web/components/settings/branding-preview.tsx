@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import { Eye } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -34,6 +35,8 @@ type ScreenKey = (typeof SCREENS)[number]['key']
  * lands rather than waiting for a reload.
  */
 export function BrandingPreview() {
+  const tr = useTranslation()
+
   const { orgName, orgLogoDark, orgLogoLight, loginLogoUrl } = useBrandingStore()
   const theme = useResolvedTheme()
   const [screen, setScreen] = React.useState<ScreenKey>('app')
@@ -77,13 +80,13 @@ export function BrandingPreview() {
           <Eye className="h-4 w-4 text-text-primary" />
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-text-primary">Preview</p>
+          <p className="text-sm font-semibold text-text-primary">{tr("Preview")}</p>
           <p className="text-xs text-text-tertiary">
             {screen === 'login'
-              ? 'What people see before signing in'
+              ? tr("What people see before signing in")
               : screen === 'email'
-                ? 'What this instance sends from'
-                : 'What your team sees after signing in'}
+                ? tr("What this instance sends from")
+                : tr("What your team sees after signing in")}
           </p>
         </div>
 
@@ -101,7 +104,7 @@ export function BrandingPreview() {
                   : 'text-text-tertiary hover:text-text-secondary',
               )}
             >
-              {s.label}
+              {tr(s.label)}
             </button>
           ))}
         </div>
@@ -151,10 +154,10 @@ export function BrandingPreview() {
 
       <p className="mt-3 text-xs text-text-tertiary">
         {screen === 'login'
-          ? 'Uses the sign-in logo when one is set, falling back to your org logo. Copies the real screen’s spacing, so the mark is shown at the size it will actually render.'
+          ? tr("Uses the sign-in logo when one is set, falling back to your org logo. Copies the real screen’s spacing, so the mark is shown at the size it will actually render.")
           : screen === 'email'
-            ? 'Every email this instance sends carries your name in the header and footer. The From line follows it too, unless MAIL_FROM_NAME pins a different one.'
-            : 'The sidebar is a faithful copy: same widths, spacing and logo size as the real one. Projects and avatars are placeholders.'}
+            ? tr("Every email this instance sends carries your name in the header and footer. The From line follows it too, unless MAIL_FROM_NAME pins a different one.")
+            : tr("The sidebar is a faithful copy: same widths, spacing and logo size as the real one. Projects and avatars are placeholders.")}
       </p>
     </div>
   )

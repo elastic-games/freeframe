@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import Image from 'next/image'
 import {
@@ -36,6 +37,8 @@ type VersionWithFiles = AssetVersion
 // ─── Zoom Controls ────────────────────────────────────────────────────────────
 
 function ZoomControls() {
+  const tr = useTranslation()
+
   const { zoomIn, zoomOut, resetTransform, centerView } = useControls()
 
   return (
@@ -43,28 +46,28 @@ function ZoomControls() {
       <button
         onClick={() => zoomIn()}
         className="flex h-8 w-8 items-center justify-center rounded bg-bg-elevated/90 text-text-secondary backdrop-blur-sm transition-colors hover:bg-bg-hover hover:text-text-primary border border-border"
-        title="Zoom in"
+        title={tr("Zoom in")}
       >
         <ZoomIn className="h-4 w-4" />
       </button>
       <button
         onClick={() => zoomOut()}
         className="flex h-8 w-8 items-center justify-center rounded bg-bg-elevated/90 text-text-secondary backdrop-blur-sm transition-colors hover:bg-bg-hover hover:text-text-primary border border-border"
-        title="Zoom out"
+        title={tr("Zoom out")}
       >
         <ZoomOut className="h-4 w-4" />
       </button>
       <button
         onClick={() => centerView(1)}
         className="flex h-8 w-8 items-center justify-center rounded bg-bg-elevated/90 text-text-secondary backdrop-blur-sm transition-colors hover:bg-bg-hover hover:text-text-primary border border-border"
-        title="Actual size"
+        title={tr("Actual size")}
       >
         <Scan className="h-4 w-4" />
       </button>
       <button
         onClick={() => resetTransform()}
         className="flex h-8 w-8 items-center justify-center rounded bg-bg-elevated/90 text-text-secondary backdrop-blur-sm transition-colors hover:bg-bg-hover hover:text-text-primary border border-border"
-        title="Fit to screen"
+        title={tr("Fit to screen")}
       >
         <Maximize2 className="h-4 w-4" />
       </button>
@@ -120,11 +123,13 @@ function SingleImage({ url, alt, containerRef, onImageLoad, annotationOverlay, i
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function ImageSkeleton() {
+  const tr = useTranslation()
+
   return (
     <div className="flex h-full w-full items-center justify-center bg-bg-secondary">
       <div className="flex flex-col items-center gap-3">
         <Loader2 className="h-8 w-8 animate-spin text-text-tertiary" />
-        <p className="text-sm text-text-tertiary">Loading image…</p>
+        <p className="text-sm text-text-tertiary">{tr("Loading image…")}</p>
       </div>
     </div>
   )
@@ -141,6 +146,8 @@ interface ImageViewerProps {
 }
 
 export function ImageViewer({ asset, version, className, annotationCanvas }: ImageViewerProps) {
+  const tr = useTranslation()
+
   const { isDrawingMode, setFocusedCommentId, setActiveAnnotation } = useReviewStore()
 
   const handleImageClick = () => {
@@ -272,7 +279,7 @@ export function ImageViewer({ asset, version, className, annotationCanvas }: Ima
   if (error) {
     return (
       <div className="flex h-full w-full items-center justify-center bg-bg-secondary">
-        <p className="text-sm text-status-error">{error}</p>
+        <p className="text-sm text-status-error">{tr(error)}</p>
       </div>
     )
   }
@@ -280,7 +287,7 @@ export function ImageViewer({ asset, version, className, annotationCanvas }: Ima
   if (!currentUrl) {
     return (
       <div className="flex h-full w-full items-center justify-center bg-bg-secondary">
-        <p className="text-sm text-text-tertiary">No image available</p>
+        <p className="text-sm text-text-tertiary">{tr("No image available")}</p>
       </div>
     )
   }

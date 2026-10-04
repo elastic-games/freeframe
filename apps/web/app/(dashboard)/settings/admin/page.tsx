@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from "react";
 import useSWR, { mutate } from "swr";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -17,6 +18,8 @@ import { InstanceSettingsTab } from "@/components/settings/instance-settings-tab
 import { BrandingTab } from "@/components/settings/branding-tab";
 
 function BulkInviteDialog() {
+  const tr = useTranslation()
+
   const [open, setOpen] = React.useState(false);
   const [emails, setEmails] = React.useState("");
   const [loading, setLoading] = React.useState(false);
@@ -77,9 +80,7 @@ function BulkInviteDialog() {
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
         <Button variant="secondary" size="sm">
-          <Users className="h-4 w-4" />
-          Bulk Invite
-        </Button>
+          <Users className="h-4 w-4" />{tr("Bulk Invite")}</Button>
       </Dialog.Trigger>
 
       <Dialog.Portal>
@@ -89,18 +90,12 @@ function BulkInviteDialog() {
             <X className="h-4 w-4" />
           </Dialog.Close>
 
-          <Dialog.Title className="text-base font-semibold text-text-primary">
-            Bulk Invite Users
-          </Dialog.Title>
-          <Dialog.Description className="mt-1 text-sm text-text-secondary">
-            Enter email addresses separated by commas or newlines.
-          </Dialog.Description>
+          <Dialog.Title className="text-base font-semibold text-text-primary">{tr("Bulk Invite Users")}</Dialog.Title>
+          <Dialog.Description className="mt-1 text-sm text-text-secondary">{tr("Enter email addresses separated by commas or newlines.")}</Dialog.Description>
 
           <form onSubmit={handleSubmit} className="mt-4 space-y-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-text-secondary">
-                Email addresses
-              </label>
+              <label className="text-sm font-medium text-text-secondary">{tr("Email addresses")}</label>
               <textarea
                 value={emails}
                 onChange={(e) => setEmails(e.target.value)}
@@ -109,7 +104,7 @@ function BulkInviteDialog() {
                 className="flex w-full rounded-md border border-border bg-bg-secondary px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary transition-colors focus:outline-none focus:border-border-focus focus:ring-1 focus:ring-border-focus resize-none"
               />
             </div>
-            {error && <p className="text-xs text-status-error">{error}</p>}
+            {error && <p className="text-xs text-status-error">{tr(error)}</p>}
             {success && (
               <p className="text-xs text-status-success">{success}</p>
             )}
@@ -119,12 +114,8 @@ function BulkInviteDialog() {
                 variant="secondary"
                 size="sm"
                 onClick={() => setOpen(false)}
-              >
-                Close
-              </Button>
-              <Button type="submit" size="sm" loading={loading}>
-                Send Invites
-              </Button>
+              >{tr("Close")}</Button>
+              <Button type="submit" size="sm" loading={loading}>{tr("Send Invites")}</Button>
             </div>
           </form>
         </Dialog.Content>
@@ -133,7 +124,7 @@ function BulkInviteDialog() {
   );
 }
 
-function userStatusBadge(status: UserStatus) {
+function userStatusBadge(status: UserStatus, tr: ReturnType<typeof useTranslation>) {
   const map: Record<UserStatus, { label: string; className: string }> = {
     active: {
       label: "Active",
@@ -160,12 +151,14 @@ function userStatusBadge(status: UserStatus) {
         cfg.className,
       )}
     >
-      {cfg.label}
+      {tr(cfg.label)}
     </span>
   );
 }
 
 export default function AdminPage() {
+  const tr = useTranslation()
+
   const { user, isSuperAdmin } = useAuthStore();
   const router = useRouter();
   const [tab, setTab] = React.useState<"users" | "instance" | "branding">("users");
@@ -253,15 +246,13 @@ export default function AdminPage() {
           <Shield className="h-5 w-5 text-text-primary" />
         </div>
         <div>
-          <h1 className="text-xl font-semibold text-text-primary">
-            Admin Dashboard
-          </h1>
+          <h1 className="text-xl font-semibold text-text-primary">{tr("Admin Dashboard")}</h1>
           <p className="text-sm text-text-secondary">
             {tab === "instance"
-              ? "Configure this instance"
+              ? tr("Configure this instance")
               : tab === "branding"
-                ? "Make this instance look like yours"
-                : "Manage platform users"}
+                ? tr("Make this instance look like yours")
+                : tr("Manage platform users")}
           </p>
         </div>
       </div>
@@ -279,7 +270,7 @@ export default function AdminPage() {
                 : "border-transparent text-text-secondary hover:text-text-primary",
             )}
           >
-            {label}
+            {tr(label)}
           </button>
         ))}
       </div>
@@ -291,9 +282,7 @@ export default function AdminPage() {
       {tab === "users" && (
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-text-primary">
-            Platform Users
-          </h2>
+          <h2 className="text-sm font-semibold text-text-primary">{tr("Platform Users")}</h2>
           <BulkInviteDialog />
         </div>
 
@@ -310,8 +299,8 @@ export default function AdminPage() {
           <div className="rounded-lg border border-border bg-bg-secondary">
             <EmptyState
               icon={Users}
-              title="No users"
-              description="Users will appear here once they register or are invited."
+              title={tr("No users")}
+              description={tr("Users will appear here once they register or are invited.")}
             />
           </div>
         ) : (
@@ -319,21 +308,11 @@ export default function AdminPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-bg-tertiary">
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-text-tertiary">
-                    User
-                  </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-text-tertiary">
-                    Role
-                  </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-text-tertiary">
-                    Status
-                  </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-text-tertiary">
-                    Joined
-                  </th>
-                  <th className="px-4 py-2.5 text-right text-xs font-medium text-text-tertiary">
-                    Actions
-                  </th>
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-text-tertiary">{tr("User")}</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-text-tertiary">{tr("Role")}</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-text-tertiary">{tr("Status")}</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-text-tertiary">{tr("Joined")}</th>
+                  <th className="px-4 py-2.5 text-right text-xs font-medium text-text-tertiary">{tr("Actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -358,17 +337,15 @@ export default function AdminPage() {
                     <td className="px-4 py-3">
                       {u.is_superadmin ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
-                          <Shield className="h-3 w-3" />
-                          Admin
-                        </span>
+                          <Shield className="h-3 w-3" />{tr("Admin")}</span>
                       ) : (
-                        <span className="text-xs text-text-tertiary">User</span>
+                        <span className="text-xs text-text-tertiary">{tr("User")}</span>
                       )}
                     </td>
-                    <td className="px-4 py-3">{userStatusBadge(u.status)}</td>
+                    <td className="px-4 py-3">{userStatusBadge(u.status, tr)}</td>
                     <td className="px-4 py-3 text-xs text-text-tertiary">
                       {u.created_at
-                        ? new Date(u.created_at).toLocaleDateString()
+                        ? new Date(u.created_at).toLocaleDateString(tr.locale)
                         : "—"}
                     </td>
                     <td className="px-4 py-3">
@@ -382,14 +359,10 @@ export default function AdminPage() {
                           >
                             {copiedId === u.id ? (
                               <>
-                                <Check className="h-3.5 w-3.5 text-status-success" />{" "}
-                                Copied
-                              </>
+                                <Check className="h-3.5 w-3.5 text-status-success" />{" "}{tr("Copied")}</>
                             ) : (
                               <>
-                                <Link2 className="h-3.5 w-3.5" /> Copy Invite
-                                Link
-                              </>
+                                <Link2 className="h-3.5 w-3.5" />{' '}{tr("Copy Invite Link")}</>
                             )}
                           </Button>
                         )}
@@ -401,7 +374,7 @@ export default function AdminPage() {
                               handleToggleAdmin(u.id, u.is_superadmin)
                             }
                           >
-                            {u.is_superadmin ? "Remove Admin" : "Make Admin"}
+                            {u.is_superadmin ? tr("Remove Admin") : tr("Make Admin")}
                           </Button>
                         )}
                         {u.id !== user?.id && u.status === "active" ? (
@@ -410,21 +383,15 @@ export default function AdminPage() {
                             size="sm"
                             onClick={() => handleDeactivate(u.id)}
                             className="text-status-error hover:text-status-error"
-                          >
-                            Deactivate
-                          </Button>
+                          >{tr("Deactivate")}</Button>
                         ) : u.id !== user?.id && u.status === "deactivated" ? (
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleReactivate(u.id)}
-                          >
-                            Reactivate
-                          </Button>
+                          >{tr("Reactivate")}</Button>
                         ) : u.id === user?.id ? (
-                          <span className="text-xs text-text-tertiary italic">
-                            You
-                          </span>
+                          <span className="text-xs text-text-tertiary italic">{tr("You")}</span>
                         ) : null}
                       </div>
                     </td>

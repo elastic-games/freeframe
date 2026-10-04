@@ -1,5 +1,6 @@
 'use client'
 
+import { useLocale, useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import { Monitor, Moon, Sun, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -28,20 +29,31 @@ const themes: { value: Theme; label: string; description: string; icon: React.El
 ]
 
 export default function AppearancePage() {
+  const tr = useTranslation()
+
+  const { locale, setLocale } = useLocale()
   const { theme, hostTheme, setTheme } = useThemeStore()
 
   return (
     <div className="p-6 max-w-2xl">
       <div className="mb-6">
-        <h1 className="text-lg font-semibold text-text-primary">Appearance</h1>
+        <h1 className="text-lg font-semibold text-text-primary">{tr("Appearance")}</h1>
         <p className="text-sm text-text-tertiary mt-1">
-          {hostTheme ? 'Appearance is shared with Studio.' : 'Customize how FreeFrame looks on your device.'}
+          {hostTheme ? tr("Appearance is shared with Studio.") : tr("Customize how FreeFrame looks on your device.")}
         </p>
       </div>
 
+      <div className="mb-6 space-y-2">
+        <label htmlFor="review-language" className="text-sm font-medium">{tr('Language')}</label>
+        {hostTheme ? <p className="text-sm text-text-tertiary">{tr('Language is shared with Studio.')}</p> : (
+          <select id="review-language" value={locale} onChange={(event) => setLocale(event.target.value === 'ru' ? 'ru' : 'en')} className="w-full rounded-lg border border-border bg-bg-secondary p-2">
+            <option value="en">English</option><option value="ru">Русский</option>
+          </select>
+        )}
+      </div>
       {/* Theme selector */}
       <div className="space-y-3">
-        <h2 className="text-sm font-medium text-text-primary">Theme</h2>
+        <h2 className="text-sm font-medium text-text-primary">{tr("Theme")}</h2>
         <div className="grid grid-cols-3 gap-3">
           {themes.filter((t) => !hostTheme || t.value !== 'system').map((t) => {
             const Icon = t.icon
@@ -98,9 +110,9 @@ export default function AppearancePage() {
                 <div>
                   <div className="flex items-center justify-center gap-1.5">
                     <Icon className="h-4 w-4 text-text-secondary" />
-                    <span className="text-sm font-medium text-text-primary">{t.label}</span>
+                    <span className="text-sm font-medium text-text-primary">{tr(t.label)}</span>
                   </div>
-                  <p className="text-2xs text-text-tertiary mt-0.5">{t.description}</p>
+                  <p className="text-2xs text-text-tertiary mt-0.5">{tr(t.description)}</p>
                 </div>
 
                 {/* Active indicator */}

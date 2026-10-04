@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -49,6 +50,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+  const tr = useTranslation()
+
   const studioManaged = process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS === 'true'
   const hostTheme = useThemeStore((s) => s.hostTheme)
   const embedded = hostTheme !== null
@@ -85,7 +88,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <>
       <aside
-        aria-label={embedded ? 'Video Reviews controls' : 'FreeFrame navigation'}
+        aria-label={embedded ? tr("Video Reviews controls") : tr("FreeFrame navigation")}
         className={cn(
           'z-30 flex border-border bg-bg-secondary overflow-hidden shrink-0',
           embedded ? 'relative h-11 w-full flex-row items-center border-b px-2 gap-1' :
@@ -96,7 +99,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {/* Logo */}
         {embedded ? (
           <button type="button" onClick={() => requestStudioControl('toggle-navigation')}
-            aria-label="Toggle Studio navigation" title="Toggle Studio navigation"
+            aria-label={tr("Toggle Studio navigation")} title={tr("Toggle Studio navigation")}
             className="h-8 w-8 shrink-0 grid place-items-center rounded-md text-text-secondary hover:bg-bg-hover hover:text-text-primary">
             <PanelLeft className="h-4 w-4" />
           </button>
@@ -157,7 +160,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   <span
                     className={cn('text-[13px]', isActive && 'font-medium')}
                   >
-                    {item.label}
+                    {tr(item.label)}
                   </span>
                 )}
               </Link>
@@ -174,8 +177,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 ? 'bg-bg-hover text-text-primary'
                 : 'text-text-secondary hover:bg-bg-hover/60 hover:text-text-primary',
             )}
-            aria-label="Notifications"
-            title={compact ? 'Notifications' : undefined}
+            aria-label={tr("Notifications")}
+            title={compact ? tr("Notifications") : undefined}
           >
             <div className="relative shrink-0">
               <Bell
@@ -189,9 +192,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               )}
             </div>
             {(!collapsed || embedded) && (
-              <span className={cn('text-[13px]', embedded && 'hidden sm:inline', notifOpen && 'font-medium')}>
-                Notifications
-              </span>
+              <span className={cn('text-[13px]', embedded && 'hidden sm:inline', notifOpen && 'font-medium')}>{tr("Notifications")}</span>
             )}
           </button>}
 
@@ -205,8 +206,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 ? 'bg-bg-hover text-text-primary'
                 : 'text-text-secondary hover:bg-bg-hover/60 hover:text-text-primary',
             )}
-            aria-label="Uploads"
-            title={compact ? 'Uploads' : undefined}
+            aria-label={tr("Uploads")}
+            title={compact ? tr("Uploads") : undefined}
           >
             <div className="relative shrink-0">
               <Upload className="h-[18px] w-[18px]" strokeWidth={panelOpen ? 2 : 1.5} />
@@ -217,9 +218,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               )}
             </div>
             {(!collapsed || embedded) && (
-              <span className={cn('text-[13px]', embedded && 'hidden sm:inline', panelOpen && 'font-medium')}>
-                Uploads
-              </span>
+              <span className={cn('text-[13px]', embedded && 'hidden sm:inline', panelOpen && 'font-medium')}>{tr("Uploads")}</span>
             )}
           </button>
       </nav>
@@ -228,8 +227,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <div className={cn('shrink-0', embedded ? 'flex items-center gap-1' : 'border-t border-border p-2 space-y-1')}>
         {embedded && <button type="button"
           onClick={() => requestStudioControl('set-theme', hostTheme === 'dark' ? 'light' : 'dark')}
-          aria-label={hostTheme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
-          title="Studio appearance"
+          aria-label={hostTheme === 'dark' ? tr("Switch to light theme") : tr("Switch to dark theme")}
+          title={tr("Studio appearance")}
           className="h-8 w-8 grid place-items-center rounded-md text-text-secondary hover:bg-bg-hover hover:text-text-primary">
           {hostTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </button>}
@@ -258,8 +257,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   'flex items-center rounded-md text-text-secondary hover:bg-bg-hover hover:text-text-primary transition-colors',
                   embedded ? 'justify-center h-8 w-8' : collapsed ? 'justify-center h-9 w-9 mx-auto' : 'w-full gap-2.5 px-2 py-1.5',
                 )}
-                aria-label={embedded ? 'FreeFrame settings and account' : undefined}
-                title={embedded ? 'FreeFrame settings and account' : collapsed ? (user?.name ?? 'Account') : undefined}
+                aria-label={embedded ? tr("FreeFrame settings and account") : undefined}
+                title={embedded ? tr("FreeFrame settings and account") : collapsed ? (user?.name ?? tr("Account")) : undefined}
               >
                 {embedded ? <Settings className="h-4 w-4" /> : <Avatar src={user?.avatar_url} name={user?.name} size="sm" />}
                 {!compact && (
@@ -285,35 +284,27 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 {studioManaged ? <DropdownMenu.Item asChild>
                   <a href="https://app.elasticlabs.site" target="_top"
                     className="flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-[13px] text-text-secondary hover:bg-bg-hover hover:text-text-primary focus:outline-none">
-                    <User className="h-4 w-4" />
-                    Open Studio
-                  </a>
+                    <User className="h-4 w-4" />{tr("Open Studio")}</a>
                 </DropdownMenu.Item> : <><DropdownMenu.Item asChild>
                   <Link
                     href="/settings/profile"
                     className="flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-[13px] text-text-secondary hover:bg-bg-hover hover:text-text-primary focus:outline-none"
                   >
-                    <User className="h-4 w-4" />
-                    Profile
-                  </Link>
+                    <User className="h-4 w-4" />{tr("Profile")}</Link>
                 </DropdownMenu.Item>
                 <DropdownMenu.Item asChild>
                   <Link
                     href={isSuperAdmin ? '/settings/admin' : '/settings/appearance'}
                     className="flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-[13px] text-text-secondary hover:bg-bg-hover hover:text-text-primary focus:outline-none"
                   >
-                    <Settings className="h-4 w-4" />
-                    Settings
-                  </Link>
+                    <Settings className="h-4 w-4" />{tr("Settings")}</Link>
                 </DropdownMenu.Item>
                 <DropdownMenu.Separator className="my-1 h-px bg-border" />
                 <DropdownMenu.Item
                   onSelect={logout}
                   className="flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-[13px] text-status-error hover:bg-status-error/10 focus:outline-none"
                 >
-                  <LogOut className="h-4 w-4" />
-                  Log out
-                </DropdownMenu.Item>
+                  <LogOut className="h-4 w-4" />{tr("Log out")}</DropdownMenu.Item>
                 </>}
               </DropdownMenu.Content>
             </DropdownMenu.Portal>
@@ -326,7 +317,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               'flex w-full items-center rounded-md text-text-tertiary hover:bg-bg-hover hover:text-text-secondary transition-colors',
               collapsed ? 'justify-center h-8 w-8 mx-auto' : 'gap-2 px-2.5 h-8',
             )}
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={collapsed ? tr("Expand sidebar") : tr("Collapse sidebar")}
           >
             <ChevronsLeft
               className={cn(
@@ -334,7 +325,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 collapsed && 'rotate-180',
               )}
             />
-            {!collapsed && <span className="text-xs">Collapse</span>}
+            {!collapsed && <span className="text-xs">{tr("Collapse")}</span>}
           </button>}
         </div>
       </aside>

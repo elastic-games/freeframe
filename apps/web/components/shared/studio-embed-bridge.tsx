@@ -2,9 +2,11 @@
 
 import { useEffect } from 'react'
 import { useThemeStore } from '@/stores/theme-store'
+import { useLocale } from '@/lib/i18n/locale-provider'
 import { STUDIO_ORIGIN } from '@/lib/studio-embed'
 
 export function StudioEmbedBridge() {
+  const { setLocale } = useLocale()
   useEffect(() => {
     if (window.parent === window) return
     function receive(event: MessageEvent) {
@@ -12,6 +14,7 @@ export function StudioEmbedBridge() {
           event.data?.type !== 'elastic-studio:appearance' ||
           !['dark', 'light'].includes(event.data?.theme)) return
       useThemeStore.getState().setHostTheme(event.data.theme)
+      if (event.data.locale === 'en' || event.data.locale === 'ru') setLocale(event.data.locale)
       window.parent.postMessage({ type: 'elastic-studio:appearance-applied' }, STUDIO_ORIGIN)
     }
     window.addEventListener('message', receive)
@@ -20,6 +23,6 @@ export function StudioEmbedBridge() {
       window.removeEventListener('message', receive)
       useThemeStore.getState().setHostTheme(null)
     }
-  }, [])
+  }, [setLocale])
   return null
 }

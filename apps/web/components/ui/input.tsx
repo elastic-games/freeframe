@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -12,6 +13,7 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, label, error, icon, id, type, ...props }, ref) => {
+    const tr = useTranslation()
     const inputId = id || label?.toLowerCase().replace(/\s+/g, '-')
     const [showPassword, setShowPassword] = React.useState(false)
     const isPassword = type === 'password'
@@ -23,7 +25,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             htmlFor={inputId}
             className="text-sm font-medium text-text-secondary"
           >
-            {label}
+            {tr(label)}
           </label>
         )}
         <div className="relative">
@@ -50,6 +52,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {isPassword && (
             <button
               type="button"
+              aria-label={tr(showPassword ? 'Hide password' : 'Show password')}
               tabIndex={-1}
               onClick={() => setShowPassword((v) => !v)}
               className="absolute inset-y-0 right-2.5 flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
@@ -63,7 +66,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {error && (
-          <p className="text-xs text-status-error">{error}</p>
+          <p className="text-xs text-status-error">{tr(error)}</p>
         )}
       </div>
     )

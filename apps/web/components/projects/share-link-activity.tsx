@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import { Loader2 } from 'lucide-react'
 import { api } from '@/lib/api'
@@ -44,13 +45,13 @@ function avatarColor(seed: string): string {
   return AVATAR_COLORS[hash % AVATAR_COLORS.length]
 }
 
-function groupByDate(activities: ShareLinkActivity[]): { label: string; items: ShareLinkActivity[] }[] {
+function groupByDate(activities: ShareLinkActivity[], locale = 'en'): { label: string; items: ShareLinkActivity[] }[] {
   const groups: { label: string; items: ShareLinkActivity[] }[] = []
   const seen: Record<string, number> = {}
 
   for (const activity of activities) {
     const d = new Date(activity.created_at)
-    const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    const label = d.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' })
     if (seen[label] === undefined) {
       seen[label] = groups.length
       groups.push({ label, items: [] })
@@ -64,6 +65,8 @@ function groupByDate(activities: ShareLinkActivity[]): { label: string; items: S
 const PER_PAGE = 20
 
 export function ShareLinkActivityPanel({ token }: ShareLinkActivityPanelProps) {
+  const tr = useTranslation()
+
   const [activities, setActivities] = React.useState<ShareLinkActivity[]>([])
   const [page, setPage] = React.useState(1)
   const [hasMore, setHasMore] = React.useState(true)
@@ -140,15 +143,13 @@ export function ShareLinkActivityPanel({ token }: ShareLinkActivityPanelProps) {
   if (activities.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-        <p className="text-sm text-text-secondary">No activity yet</p>
-        <p className="mt-1 text-xs text-text-tertiary">
-          Activity will appear here once someone views this share link.
-        </p>
+        <p className="text-sm text-text-secondary">{tr("No activity yet")}</p>
+        <p className="mt-1 text-xs text-text-tertiary">{tr("Activity will appear here once someone views this share link.")}</p>
       </div>
     )
   }
 
-  const groups = groupByDate(activities)
+  const groups = groupByDate(activities, tr.locale)
 
   return (
     <div className="py-2">
@@ -157,7 +158,7 @@ export function ShareLinkActivityPanel({ token }: ShareLinkActivityPanelProps) {
           {/* Date separator */}
           <div className="sticky top-0 z-10 px-4 py-1.5 bg-bg-secondary/90 backdrop-blur-sm">
             <span className="text-2xs font-semibold uppercase tracking-wider text-text-tertiary">
-              {group.label}
+              {tr(group.label)}
             </span>
           </div>
 
@@ -186,7 +187,7 @@ export function ShareLinkActivityPanel({ token }: ShareLinkActivityPanelProps) {
                       </span>
                       {activity.asset_name && (
                         <>
-                          <span className="text-xs text-text-tertiary">on</span>
+                          <span className="text-xs text-text-tertiary">{tr("on")}</span>
                           <span className="text-xs text-text-secondary truncate max-w-[120px]">
                             {activity.asset_name}
                           </span>
@@ -194,9 +195,9 @@ export function ShareLinkActivityPanel({ token }: ShareLinkActivityPanelProps) {
                       )}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className={`text-xs font-medium ${actionColor}`}>{actionLabel}</span>
+                      <span className={`text-xs font-medium ${actionColor}`}>{tr(actionLabel)}</span>
                       <span className="text-text-tertiary">·</span>
-                      <span className="text-xs text-text-tertiary">{formatRelativeTime(activity.created_at)}</span>
+                      <span className="text-xs text-text-tertiary">{formatRelativeTime(activity.created_at, tr.locale)}</span>
                     </div>
                   </div>
                 </div>
@@ -216,7 +217,7 @@ export function ShareLinkActivityPanel({ token }: ShareLinkActivityPanelProps) {
       )}
 
       {!hasMore && activities.length > PER_PAGE && (
-        <p className="text-center text-2xs text-text-tertiary py-3">All activity loaded</p>
+        <p className="text-center text-2xs text-text-tertiary py-3">{tr("All activity loaded")}</p>
       )}
     </div>
   )

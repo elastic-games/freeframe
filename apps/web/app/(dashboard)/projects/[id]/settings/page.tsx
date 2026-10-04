@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import { useParams } from 'next/navigation'
 import useSWR, { mutate as globalMutate } from 'swr'
@@ -45,9 +46,11 @@ function SimpleSelect<T extends string>({
   onChange: (v: T) => void
   label?: string
 }) {
+  const tr = useTranslation()
+
   return (
     <div className="flex flex-col gap-1.5">
-      {label && <label className="text-sm font-medium text-text-secondary">{label}</label>}
+      {label && <label className="text-sm font-medium text-text-secondary">{tr(label)}</label>}
       <Select.Root value={value} onValueChange={(v) => onChange(v as T)}>
         <Select.Trigger className="inline-flex items-center justify-between gap-2 rounded-md border border-border bg-bg-secondary px-3 h-9 text-sm text-text-primary hover:bg-bg-tertiary transition-colors focus:outline-none focus:ring-1 focus:ring-border-focus">
           <Select.Value />
@@ -65,7 +68,7 @@ function SimpleSelect<T extends string>({
                   <Select.ItemIndicator className="absolute left-2">
                     <Check className="h-3.5 w-3.5 text-accent" />
                   </Select.ItemIndicator>
-                  <Select.ItemText>{opt.label}</Select.ItemText>
+                  <Select.ItemText>{tr(opt.label)}</Select.ItemText>
                 </Select.Item>
               ))}
             </Select.Viewport>
@@ -79,6 +82,8 @@ function SimpleSelect<T extends string>({
 // ─── Branding Tab ─────────────────────────────────────────────────────────────
 
 function BrandingTab({ projectId }: { projectId: string }) {
+  const tr = useTranslation()
+
   const key = `/projects/${projectId}/branding`
   const { data: branding } = useSWR<ProjectBranding>(key, () =>
     api.get<ProjectBranding>(key),
@@ -149,12 +154,10 @@ function BrandingTab({ projectId }: { projectId: string }) {
     <form onSubmit={handleSave} className="space-y-5">
       {/* Logo */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-text-secondary">Logo</label>
+        <label className="text-sm font-medium text-text-secondary">{tr("Logo")}</label>
         <div className="flex items-center gap-3">
           {branding?.logo_s3_key && (
-            <div className="h-12 w-12 rounded-lg border border-border bg-bg-tertiary overflow-hidden flex items-center justify-center text-text-tertiary text-xs">
-              Logo
-            </div>
+            <div className="h-12 w-12 rounded-lg border border-border bg-bg-tertiary overflow-hidden flex items-center justify-center text-text-tertiary text-xs">{tr("Logo")}</div>
           )}
           <input
             type="file"
@@ -170,7 +173,7 @@ function BrandingTab({ projectId }: { projectId: string }) {
             onClick={() => logoInputRef.current?.click()}
           >
             <Upload className="h-4 w-4" />
-            {logoFile ? logoFile.name : 'Choose file'}
+            {logoFile ? logoFile.name : tr("Choose file")}
           </Button>
           {logoFile && (
             <Button
@@ -178,9 +181,7 @@ function BrandingTab({ projectId }: { projectId: string }) {
               size="sm"
               onClick={handleLogoUpload}
               loading={uploadingLogo}
-            >
-              Upload
-            </Button>
+            >{tr("Upload")}</Button>
           )}
         </div>
       </div>
@@ -188,7 +189,7 @@ function BrandingTab({ projectId }: { projectId: string }) {
       {/* Colors */}
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-text-secondary">Primary color</label>
+          <label className="text-sm font-medium text-text-secondary">{tr("Primary color")}</label>
           <div className="flex items-center gap-2">
             <input
               type="color"
@@ -205,7 +206,7 @@ function BrandingTab({ projectId }: { projectId: string }) {
           </div>
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-text-secondary">Secondary color</label>
+          <label className="text-sm font-medium text-text-secondary">{tr("Secondary color")}</label>
           <div className="flex items-center gap-2">
             <input
               type="color"
@@ -224,26 +225,26 @@ function BrandingTab({ projectId }: { projectId: string }) {
       </div>
 
       <Input
-        label="Custom title"
+        label={tr("Custom title")}
         value={form.custom_title ?? ''}
         onChange={(e) => set('custom_title', e.target.value)}
-        placeholder="My Project Hub"
+        placeholder={tr("My Project Hub")}
       />
       <Input
-        label="Custom footer"
+        label={tr("Custom footer")}
         value={form.custom_footer ?? ''}
         onChange={(e) => set('custom_footer', e.target.value)}
-        placeholder="Confidential — do not distribute"
+        placeholder={tr("Confidential — do not distribute")}
       />
       <Input
-        label="Featured field"
+        label={tr("Featured field")}
         value={form.featured_field ?? ''}
         onChange={(e) => set('featured_field', e.target.value)}
-        placeholder="Custom metadata field name"
+        placeholder={tr("Custom metadata field name")}
       />
 
       <SimpleSelect<ViewerLayout>
-        label="Viewer layout"
+        label={tr("Viewer layout")}
         value={form.viewer_layout ?? 'grid'}
         options={[
           { value: 'grid', label: 'Grid' },
@@ -255,9 +256,7 @@ function BrandingTab({ projectId }: { projectId: string }) {
       {msg && <p className="text-xs text-text-secondary">{msg}</p>}
 
       <div className="flex justify-end">
-        <Button type="submit" size="sm" loading={saving}>
-          Save branding
-        </Button>
+        <Button type="submit" size="sm" loading={saving}>{tr("Save branding")}</Button>
       </div>
     </form>
   )
@@ -266,6 +265,8 @@ function BrandingTab({ projectId }: { projectId: string }) {
 // ─── Watermark Tab ────────────────────────────────────────────────────────────
 
 function WatermarkTab({ projectId }: { projectId: string }) {
+  const tr = useTranslation()
+
   const key = `/projects/${projectId}/watermark`
   const { data: wm } = useSWR<WatermarkSettings>(key, () =>
     api.get<WatermarkSettings>(key),
@@ -313,10 +314,8 @@ function WatermarkTab({ projectId }: { projectId: string }) {
       {/* Enable toggle */}
       <div className="flex items-center justify-between rounded-lg border border-border bg-bg-secondary px-4 py-3">
         <div>
-          <p className="text-sm font-medium text-text-primary">Enable watermark</p>
-          <p className="text-xs text-text-tertiary">
-            Burn user identity into shared media
-          </p>
+          <p className="text-sm font-medium text-text-primary">{tr("Enable watermark")}</p>
+          <p className="text-xs text-text-tertiary">{tr("Burn user identity into shared media")}</p>
         </div>
         <Switch.Root
           checked={form.enabled ?? false}
@@ -328,7 +327,7 @@ function WatermarkTab({ projectId }: { projectId: string }) {
       </div>
 
       <SimpleSelect<WatermarkPosition>
-        label="Position"
+        label={tr("Position")}
         value={form.position ?? 'center'}
         options={[
           { value: 'center', label: 'Center' },
@@ -339,7 +338,7 @@ function WatermarkTab({ projectId }: { projectId: string }) {
       />
 
       <SimpleSelect<WatermarkContent>
-        label="Content"
+        label={tr("Content")}
         value={form.content ?? 'email'}
         options={[
           { value: 'email', label: 'User email' },
@@ -351,16 +350,15 @@ function WatermarkTab({ projectId }: { projectId: string }) {
 
       {form.content === 'custom_text' && (
         <Input
-          label="Custom watermark text"
+          label={tr("Custom watermark text")}
           value={form.custom_text ?? ''}
           onChange={(e) => set('custom_text', e.target.value)}
-          placeholder="Confidential"
+          placeholder={tr("Confidential")}
         />
       )}
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-text-secondary">
-          Opacity: {Math.round((form.opacity ?? 0.3) * 100)}%
+        <label className="text-sm font-medium text-text-secondary">{tr("Opacity:")}{' '}{Math.round((form.opacity ?? 0.3) * 100)}%
         </label>
         <input
           type="range"
@@ -376,9 +374,7 @@ function WatermarkTab({ projectId }: { projectId: string }) {
       {msg && <p className="text-xs text-text-secondary">{msg}</p>}
 
       <div className="flex justify-end">
-        <Button type="submit" size="sm" loading={saving}>
-          Save watermark
-        </Button>
+        <Button type="submit" size="sm" loading={saving}>{tr("Save watermark")}</Button>
       </div>
     </form>
   )
@@ -395,6 +391,8 @@ const FIELD_TYPES: { value: MetadataFieldType; label: string }[] = [
 ]
 
 function CreateFieldDialog({ projectId, onDone }: { projectId: string; onDone: () => void }) {
+  const tr = useTranslation()
+
   const [open, setOpen] = React.useState(false)
   const [name, setName] = React.useState('')
   const [fieldType, setFieldType] = React.useState<MetadataFieldType>('text')
@@ -439,9 +437,7 @@ function CreateFieldDialog({ projectId, onDone }: { projectId: string; onDone: (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
         <Button size="sm">
-          <Plus className="h-4 w-4" />
-          Add Field
-        </Button>
+          <Plus className="h-4 w-4" />{tr("Add Field")}</Button>
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
@@ -449,33 +445,31 @@ function CreateFieldDialog({ projectId, onDone }: { projectId: string; onDone: (
           <Dialog.Close className="absolute right-4 top-4 text-text-tertiary hover:text-text-primary transition-colors">
             <X className="h-4 w-4" />
           </Dialog.Close>
-          <Dialog.Title className="text-base font-semibold text-text-primary">
-            Add Metadata Field
-          </Dialog.Title>
+          <Dialog.Title className="text-base font-semibold text-text-primary">{tr("Add Metadata Field")}</Dialog.Title>
           <form onSubmit={handleSubmit} className="mt-4 space-y-4">
             <Input
-              label="Field name"
+              label={tr("Field name")}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Scene number"
+              placeholder={tr("Scene number")}
               required
             />
             <SimpleSelect<MetadataFieldType>
-              label="Field type"
+              label={tr("Field type")}
               value={fieldType}
               options={FIELD_TYPES}
               onChange={setFieldType}
             />
             {(fieldType === 'select' || fieldType === 'multi_select') && (
               <Input
-                label="Options (comma separated)"
+                label={tr("Options (comma separated)")}
                 value={options}
                 onChange={(e) => setOptions(e.target.value)}
-                placeholder="Option 1, Option 2, Option 3"
+                placeholder={tr("Option 1, Option 2, Option 3")}
               />
             )}
             <div className="flex items-center justify-between rounded-lg border border-border bg-bg-tertiary px-3 py-2">
-              <span className="text-sm text-text-secondary">Required</span>
+              <span className="text-sm text-text-secondary">{tr("Required")}</span>
               <Switch.Root
                 checked={required}
                 onCheckedChange={setRequired}
@@ -484,14 +478,10 @@ function CreateFieldDialog({ projectId, onDone }: { projectId: string; onDone: (
                 <Switch.Thumb className="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0" />
               </Switch.Root>
             </div>
-            {error && <p className="text-xs text-status-error">{error}</p>}
+            {error && <p className="text-xs text-status-error">{tr(error)}</p>}
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="secondary" size="sm" onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" size="sm" loading={loading}>
-                Create
-              </Button>
+              <Button type="button" variant="secondary" size="sm" onClick={() => setOpen(false)}>{tr("Cancel")}</Button>
+              <Button type="submit" size="sm" loading={loading}>{tr("Create")}</Button>
             </div>
           </form>
         </Dialog.Content>
@@ -501,6 +491,8 @@ function CreateFieldDialog({ projectId, onDone }: { projectId: string; onDone: (
 }
 
 function MetadataTab({ projectId }: { projectId: string }) {
+  const tr = useTranslation()
+
   const key = `/projects/${projectId}/metadata-fields`
   const { data: fields, isLoading } = useSWR<MetadataField[]>(
     key,
@@ -519,9 +511,7 @@ function MetadataTab({ projectId }: { projectId: string }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-text-secondary">
-          Define custom fields for assets in this project.
-        </p>
+        <p className="text-sm text-text-secondary">{tr("Define custom fields for assets in this project.")}</p>
         <CreateFieldDialog projectId={projectId} onDone={() => globalMutate(key)} />
       </div>
 
@@ -533,17 +523,17 @@ function MetadataTab({ projectId }: { projectId: string }) {
         </div>
       ) : !fields || fields.length === 0 ? (
         <div className="rounded-lg border border-border bg-bg-secondary p-6 text-center">
-          <p className="text-sm text-text-secondary">No custom fields yet.</p>
+          <p className="text-sm text-text-secondary">{tr("No custom fields yet.")}</p>
         </div>
       ) : (
         <div className="rounded-lg border border-border bg-bg-secondary overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-bg-tertiary">
-                <th className="px-4 py-2.5 text-left text-xs font-medium text-text-tertiary">Name</th>
-                <th className="px-4 py-2.5 text-left text-xs font-medium text-text-tertiary">Type</th>
-                <th className="px-4 py-2.5 text-left text-xs font-medium text-text-tertiary">Options</th>
-                <th className="px-4 py-2.5 text-left text-xs font-medium text-text-tertiary">Required</th>
+                <th className="px-4 py-2.5 text-left text-xs font-medium text-text-tertiary">{tr("Name")}</th>
+                <th className="px-4 py-2.5 text-left text-xs font-medium text-text-tertiary">{tr("Type")}</th>
+                <th className="px-4 py-2.5 text-left text-xs font-medium text-text-tertiary">{tr("Options")}</th>
+                <th className="px-4 py-2.5 text-left text-xs font-medium text-text-tertiary">{tr("Required")}</th>
                 <th className="px-4 py-2.5 text-right text-xs font-medium text-text-tertiary" />
               </tr>
             </thead>
@@ -560,7 +550,7 @@ function MetadataTab({ projectId }: { projectId: string }) {
                       : '—'}
                   </td>
                   <td className="px-4 py-3 text-xs text-text-tertiary">
-                    {field.required ? 'Yes' : 'No'}
+                    {field.required ? tr("Yes") : 'No'}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <Button
@@ -585,12 +575,14 @@ function MetadataTab({ projectId }: { projectId: string }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ProjectSettingsPage() {
+  const tr = useTranslation()
+
   const params = useParams()
   const projectId = params.id as string
 
   return (
     <div className="p-6 space-y-6 max-w-3xl">
-      <h1 className="text-xl font-semibold text-text-primary">Project Settings</h1>
+      <h1 className="text-xl font-semibold text-text-primary">{tr("Project Settings")}</h1>
 
       <Tabs.Root defaultValue="branding">
         <Tabs.List className="flex items-center gap-1 border-b border-border -mb-px">
@@ -609,7 +601,7 @@ export default function ProjectSettingsPage() {
               )}
             >
               <Icon className="h-3.5 w-3.5" />
-              {label}
+              {tr(label)}
             </Tabs.Trigger>
           ))}
         </Tabs.List>

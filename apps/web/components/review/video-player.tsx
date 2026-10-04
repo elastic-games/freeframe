@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Maximize,
@@ -131,6 +132,8 @@ export function VideoPlayer({
   className,
   initialStreamUrl,
 }: VideoPlayerProps) {
+  const tr = useTranslation()
+
   const containerRef = useRef<HTMLDivElement>(null);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [clockEvidence,setClockEvidence] = useState<ReviewClockEvidence|null>(null);
@@ -448,7 +451,7 @@ export function VideoPlayer({
         {/* Error state */}
         {error && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-            <p className="text-red-400 text-sm">{error}</p>
+            <p className="text-red-400 text-sm">{tr(error)}</p>
           </div>
         )}
 
@@ -476,14 +479,14 @@ export function VideoPlayer({
       {clockRequired && (
         <div role="status" className="flex items-center justify-between gap-3 px-4 py-1 text-xs text-text-secondary">
           <span>{clockEvidence && reviewFrameIndex!==null
-            ? `Reviewed frame ${reviewFrameIndex} of ${clockEvidence.timing.pts.length-1} · timing verified`
-            : clockEvidence ? 'Waiting for a verified presented frame · play the visible viewer once' : 'Frame timing unavailable'}</span>
+            ? tr("Reviewed frame {value0} of {value1} · timing verified", { value0: reviewFrameIndex, value1: clockEvidence.timing.pts.length-1 })
+            : clockEvidence ? tr("Waiting for a verified presented frame · play the visible viewer once") : tr("Frame timing unavailable")}</span>
           {process.env.NODE_ENV==='development' && reviewFrameIndex===null && frameDiagnostic && <span>{frameDiagnostic}</span>}
           <div className="flex gap-2">
-            {[-1,1].map((step) => <button key={step} aria-label={step<0?'Previous reviewed frame':'Next reviewed frame'}
+            {[-1,1].map((step) => <button key={step} aria-label={step<0?tr("Previous reviewed frame"):tr("Next reviewed frame")}
               disabled={!clockEvidence || reviewFrameIndex===null || reviewFrameIndex+step<0 || reviewFrameIndex+step>=clockEvidence.timing.pts.length}
               onClick={() => { if (clockEvidence && reviewFrameIndex!==null) { pause(); seek(presentationTimes(clockEvidence)[reviewFrameIndex+step]); } }}
-              className="rounded px-2 py-1 hover:bg-bg-hover disabled:opacity-30">{step<0?'Previous frame':'Next frame'}</button>)}
+              className="rounded px-2 py-1 hover:bg-bg-hover disabled:opacity-30">{step<0?tr("Previous frame"):tr("Next frame")}</button>)}
           </div>
         </div>
       )}
@@ -502,7 +505,7 @@ export function VideoPlayer({
           <button
             onClick={togglePlay}
             className={cn("flex items-center justify-center rounded text-text-primary hover:bg-bg-hover transition-colors", compact ? "h-11 w-11" : "h-7 w-7")}
-            aria-label={isPlaying ? "Pause" : "Play"}
+            aria-label={isPlaying ? tr("Pause") : tr("Play")}
           >
             {isPlaying ? (
               <Pause className="h-4 w-4" />
@@ -521,7 +524,7 @@ export function VideoPlayer({
                   ? "text-accent bg-accent/10"
                   : "text-text-tertiary hover:text-text-secondary hover:bg-bg-hover",
               )}
-              aria-label="Loop"
+              aria-label={tr("Loop")}
             >
               <Repeat className="h-4 w-4" />
             </button>
@@ -529,7 +532,7 @@ export function VideoPlayer({
             <button
               onClick={handleSpeedCycle}
               className="flex h-7 items-center justify-center rounded px-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover hover:text-text-primary transition-colors tabular-nums"
-              aria-label="Playback speed"
+              aria-label={tr("Playback speed")}
             >
               {playbackRate}x
             </button>
@@ -537,7 +540,7 @@ export function VideoPlayer({
             <button
               onClick={toggleMute}
               className="flex h-7 w-7 items-center justify-center rounded text-text-tertiary hover:text-text-secondary hover:bg-bg-hover transition-colors"
-              aria-label={isMuted ? "Unmute" : "Mute"}
+              aria-label={isMuted ? tr("Unmute") : tr("Mute")}
             >
               {isMuted || volume === 0 ? (
                 <VolumeX className="h-4 w-4" />
@@ -575,9 +578,7 @@ export function VideoPlayer({
           </button>
           {timeFormatOpen && (
             <div className="absolute bottom-full left-1/2 -translate-x-1/2 slide-in-from-left-1/2 mb-2 z-50 w-48 rounded-xl border border-white/10 bg-[#2a2a30] shadow-2xl py-1.5 animate-in fade-in zoom-in-95 duration-100">
-              <div className="px-3 py-2 text-[11px] text-text-tertiary uppercase tracking-wider font-medium">
-                Time Format
-              </div>
+              <div className="px-3 py-2 text-[11px] text-text-tertiary uppercase tracking-wider font-medium">{tr("Time Format")}</div>
               {(
                 [
                   { id: "frames" as TimeFormat, label: "Frames" },
@@ -598,7 +599,7 @@ export function VideoPlayer({
                     setTimeFormatOpen(false);
                   }}
                 >
-                  {item.label}
+                  {tr(item.label)}
                   {timeFormat === item.id && (
                     <Check className="h-4 w-4 text-accent" />
                   )}
@@ -615,7 +616,7 @@ export function VideoPlayer({
               <button
                 onClick={() => setOverflowOpen((p) => !p)}
                 className="flex h-11 w-11 items-center justify-center rounded text-text-tertiary hover:text-text-primary hover:bg-bg-hover transition-colors"
-                aria-label="More controls"
+                aria-label={tr("More controls")}
                 aria-expanded={overflowOpen}
               >
                 <MoreHorizontal className="h-5 w-5" />
@@ -625,22 +626,18 @@ export function VideoPlayer({
                   <button
                     onClick={() => { setLoop((v) => !v); setOverflowOpen(false); }}
                     className="flex h-11 w-full items-center justify-between px-3 text-[13px] text-text-secondary hover:bg-bg-hover transition-colors"
-                  >
-                    Loop
-                    {loop && <Check className="h-4 w-4 text-accent" />}
+                  >{tr("Loop")}{loop && <Check className="h-4 w-4 text-accent" />}
                   </button>
                   <button
                     onClick={() => { handleSpeedCycle(); }}
                     className="flex h-11 w-full items-center justify-between px-3 text-[13px] text-text-secondary hover:bg-bg-hover transition-colors"
-                  >
-                    Speed
-                    <span className="tabular-nums text-text-tertiary">{playbackRate}x</span>
+                  >{tr("Speed")}<span className="tabular-nums text-text-tertiary">{playbackRate}x</span>
                   </button>
                   <button
                     onClick={() => { toggleMute(); setOverflowOpen(false); }}
                     className="flex h-11 w-full items-center justify-between px-3 text-[13px] text-text-secondary hover:bg-bg-hover transition-colors"
                   >
-                    {isMuted || volume === 0 ? 'Unmute' : 'Mute'}
+                    {isMuted || volume === 0 ? tr("Unmute") : tr("Mute")}
                     {isMuted || volume === 0 ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
                   </button>
                 </div>
@@ -653,18 +650,16 @@ export function VideoPlayer({
               value={currentQuality}
               onChange={(e) => setQuality(parseInt(e.target.value, 10))}
               className="bg-transparent text-text-secondary text-xs border border-border rounded px-1.5 py-1 cursor-pointer shrink-0 hover:text-text-primary transition-colors"
-              aria-label="Quality"
+              aria-label={tr("Quality")}
             >
-              <option value={-1} className="bg-bg-secondary">
-                Auto
-              </option>
+              <option value={-1} className="bg-bg-secondary">{tr("Auto")}</option>
               {qualityLevels.map((level) => (
                 <option
                   key={level.index}
                   value={level.index}
                   className="bg-bg-secondary"
                 >
-                  {level.label}
+                  {tr(level.label)}
                 </option>
               ))}
             </select>
@@ -674,7 +669,7 @@ export function VideoPlayer({
           <button
             onClick={handleFullscreen}
             className="flex h-7 w-7 items-center justify-center rounded text-text-tertiary hover:text-text-primary hover:bg-bg-hover transition-colors"
-            aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            aria-label={isFullscreen ? tr("Exit fullscreen") : tr("Enter fullscreen")}
           >
             {isFullscreen ? (
               <Minimize className="h-4 w-4" />

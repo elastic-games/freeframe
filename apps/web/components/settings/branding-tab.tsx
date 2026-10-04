@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import { Upload, RotateCcw, Check } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth-store'
@@ -37,6 +38,8 @@ function QuickUpload({
 }: {
   onSlotUpload: (slot: BrandingSlot, url: string) => void
 }) {
+  const tr = useTranslation()
+
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
@@ -85,7 +88,7 @@ function QuickUpload({
 
   return (
     <div className="flex flex-col items-center gap-3">
-      {error && <p className="text-xs text-status-error">{error}</p>}
+      {error && <p className="text-xs text-status-error">{tr(error)}</p>}
       <input
         ref={fileInputRef}
         type="file"
@@ -101,18 +104,16 @@ function QuickUpload({
         className="w-full max-w-xs"
       >
         <Upload className="h-4 w-4" />
-        {uploading ? 'Uploading...' : 'Upload your logo'}
+        {uploading ? 'Uploading...' : tr("Upload your logo")}
       </Button>
-      <p className="text-xs text-text-tertiary text-center">
-        PNG, SVG, or WebP · 512×512px+ · Transparent background
-        <br />
-        We&apos;ll apply it to all branding slots at once.
-      </p>
+      <p className="text-xs text-text-tertiary text-center">{tr("PNG, SVG, or WebP · 512×512px+ · Transparent background")}<br />{tr("We'll apply it to all branding slots at once.")}</p>
     </div>
   )
 }
 
 export function BrandingTab() {
+  const tr = useTranslation()
+
   const { user } = useAuthStore()
   const {
     orgName,
@@ -256,21 +257,19 @@ export function BrandingTab() {
       {/* ── Identity: the two single-value settings, side by side rather than
              as two more full-width cards in the stack ── */}
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-text-primary">Identity</h2>
+        <h2 className="text-sm font-semibold text-text-primary">{tr("Identity")}</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2 rounded-lg border border-border bg-bg-secondary p-4">
             <div>
-              <p className="text-sm font-medium text-text-primary">Workspace name</p>
-              <p className="text-xs text-text-tertiary mt-0.5">
-                Sidebar, sign-in screen, and the emails this instance sends.
-              </p>
+              <p className="text-sm font-medium text-text-primary">{tr("Workspace name")}</p>
+              <p className="text-xs text-text-tertiary mt-0.5">{tr("Sidebar, sign-in screen, and the emails this instance sends.")}</p>
             </div>
             {isAdmin ? (
               <div className="flex items-center gap-2 pt-1">
                 <Input
                   value={nameValue}
                   onChange={(e) => setNameValue(e.target.value)}
-                  placeholder="e.g. Acme Studio"
+                  placeholder={tr("e.g. Acme Studio")}
                   onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
                   className="flex-1"
                 />
@@ -280,7 +279,7 @@ export function BrandingTab() {
                   loading={savingName}
                   disabled={!nameValue.trim() || nameValue.trim() === orgName}
                 >
-                  {nameSaved ? <Check className="h-3.5 w-3.5" /> : 'Save'}
+                  {nameSaved ? <Check className="h-3.5 w-3.5" /> : tr("Save")}
                 </Button>
               </div>
             ) : (
@@ -290,17 +289,14 @@ export function BrandingTab() {
 
           <div className="space-y-2 rounded-lg border border-border bg-bg-secondary p-4">
             <div>
-              <p className="text-sm font-medium text-text-primary">Accent color</p>
-              <p className="text-xs text-text-tertiary mt-0.5">
-                Primary buttons, links and focus rings, including a guest&apos;s download
-                and comment buttons.
-              </p>
+              <p className="text-sm font-medium text-text-primary">{tr("Accent color")}</p>
+              <p className="text-xs text-text-tertiary mt-0.5">{tr("Primary buttons, links and focus rings, including a guest's download and comment buttons.")}</p>
             </div>
             {isAdmin ? (
               <div className="flex items-center gap-2 pt-1">
                 <input
                   type="color"
-                  aria-label="Accent color"
+                  aria-label={tr("Accent color")}
                   value={colorValue || '#7c3aed'}
                   onChange={(e) => setColorValue(e.target.value)}
                   className="h-9 w-10 shrink-0 cursor-pointer rounded border border-border bg-transparent p-0.5"
@@ -322,9 +318,7 @@ export function BrandingTab() {
                     colorValue.trim() === primaryColor ||
                     !/^#[0-9A-Fa-f]{6}$/.test(colorValue.trim())
                   }
-                >
-                  Save
-                </Button>
+                >{tr("Save")}</Button>
               </div>
             ) : (
               <p className="pt-1 font-mono text-sm text-text-secondary">
@@ -337,10 +331,8 @@ export function BrandingTab() {
 
       {/* ── Section: Logos & Icons ── */}
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-text-primary">Logos &amp; icons</h2>
-        <p className="-mt-1 text-sm text-text-secondary">
-          Upload one image to fill every slot, or set them individually below.
-        </p>
+        <h2 className="text-sm font-semibold text-text-primary">{tr("Logos & icons")}</h2>
+        <p className="-mt-1 text-sm text-text-secondary">{tr("Upload one image to fill every slot, or set them individually below.")}</p>
 
         {isAdmin && (
           <div className="rounded-lg border-2 border-dashed border-border bg-bg-secondary p-4 transition-colors hover:border-accent/50">
@@ -362,8 +354,8 @@ export function BrandingTab() {
         <div className="grid gap-4 lg:grid-cols-2">
             <BrandingLogoUpload
               slotKey="logo_light"
-              label="Logo (light background)"
-              description="Sidebar and app chrome in light theme."
+              label={tr("Logo (light background)")}
+              description={tr("Sidebar and app chrome in light theme.")}
               acceptedFormats={['PNG', 'SVG', 'WebP']}
               minResolution="256px+"
               currentUrl={orgLogoLight}
@@ -376,8 +368,8 @@ export function BrandingTab() {
 
             <BrandingLogoUpload
               slotKey="logo_dark"
-              label="Logo (dark background)"
-              description="Sidebar and app chrome in dark theme."
+              label={tr("Logo (dark background)")}
+              description={tr("Sidebar and app chrome in dark theme.")}
               acceptedFormats={['PNG', 'SVG', 'WebP']}
               minResolution="256px+"
               currentUrl={orgLogoDark}
@@ -390,8 +382,8 @@ export function BrandingTab() {
 
             <BrandingLogoUpload
               slotKey="favicon"
-              label="Favicon"
-              description="Browser tab. Renders at 16-32px, so keep it simple."
+              label={tr("Favicon")}
+              description={tr("Browser tab. Renders at 16-32px, so keep it simple.")}
               acceptedFormats={['ICO', 'PNG']}
               minResolution="32px+"
               currentUrl={faviconUrl}
@@ -403,8 +395,8 @@ export function BrandingTab() {
 
             <BrandingLogoUpload
               slotKey="apple_icon"
-              label="Apple touch icon"
-              description="Shown when someone adds this instance to an iOS home screen."
+              label={tr("Apple touch icon")}
+              description={tr("Shown when someone adds this instance to an iOS home screen.")}
               acceptedFormats={['PNG']}
               minResolution="180px+"
               currentUrl={appleIconUrl}
@@ -417,8 +409,8 @@ export function BrandingTab() {
 
             <BrandingLogoUpload
               slotKey="login_logo"
-              label="Sign-in logo"
-              description="Optional. Falls back to your logo above."
+              label={tr("Sign-in logo")}
+              description={tr("Optional. Falls back to your logo above.")}
               acceptedFormats={['PNG', 'SVG', 'WebP']}
               minResolution="512px+"
               currentUrl={loginLogoUrl}
@@ -434,16 +426,11 @@ export function BrandingTab() {
       {/* ── Attribution: one switch, so it reads as a row rather than another
              full section competing with the ones that hold real work ── */}
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-text-primary">Attribution</h2>
+        <h2 className="text-sm font-semibold text-text-primary">{tr("Attribution")}</h2>
         <div className="flex items-center justify-between gap-6 rounded-lg border border-border bg-bg-secondary p-4">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-text-primary">
-              Show &ldquo;Powered by FreeFrame&rdquo;
-            </p>
-            <p className="mt-0.5 text-xs text-text-tertiary">
-              A small link to the project, bottom-right of the app and under the sign-in
-              card. Turn it off to white-label completely.
-            </p>
+            <p className="text-sm font-medium text-text-primary">{tr("Show “Powered by FreeFrame”")}</p>
+            <p className="mt-0.5 text-xs text-text-tertiary">{tr("A small link to the project, bottom-right of the app and under the sign-in card. Turn it off to white-label completely.")}</p>
           </div>
           {isAdmin ? (
             <Switch
@@ -453,7 +440,7 @@ export function BrandingTab() {
             />
           ) : (
             <span className="shrink-0 text-sm text-text-secondary">
-              {poweredByFreeframe ? 'On' : 'Off'}
+              {poweredByFreeframe ? 'On' : tr("Off")}
             </span>
           )}
         </div>
@@ -471,9 +458,7 @@ export function BrandingTab() {
               setResetOpen(true)
             }}
           >
-            <RotateCcw className="h-3.5 w-3.5" />
-            Reset all branding
-          </Button>
+            <RotateCcw className="h-3.5 w-3.5" />{tr("Reset all branding")}</Button>
           {resetError && (
             <p className="mt-2 text-xs text-status-error">{resetError}</p>
           )}
@@ -481,16 +466,14 @@ export function BrandingTab() {
       )}
 
       {!isAdmin && (
-        <p className="text-xs text-text-tertiary">
-          Only super admins can edit branding settings.
-        </p>
+        <p className="text-xs text-text-tertiary">{tr("Only super admins can edit branding settings.")}</p>
       )}
 
       <ConfirmDialog
         open={resetOpen}
         onOpenChange={setResetOpen}
-        title="Reset all branding?"
-        description='This clears your custom name, logos and accent color, and turns the "Powered by FreeFrame" badge back on.'
+        title={tr("Reset all branding?")}
+        description={tr("This clears your custom name, logos and accent color, and turns the \"Powered by FreeFrame\" badge back on.")}
         confirmLabel="Reset"
         variant="danger"
         loading={resetting}

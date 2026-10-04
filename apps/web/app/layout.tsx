@@ -7,6 +7,8 @@ import { BrandingHead } from "@/components/shared/branding-head";
 import { BrandingProvider } from "@/components/shared/branding-provider";
 import { getServerBranding } from "@/lib/branding-server";
 import { accentVars } from "@/lib/accent";
+import { LocaleProvider } from "@/lib/i18n/locale-provider";
+import { getServerTranslation } from "@/lib/i18n/server";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -28,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const branding = await getServerBranding();
   return {
     title: branding?.org_name || "FreeFrame",
-    description: "Collaborative media review and approval platform",
+    description: getServerTranslation()("Collaborative media review & approval"),
   };
 }
 
@@ -55,6 +57,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const branding = await getServerBranding();
+  const tr = getServerTranslation();
   const favicon = branding?.favicon_url || DEFAULT_FAVICON;
   const appleIcon = branding?.apple_icon_url || DEFAULT_APPLE_ICON;
   // Painting the accent from the server too, so a branded instance does not
@@ -63,7 +66,7 @@ export default async function RootLayout({
 
   return (
     <html
-      lang="en"
+      lang={tr.locale}
       suppressHydrationWarning
       style={accent as React.CSSProperties | undefined}
     >
@@ -82,6 +85,7 @@ export default async function RootLayout({
         <link rel="apple-touch-icon" href={appleIcon} data-ff-branding="" />
       </head>
       <body className={`${dmSans.variable} font-sans antialiased`}>
+        <LocaleProvider initialLocale={tr.locale}>
         <ThemeInitializer />
         <StudioEmbedBridge />
         <BrandingProvider initial={branding}>
@@ -93,6 +97,7 @@ export default async function RootLayout({
           <BrandingHead />
           <ToastProvider>{children}</ToastProvider>
         </BrandingProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

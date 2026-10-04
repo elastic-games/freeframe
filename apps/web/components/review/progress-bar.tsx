@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Hls from 'hls.js'
@@ -174,6 +175,8 @@ function CommentMarker({
   onLeave,
   onSeek,
 }: CommentMarkerProps) {
+  const tr = useTranslation()
+
   const markerRef = useRef<HTMLDivElement>(null)
   const setFocusedCommentId = useReviewStore((s) => s.setFocusedCommentId)
   const setActiveAnnotation = useReviewStore((s) => s.setActiveAnnotation)
@@ -250,7 +253,7 @@ function CommentMarker({
               <span className="text-xs font-medium text-white truncate">{authorName}</span>
               {comment.timecode_start !== null && (
                 <span className="ml-auto text-[10px] font-mono text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded">
-                  {comment.review_clock?.schema==='freeframe-annotation-clock/v1' ? `Reviewed frame ${comment.review_clock.reviewIndex}` : `${formatTimecode(comment.timecode_start)} · unverified legacy time`}
+                  {comment.review_clock?.schema==='freeframe-annotation-clock/v1' ? tr("Reviewed frame {value0}", { value0: comment.review_clock.reviewIndex }) : tr("{value0} · unverified legacy time", { value0: formatTimecode(comment.timecode_start) })}
                 </span>
               )}
             </div>
@@ -280,6 +283,8 @@ export function ProgressBar({
   onSeek,
   className,
 }: ProgressBarProps) {
+  const tr = useTranslation()
+
   const trackRef = useRef<HTMLDivElement>(null)
   const activePointerIdRef = useRef<number | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -525,7 +530,7 @@ export function ProgressBar({
           <div className="flex justify-center">
             <span className="bg-black/90 text-white text-[11px] font-mono px-2 py-0.5 rounded-md">
               {clock ? formatReviewedTimecode(hoverTime,clock) : formatTimecode(hoverTime)}
-              {clock && <span className="block text-[9px]">Preview timing unverified; image hidden</span>}
+              {clock && <span className="block text-[9px]">{tr("Preview timing unverified; image hidden")}</span>}
             </span>
           </div>
         </div>

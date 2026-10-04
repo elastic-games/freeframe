@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Columns2, FlipHorizontal2, MessageSquare, Volume2, VolumeX, X } from 'lucide-react'
@@ -39,6 +40,8 @@ function mediaOf(v: AssetVersion | null | undefined): { fps?: number | null; dur
 
 /** Fullscreen two-version compare. Chrome: select A, (image mode toggle), select B, close. */
 export function CompareOverlay({ asset, versions, rightVersion, onClose, canComment = true }: CompareOverlayProps) {
+  const tr = useTranslation()
+
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -369,12 +372,12 @@ export function CompareOverlay({ asset, versions, rightVersion, onClose, canComm
           {!isVideo && (
             <button
               type="button"
-              aria-label={mode === 'wipe' ? 'Switch to side-by-side' : 'Switch to wipe'}
+              aria-label={mode === 'wipe' ? tr("Switch to side-by-side") : tr("Switch to wipe")}
               onClick={() => writeParams((p) => p.set('mode', mode === 'wipe' ? 'sbs' : 'wipe'))}
               className="flex shrink-0 items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-[13px] text-text-secondary hover:bg-bg-hover"
             >
               {mode === 'wipe' ? <Columns2 className="h-3.5 w-3.5" /> : <FlipHorizontal2 className="h-3.5 w-3.5" />}
-              {mode === 'wipe' ? 'Side-by-side' : 'Wipe'}
+              {mode === 'wipe' ? 'Side-by-side' : tr("Wipe")}
             </button>
           )}
         </div>
@@ -389,7 +392,7 @@ export function CompareOverlay({ asset, versions, rightVersion, onClose, canComm
           />
           <button
             type="button"
-            aria-label="Close compare"
+            aria-label={tr("Close compare")}
             onClick={onClose}
             className="flex h-8 w-8 items-center justify-center rounded-md text-text-tertiary hover:bg-bg-hover hover:text-text-primary"
           >
@@ -462,7 +465,7 @@ export function CompareOverlay({ asset, versions, rightVersion, onClose, canComm
         <div className="relative flex min-w-0 flex-1 flex-col">
           <button
             type="button"
-            aria-label="Toggle left comments"
+            aria-label={tr("Toggle left comments")}
             onClick={() => setPanelAOpen((p) => !p)}
             className="absolute left-2 top-1/2 z-20 -translate-y-1/2 rounded-md bg-bg-elevated/80 p-1.5 text-sky-400 hover:bg-bg-hover"
           >
@@ -470,7 +473,7 @@ export function CompareOverlay({ asset, versions, rightVersion, onClose, canComm
           </button>
           <button
             type="button"
-            aria-label="Toggle right comments"
+            aria-label={tr("Toggle right comments")}
             onClick={() => setPanelBOpen((p) => !p)}
             className="absolute right-2 top-1/2 z-20 -translate-y-1/2 rounded-md bg-bg-elevated/80 p-1.5 text-emerald-400 hover:bg-bg-hover"
           >
@@ -485,7 +488,7 @@ export function CompareOverlay({ asset, versions, rightVersion, onClose, canComm
                     <span className="rounded bg-sky-500/90 px-1.5 py-0.5 text-[11px] font-semibold text-white">{badgeA}</span>
                     <button
                       type="button"
-                      aria-label={audioSide === 'a' ? `Mute ${badgeA}` : `Unmute ${badgeA}`}
+                      aria-label={audioSide === 'a' ? tr("Mute {value0}", { value0: badgeA }) : tr("Unmute {value0}", { value0: badgeA })}
                       onClick={() => setAudioSide((prev) => (prev === 'a' ? 'none' : 'a'))}
                       className="flex h-7 w-7 items-center justify-center rounded bg-black/40 text-white/80 transition-colors hover:text-white"
                     >
@@ -503,14 +506,14 @@ export function CompareOverlay({ asset, versions, rightVersion, onClose, canComm
                     <AnnotationOverlay key={`a-${focusedCommentId ?? 'none'}`} annotation={annotationA} />
                     {drawingSide === 'a' && <AnnotationCanvas />}
                   </VideoFrameConstraint>
-                  {errA && <span className="absolute text-[12px] text-text-tertiary">Stream unavailable for {badgeA}</span>}
+                  {errA && <span className="absolute text-[12px] text-text-tertiary">{tr("Stream unavailable for")}{' '}{badgeA}</span>}
                 </div>
                 <div className="w-px bg-border" />
                 <div className="relative flex min-w-0 flex-1 items-center justify-center bg-black">
                   <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">
                     <button
                       type="button"
-                      aria-label={audioSide === 'b' ? `Mute ${badgeB}` : `Unmute ${badgeB}`}
+                      aria-label={audioSide === 'b' ? tr("Mute {value0}", { value0: badgeB }) : tr("Unmute {value0}", { value0: badgeB })}
                       onClick={() => setAudioSide((prev) => (prev === 'b' ? 'none' : 'b'))}
                       className="flex h-7 w-7 items-center justify-center rounded bg-black/40 text-white/80 transition-colors hover:text-white"
                     >
@@ -523,7 +526,7 @@ export function CompareOverlay({ asset, versions, rightVersion, onClose, canComm
                     <AnnotationOverlay key={`b-${focusedCommentId ?? 'none'}`} annotation={annotationB} />
                     {drawingSide === 'b' && <AnnotationCanvas />}
                   </VideoFrameConstraint>
-                  {errB && <span className="absolute text-[12px] text-text-tertiary">Stream unavailable for {badgeB}</span>}
+                  {errB && <span className="absolute text-[12px] text-text-tertiary">{tr("Stream unavailable for")}{' '}{badgeB}</span>}
                 </div>
               </div>
               <CompareScrubber

@@ -10,6 +10,7 @@
  * with a plain textarea, no timecode control and no version concept at all
  * (#117, #123).
  */
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import { ModelViewer } from '@/components/review/model-viewer'
 import { ArrowLeft, Download, Loader2, PanelRightClose, PanelRightOpen } from 'lucide-react'
@@ -88,6 +89,8 @@ function ShareReviewInner({
   token, shareSession, assetName, permission, allowDownload, showVersions, onBack,
   VideoPlayer, ImageViewer, AudioPlayer, CommentPanel, CommentInput, VersionSwitcher,
 }: any) {
+  const tr = useTranslation()
+
   const { asset, versions, isLoading, comments, refetchComments, addComment } = useReview()
   const { currentVersion, isDrawingMode, focusedCommentId, playheadTime } = useReviewStore()
   const [sidebarOpen, setSidebarOpen] = React.useState(() => typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches)
@@ -196,12 +199,8 @@ function ShareReviewInner({
   const panelTabs = (
     <div className="px-4 pt-3 pb-2 shrink-0">
       <div className="flex items-center bg-bg-tertiary rounded-lg p-0.5">
-        <button onClick={() => setActiveTab('comments')} className={`flex-1 py-1.5 text-[13px] font-medium rounded-md transition-all ${activeTab === 'comments' ? 'bg-bg-hover text-text-primary shadow-sm' : 'text-text-tertiary'}`}>
-          Comments
-        </button>
-        <button onClick={() => setActiveTab('fields')} className={`flex-1 py-1.5 text-[13px] font-medium rounded-md transition-all ${activeTab === 'fields' ? 'bg-bg-hover text-text-primary shadow-sm' : 'text-text-tertiary'}`}>
-          Fields
-        </button>
+        <button onClick={() => setActiveTab('comments')} className={`flex-1 py-1.5 text-[13px] font-medium rounded-md transition-all ${activeTab === 'comments' ? 'bg-bg-hover text-text-primary shadow-sm' : 'text-text-tertiary'}`}>{tr("Comments")}</button>
+        <button onClick={() => setActiveTab('fields')} className={`flex-1 py-1.5 text-[13px] font-medium rounded-md transition-all ${activeTab === 'fields' ? 'bg-bg-hover text-text-primary shadow-sm' : 'text-text-tertiary'}`}>{tr("Fields")}</button>
       </div>
     </div>
   )
@@ -259,8 +258,7 @@ function ShareReviewInner({
           )}
           {allowDownload && (
             <button className="flex items-center gap-1.5 h-7 px-3 rounded-md text-xs font-medium text-text-inverse bg-accent hover:bg-accent-hover transition-colors" onClick={() => handleDownload(token, asset.id, shareSession)}>
-              <Download className="h-3 w-3" /> Download
-            </button>
+              <Download className="h-3 w-3" />{' '}{tr("Download")}</button>
           )}
           <button onClick={() => (useSheet ? setSheetState(st => (st === 'peek' ? 'half' : 'peek')) : setSidebarOpen(v => !v))} className="flex items-center justify-center h-8 w-8 rounded-md text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors">
             {(useSheet ? sheetState !== 'peek' : sidebarOpen) ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
@@ -364,18 +362,20 @@ function ShareReviewInner({
 // ─── Guest Identity Prompt ───────────────────────────────────────────────────
 
 function GuestIdentityPrompt({ onSave, onCancel }: { onSave: (name: string, email: string) => void; onCancel: () => void }) {
+  const tr = useTranslation()
+
   const [name, setName] = React.useState('')
   const [email, setEmail] = React.useState('')
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="w-full max-w-sm rounded-xl border border-border bg-bg-secondary p-5 shadow-xl">
-        <h3 className="text-sm font-semibold text-text-primary mb-1">Leave a comment</h3>
-        <p className="text-xs text-text-tertiary mb-4">Enter your name and email to comment on this shared asset.</p>
+        <h3 className="text-sm font-semibold text-text-primary mb-1">{tr("Leave a comment")}</h3>
+        <p className="text-xs text-text-tertiary mb-4">{tr("Enter your name and email to comment on this shared asset.")}</p>
         <div className="space-y-3">
           <input
             type="text"
-            placeholder="Your name"
+            placeholder={tr("Your name")}
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full rounded-md border border-border bg-bg-tertiary px-3 py-2 text-[16px] [@media(hover:hover)]:text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent"
@@ -383,23 +383,19 @@ function GuestIdentityPrompt({ onSave, onCancel }: { onSave: (name: string, emai
           />
           <input
             type="email"
-            placeholder="Email address"
+            placeholder={tr("Email address")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full rounded-md border border-border bg-bg-tertiary px-3 py-2 text-[16px] [@media(hover:hover)]:text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent"
           />
         </div>
         <div className="flex items-center justify-end gap-2 mt-4">
-          <button onClick={onCancel} className="px-3 py-1.5 text-xs text-text-tertiary hover:text-text-primary transition-colors">
-            Cancel
-          </button>
+          <button onClick={onCancel} className="px-3 py-1.5 text-xs text-text-tertiary hover:text-text-primary transition-colors">{tr("Cancel")}</button>
           <button
             disabled={!name.trim() || !email.trim()}
             onClick={() => onSave(name.trim(), email.trim())}
             className="px-4 py-1.5 rounded-md bg-accent text-xs font-medium text-white hover:bg-accent/90 disabled:opacity-50 transition-colors"
-          >
-            Continue
-          </button>
+          >{tr("Continue")}</button>
         </div>
       </div>
     </div>

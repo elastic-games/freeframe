@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import { ChevronDown, ChevronUp, Pause, Play } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -88,6 +89,8 @@ export function MobileCommentSheet({
   composer,
   position = 'absolute',
 }: MobileCommentSheetProps) {
+  const tr = useTranslation()
+
   const rootRef = React.useRef<HTMLDivElement>(null)
   const keyboardInset = useKeyboardInset()
   const [rootHeight, setRootHeight] = React.useState(() =>
@@ -274,7 +277,7 @@ export function MobileCommentSheet({
         // children-presentational, so once aria-label wins over name-from-
         // content the `Comments · N` span is pruned from the accessibility
         // tree — and below md this is the only comment affordance there is.
-        aria-label={commentCount > 0 ? `Comments panel, ${commentCount} comments` : 'Comments panel'}
+        aria-label={commentCount > 0 ? tr("Comments panel, {value0} comments", { value0: commentCount }) : tr("Comments panel")}
         aria-expanded={state !== 'peek'}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -305,7 +308,7 @@ export function MobileCommentSheet({
           <>
             <button
               type="button"
-              aria-label={isPlaying ? 'Pause' : 'Play'}
+              aria-label={isPlaying ? tr("Pause") : tr("Play")}
               onPointerDown={(e) => e.stopPropagation()}
               onClick={onTogglePlay}
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary"
@@ -318,11 +321,11 @@ export function MobileCommentSheet({
           </>
         )}
         <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-text-primary">
-          {commentCount > 0 ? `Comments · ${commentCount}` : 'Comments'}
+          {commentCount > 0 ? tr("Comments · {value0}", { value0: commentCount }) : tr("Comments")}
         </span>
         <button
           type="button"
-          aria-label={state === 'peek' ? 'Open comments' : 'Close comments'}
+          aria-label={state === 'peek' ? tr("Open comments") : tr("Close comments")}
           disabled={lockedToCompose}
           onPointerDown={(e) => e.stopPropagation()}
           onClick={toggleOpen}

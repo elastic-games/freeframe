@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import React, { useCallback, useRef, useState } from 'react'
 import useSWR from 'swr'
 import { Folder, Film, Music, Image as ImageIcon, Images, MoreHorizontal, Pencil, Trash, Share2 } from 'lucide-react'
@@ -115,6 +116,8 @@ export function FolderCard({
   fileDragActive,
   className,
 }: FolderCardProps) {
+  const tr = useTranslation()
+
   const [menuOpen, setMenuOpen] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
   const [renameOpen, setRenameOpen] = useState(false)
@@ -278,8 +281,7 @@ export function FolderCard({
                       setRenameOpen(true)
                     }}
                   >
-                    <Pencil className="h-3 w-3" /> Rename
-                  </button>
+                    <Pencil className="h-3 w-3" />{' '}{tr("Rename")}</button>
                   <button
                     className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-hover"
                     onClick={(e) => {
@@ -288,8 +290,7 @@ export function FolderCard({
                       onShare?.(folder.id, folder.name)
                     }}
                   >
-                    <Share2 className="h-3 w-3" /> Share
-                  </button>
+                    <Share2 className="h-3 w-3" />{' '}{tr("Share")}</button>
                   <button
                     className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/10"
                     onClick={(e) => {
@@ -298,14 +299,13 @@ export function FolderCard({
                       setDeleteOpen(true)
                     }}
                   >
-                    <Trash className="h-3 w-3" /> Delete
-                  </button>
+                    <Trash className="h-3 w-3" />{' '}{tr("Delete")}</button>
                 </div>
               )}
             </div>
           </div>
           <p className="text-xs text-text-tertiary mt-0.5">
-            {folder.item_count} {folder.item_count === 1 ? 'Item' : 'Items'}
+            {folder.item_count} {folder.item_count === 1 ? tr("Item") : tr("Items")}
           </p>
         </div>
       </div>
@@ -314,8 +314,8 @@ export function FolderCard({
       <NameDialog
         open={renameOpen}
         onOpenChange={setRenameOpen}
-        title="Rename Folder"
-        placeholder="Folder name"
+        title={tr("Rename Folder")}
+        placeholder={tr("Folder name")}
         defaultValue={folder.name}
         submitLabel="Rename"
         onSubmit={(name) => onRename?.(folder.id, name)}
@@ -325,8 +325,8 @@ export function FolderCard({
       <ConfirmDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        title={`Delete "${folder.name}"?`}
-        description="This folder and all its contents will be moved to trash. You can restore them later."
+        title={tr("Delete \"{value0}\"?", { value0: folder.name })}
+        description={tr("This folder and all its contents will be moved to trash. You can restore them later.")}
         confirmLabel="Delete"
         variant="danger"
         onConfirm={() => onDelete?.(folder.id)}

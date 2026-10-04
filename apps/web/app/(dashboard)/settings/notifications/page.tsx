@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from "react";
 import { Bell, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
@@ -63,6 +64,8 @@ const defaults: NotifPrefs = {
 };
 
 export default function NotificationsPage() {
+  const tr = useTranslation()
+
   const { user } = useAuthStore();
   const [prefs, setPrefs] = React.useState<NotifPrefs>(defaults);
   const [saving, setSaving] = React.useState(false);
@@ -102,12 +105,8 @@ export default function NotificationsPage() {
           <Bell className="h-5 w-5 text-text-primary" />
         </div>
         <div className="flex-1">
-          <h1 className="text-lg font-semibold text-text-primary">
-            Notifications
-          </h1>
-          <p className="text-sm text-text-secondary">
-            Manage your notification preferences
-          </p>
+          <h1 className="text-lg font-semibold text-text-primary">{tr("Notifications")}</h1>
+          <p className="text-sm text-text-secondary">{tr("Manage your notification preferences")}</p>
         </div>
         {saving && (
           <Loader2 className="h-4 w-4 animate-spin text-text-tertiary" />
@@ -119,22 +118,18 @@ export default function NotificationsPage() {
         <div className="flex items-start gap-3 p-4 rounded-lg border border-border bg-bg-secondary">
           <Bell className="h-5 w-5 text-text-secondary mt-0.5" />
           <div className="flex-1">
-            <h3 className="text-sm font-medium text-text-primary">
-              Email Notifications Frequency
-            </h3>
-            <p className="text-xs text-text-tertiary mt-1">
-              Email updates will be sent to your email address
-            </p>
+            <h3 className="text-sm font-medium text-text-primary">{tr("Email Notifications Frequency")}</h3>
+            <p className="text-xs text-text-tertiary mt-1">{tr("Email updates will be sent to your email address")}</p>
             <select
               value={prefs.email_frequency}
               onChange={(e) => updatePref("email_frequency", e.target.value)}
               className="mt-3 w-40 rounded-md border border-border bg-bg-tertiary px-3 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
             >
-              <option value="instant">Instantly</option>
-              <option value="15min">15 Minutes</option>
-              <option value="hourly">Hourly</option>
-              <option value="daily">Daily</option>
-              <option value="never">Never</option>
+              <option value="instant">{tr("Instantly")}</option>
+              <option value="15min">{tr("15 Minutes")}</option>
+              <option value="hourly">{tr("Hourly")}</option>
+              <option value="daily">{tr("Daily")}</option>
+              <option value="never">{tr("Never")}</option>
             </select>
           </div>
         </div>
@@ -142,7 +137,7 @@ export default function NotificationsPage() {
 
       {/* Comments Section */}
       <section className="space-y-4">
-        <h2 className="text-sm font-semibold text-text-primary">Comments</h2>
+        <h2 className="text-sm font-semibold text-text-primary">{tr("Comments")}</h2>
         <div className="space-y-3">
           {commentNotifications.map((item) => (
             <div
@@ -151,10 +146,10 @@ export default function NotificationsPage() {
             >
               <div>
                 <h3 className="text-sm font-medium text-text-primary">
-                  {item.title}
+                  {tr(item.title)}
                 </h3>
                 <p className="text-xs text-text-tertiary mt-0.5">
-                  {item.description}
+                  {tr(item.description)}
                 </p>
               </div>
               <select
@@ -162,9 +157,9 @@ export default function NotificationsPage() {
                 onChange={(e) => updatePref(item.id, e.target.value)}
                 className="rounded-md border border-border bg-bg-tertiary px-3 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
               >
-                <option value="all_on">All On</option>
-                <option value="in_app">In-App Only</option>
-                <option value="all_off">All Off</option>
+                <option value="all_on">{tr("All On")}</option>
+                <option value="in_app">{tr("In-App Only")}</option>
+                <option value="all_off">{tr("All Off")}</option>
               </select>
             </div>
           ))}
@@ -173,7 +168,7 @@ export default function NotificationsPage() {
 
       {/* Assets Section */}
       <section className="space-y-4">
-        <h2 className="text-sm font-semibold text-text-primary">Assets</h2>
+        <h2 className="text-sm font-semibold text-text-primary">{tr("Assets")}</h2>
         <div className="space-y-3">
           {assetNotifications.map((item) => (
             <div
@@ -182,10 +177,10 @@ export default function NotificationsPage() {
             >
               <div>
                 <h3 className="text-sm font-medium text-text-primary">
-                  {item.title}
+                  {tr(item.title)}
                 </h3>
                 <p className="text-xs text-text-tertiary mt-0.5">
-                  {item.description}
+                  {tr(item.description)}
                 </p>
               </div>
               <select
@@ -193,9 +188,9 @@ export default function NotificationsPage() {
                 onChange={(e) => updatePref(item.id, e.target.value)}
                 className="rounded-md border border-border bg-bg-tertiary px-3 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
               >
-                <option value="all_on">All On</option>
-                <option value="in_app">In-App Only</option>
-                <option value="all_off">All Off</option>
+                <option value="all_on">{tr("All On")}</option>
+                <option value="in_app">{tr("In-App Only")}</option>
+                <option value="all_off">{tr("All Off")}</option>
               </select>
             </div>
           ))}
@@ -203,10 +198,7 @@ export default function NotificationsPage() {
       </section>
 
       <div className="p-4 rounded-lg bg-bg-tertiary border border-border">
-        <p className="text-xs text-text-secondary">
-          You will always get important administrative emails, such as password
-          resets and account billing.
-        </p>
+        <p className="text-xs text-text-secondary">{tr("You will always get important administrative emails, such as password resets and account billing.")}</p>
       </div>
     </div>
   );

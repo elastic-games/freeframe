@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import { useEffect, useRef, useState } from 'react'
 import { api } from '@/lib/api'
 import { useReview } from './review-provider'
@@ -12,6 +13,8 @@ import type { Asset, AssetVersion } from '@/types'
 
 /** Notes and drawings use the existing FreeFrame comment lifecycle, with an exact 3D view attached. */
 export function ModelViewer({ asset, version }: { asset: Asset; version: AssetVersion | null }) {
+  const tr = useTranslation()
+
   const versionId = version?.id
   const host = useRef<HTMLDivElement>(null),
     outer = useRef<HTMLDivElement>(null),
@@ -149,6 +152,9 @@ export function ModelViewer({ asset, version }: { asset: Asset; version: AssetVe
       setTime(saved.time)
     } else setRestored(false)
   }, [saved, hasSaved, loaded])
+  useEffect(() => {
+    host.current?.querySelector('canvas')?.setAttribute('aria-label', tr('Interactive 3D model. Drag to orbit, right drag to pan, scroll to zoom.'))
+  }, [tr, loaded])
   const resume = () => {
     useReviewStore.setState({
       activeAnnotation: null,
@@ -166,28 +172,23 @@ export function ModelViewer({ asset, version }: { asset: Asset; version: AssetVe
       <div className="flex flex-wrap items-center gap-3 text-xs text-text-secondary">
         <span>
           {locked
-            ? 'Saved review view · camera locked'
-            : 'Drag to orbit · Right drag to pan · Scroll to zoom'}
+            ? tr("Saved review view · camera locked")
+            : tr("Drag to orbit · Right drag to pan · Scroll to zoom")}
         </span>
         <button
           type="button"
           onClick={() => viewer.current?.reset()}
           disabled={status !== 'ready' || locked}
           className="text-accent disabled:opacity-50"
-        >
-          Reset view
-        </button>
+        >{tr("Reset view")}</button>
         {locked && !drawing && (
-          <button type="button" onClick={resume} className="text-accent">
-            Resume orbit
-          </button>
+          <button type="button" onClick={resume} className="text-accent">{tr("Resume orbit")}</button>
         )}
         {!!clips.length && (
           <>
-            <label>
-              Animation{' '}
+            <label>{tr("Animation")}{' '}
               <select
-                aria-label="Animation pose"
+                aria-label={tr("Animation pose")}
                 value={clip}
                 disabled={locked}
                 className="bg-bg-secondary"
@@ -198,7 +199,7 @@ export function ModelViewer({ asset, version }: { asset: Asset; version: AssetVe
                   viewer.current?.setPose(n, 0)
                 }}
               >
-                <option value={-1}>Rest pose</option>
+                <option value={-1}>{tr("Rest pose")}</option>
                 {clips.map((name, i) => (
                   <option key={i} value={i}>
                     {name}
@@ -207,10 +208,9 @@ export function ModelViewer({ asset, version }: { asset: Asset; version: AssetVe
               </select>
             </label>
             {clip !== -1 && (
-              <label>
-                Seconds{' '}
+              <label>{tr("Seconds")}{' '}
                 <input
-                  aria-label="Pose time"
+                  aria-label={tr("Pose time")}
                   type="number"
                   min={0}
                   max={viewer.current?.duration(clip)}
@@ -241,31 +241,22 @@ export function ModelViewer({ asset, version }: { asset: Asset; version: AssetVe
           {drawing && status === 'ready' && <AnnotationCanvas onSave={save} />}
         </div>
         {status === 'loading' && (
-          <div role="status" className="absolute inset-0 grid place-items-center">
-            Loading exact model version…
-          </div>
+          <div role="status" className="absolute inset-0 grid place-items-center">{tr("Loading exact model version…")}</div>
         )}
         {status === 'error' && (
           <div
             role="alert"
             className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6"
           >
-            <span>{error}</span>
-            <button onClick={() => setNonce((n) => n + 1)} className="text-accent">
-              Retry
-            </button>
+            <span>{tr(error)}</span>
+            <button onClick={() => setNonce((n) => n + 1)} className="text-accent">{tr("Retry")}</button>
           </div>
         )}
         {hasSaved && status === 'ready' && !restored && (
-          <div role="alert" className="absolute bottom-3 p-3 bg-bg-primary">
-            This drawing belongs to different model content. It cannot be overlaid on this version.
-          </div>
+          <div role="alert" className="absolute bottom-3 p-3 bg-bg-primary">{tr("This drawing belongs to different model content. It cannot be overlaid on this version.")}</div>
         )}
       </div>
-      <p className="text-xs text-text-tertiary">
-        Notes save the camera, object transform, animation pose and exact model digest. Drawings are
-        attached to this saved view.
-      </p>
+      <p className="text-xs text-text-tertiary">{tr("Notes save the camera, object transform, animation pose and exact model digest. Drawings are attached to this saved view.")}</p>
     </div>
   )
 }

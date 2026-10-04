@@ -85,13 +85,22 @@ export function storageMeterState(
  * Format an ISO date string into a relative time string
  * e.g. "2 hours ago", "3 days ago", "just now"
  */
-export function formatRelativeTime(date: string): string {
+export function formatRelativeTime(date: string, locale = 'en'): string {
   const now = Date.now()
   const then = new Date(date).getTime()
   const diffMs = now - then
   const diffSecs = Math.floor(diffMs / 1000)
 
-  if (diffSecs < 60) return 'just now'
+  if (diffSecs < 60) return locale === 'ru' ? 'только что' : 'just now'
+
+  if (locale === 'ru') {
+    const relative = new Intl.RelativeTimeFormat('ru', { numeric: 'always' })
+    if (diffSecs < 3600) return relative.format(-Math.floor(diffSecs / 60), 'minute')
+    if (diffSecs < 86400) return relative.format(-Math.floor(diffSecs / 3600), 'hour')
+    if (diffSecs < 2592000) return relative.format(-Math.floor(diffSecs / 86400), 'day')
+    if (diffSecs < 31536000) return relative.format(-Math.floor(diffSecs / 2592000), 'month')
+    return relative.format(-Math.floor(diffSecs / 31536000), 'year')
+  }
 
   const diffMins = Math.floor(diffSecs / 60)
   if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`

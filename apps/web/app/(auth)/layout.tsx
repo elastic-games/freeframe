@@ -1,3 +1,4 @@
+import { getServerTranslation } from "@/lib/i18n/server";
 import type { Metadata } from "next"
 import { AuthBrandingHeader } from "@/components/auth/auth-branding-header"
 import { getServerBranding } from "@/lib/branding-server"
@@ -16,6 +17,7 @@ export default function AuthLayout({
 }: {
   children: React.ReactNode
 }) {
+  const tr = getServerTranslation();
   return (
     <div className="relative min-h-screen bg-bg-primary flex flex-col items-center justify-center px-4">
       {/* Subtle radial glow */}
@@ -33,7 +35,7 @@ export default function AuthLayout({
 
       {/* Footer */}
       <p className="relative mt-8 text-2xs text-text-tertiary">
-        Collaborative media review &amp; approval
+        {tr("Collaborative media review & approval")}
       </p>
     </div>
   )

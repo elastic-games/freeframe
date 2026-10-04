@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import WaveSurfer from 'wavesurfer.js'
 import {
@@ -35,6 +36,8 @@ interface AudioPlayerProps {
 }
 
 export function AudioPlayer({ asset, version, comments = [], className }: AudioPlayerProps) {
+  const tr = useTranslation()
+
   const { setPlayheadTime, seekTarget, timeFormat, setTimeFormat } = useReviewStore()
   const [timeFormatOpen, setTimeFormatOpen] = React.useState(false)
   const timeFormatRef = React.useRef<HTMLDivElement>(null)
@@ -246,14 +249,14 @@ export function AudioPlayer({ asset, version, comments = [], className }: AudioP
         {isLoading && !error && (
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="h-8 w-8 animate-spin text-text-tertiary" />
-            <span className="text-xs text-text-tertiary">Loading waveform...</span>
+            <span className="text-xs text-text-tertiary">{tr("Loading waveform...")}</span>
           </div>
         )}
 
         {/* Error */}
         {error && (
           <div className="flex flex-col items-center gap-2">
-            <span className="text-sm text-status-warning">{error}</span>
+            <span className="text-sm text-status-warning">{tr(error)}</span>
           </div>
         )}
 
@@ -285,7 +288,7 @@ export function AudioPlayer({ asset, version, comments = [], className }: AudioP
             onClick={handlePlayPause}
             disabled={!isReady}
             className="flex h-7 w-7 items-center justify-center rounded text-text-primary hover:bg-bg-hover transition-colors disabled:opacity-40"
-            title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
+            title={isPlaying ? tr("Pause (Space)") : tr("Play (Space)")}
           >
             {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </button>
@@ -296,7 +299,7 @@ export function AudioPlayer({ asset, version, comments = [], className }: AudioP
               'flex h-7 w-7 items-center justify-center rounded transition-colors',
               loop ? 'text-accent bg-accent/10' : 'text-text-tertiary hover:text-text-secondary hover:bg-bg-hover',
             )}
-            title="Loop"
+            title={tr("Loop")}
           >
             <Repeat className="h-4 w-4" />
           </button>
@@ -309,7 +312,7 @@ export function AudioPlayer({ asset, version, comments = [], className }: AudioP
             }}
             disabled={!isReady}
             className="flex h-7 items-center justify-center rounded px-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover hover:text-text-primary transition-colors tabular-nums disabled:opacity-40"
-            title="Playback speed"
+            title={tr("Playback speed")}
           >
             {speed}x
           </button>
@@ -317,7 +320,7 @@ export function AudioPlayer({ asset, version, comments = [], className }: AudioP
           <button
             onClick={() => setMuted(!muted)}
             className="flex h-7 w-7 items-center justify-center rounded text-text-tertiary hover:text-text-secondary hover:bg-bg-hover transition-colors"
-            title={muted ? 'Unmute' : 'Mute'}
+            title={muted ? tr("Unmute") : tr("Mute")}
           >
             {muted || volume === 0 ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
           </button>
@@ -339,9 +342,7 @@ export function AudioPlayer({ asset, version, comments = [], className }: AudioP
           </button>
           {timeFormatOpen && (
             <div className="absolute bottom-full left-1/2 -translate-x-1/2 slide-in-from-left-1/2 mb-2 z-50 w-48 rounded-xl border border-white/10 bg-[#2a2a30] shadow-2xl py-1.5 animate-in fade-in zoom-in-95 duration-100">
-              <div className="px-3 py-2 text-[11px] text-text-tertiary uppercase tracking-wider font-medium">
-                Time Format
-              </div>
+              <div className="px-3 py-2 text-[11px] text-text-tertiary uppercase tracking-wider font-medium">{tr("Time Format")}</div>
               {([
                 { id: 'frames' as TimeFormat, label: 'Frames' },
                 { id: 'standard' as TimeFormat, label: 'Standard' },
@@ -355,7 +356,7 @@ export function AudioPlayer({ asset, version, comments = [], className }: AudioP
                   )}
                   onClick={() => { setTimeFormat(item.id); setTimeFormatOpen(false) }}
                 >
-                  {item.label}
+                  {tr(item.label)}
                   {timeFormat === item.id && <Check className="h-4 w-4 text-accent" />}
                 </button>
               ))}

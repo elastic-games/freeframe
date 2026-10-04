@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import {
@@ -76,16 +77,16 @@ function formatFileSize(bytes: number | null): string {
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
 }
 
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString(undefined, {
+function formatDate(dateStr: string, locale = 'en'): string {
+  return new Date(dateStr).toLocaleDateString(locale, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
   })
 }
 
-function formatShortDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString(undefined, {
+function formatShortDate(dateStr: string, locale = 'en'): string {
+  return new Date(dateStr).toLocaleDateString(locale, {
     month: 'short',
     day: 'numeric',
   })
@@ -172,6 +173,8 @@ interface SubfolderCardProps {
 }
 
 function SubfolderCard({ subfolder, onClick }: SubfolderCardProps) {
+  const tr = useTranslation()
+
   const thumbs = subfolder.thumbnail_urls ?? []
 
   return (
@@ -220,7 +223,7 @@ function SubfolderCard({ subfolder, onClick }: SubfolderCardProps) {
       <div className="px-3 py-2.5">
         <p className="text-sm font-medium text-text-primary truncate">{subfolder.name}</p>
         <p className="text-xs text-text-tertiary mt-0.5">
-          {subfolder.item_count} {subfolder.item_count === 1 ? 'Item' : 'Items'}
+          {subfolder.item_count} {subfolder.item_count === 1 ? tr("Item") : tr("Items")}
         </p>
       </div>
     </button>
@@ -259,6 +262,8 @@ interface AssetGridCardProps {
 }
 
 function AssetGridCard({ asset, allowDownload, token, shareSession, isSelected, onSelect, onOpen, aspectClass = 'aspect-[16/10]', thumbnailScale = 'fill', showCardInfo = true }: AssetGridCardProps) {
+  const tr = useTranslation()
+
   const TypeIcon = getAssetTypeIcon(asset.asset_type)
   const [imgError, setImgError] = React.useState(false)
 
@@ -294,7 +299,7 @@ function AssetGridCard({ asset, allowDownload, token, shareSession, isSelected, 
 
         {/* Version count badge — top left (only when multiple versions exist) */}
         {(asset.version_count ?? 1) > 1 && (
-          <div className="absolute top-2 left-2 flex items-center gap-1 bg-bg-primary/80 backdrop-blur-sm rounded-md px-1.5 py-0.5" title={`${asset.version_count} versions`}>
+          <div className="absolute top-2 left-2 flex items-center gap-1 bg-bg-primary/80 backdrop-blur-sm rounded-md px-1.5 py-0.5" title={tr("{value0} versions", { value0: asset.version_count ?? 0 })}>
             <Layers className="h-3 w-3 text-text-primary" />
             <span className="text-[10px] font-medium text-text-primary tabular-nums">{asset.version_count}</span>
           </div>
@@ -325,7 +330,7 @@ function AssetGridCard({ asset, allowDownload, token, shareSession, isSelected, 
               e.stopPropagation()
               handleDownload(token, asset.id, shareSession)
             }}
-            title="Download"
+            title={tr("Download")}
           >
             <Download className="h-3 w-3" />
           </button>
@@ -338,7 +343,7 @@ function AssetGridCard({ asset, allowDownload, token, shareSession, isSelected, 
           <p className="text-sm font-medium text-text-primary line-clamp-1">{asset.name}</p>
           <p className="text-xs text-text-tertiary mt-0.5 truncate">
             {asset.created_by_name && <>{asset.created_by_name} &middot; </>}
-            {formatShortDate(asset.created_at)}
+            {formatShortDate(asset.created_at, tr.locale)}
             {asset.file_size != null && <> &middot; {formatFileSize(asset.file_size)}</>}
           </p>
         </div>
@@ -358,13 +363,15 @@ interface SectionHeaderProps {
 }
 
 function SectionHeader({ label, count, totalSize, expanded, onToggle }: SectionHeaderProps) {
+  const tr = useTranslation()
+
   return (
     <button className="flex items-center gap-2 py-2 w-full text-left group" onClick={onToggle}>
       <ChevronDown
         className={cn('h-4 w-4 shrink-0 transition-transform text-text-tertiary', !expanded && '-rotate-90')}
       />
       <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
-        {count} {label}
+        {count} {tr(label)}
       </span>
       {totalSize && (
         <span className="text-xs text-text-tertiary">&middot; {totalSize}</span>
@@ -397,6 +404,8 @@ interface GuestComment {
 }
 
 function RightPanel({ selectedAsset, token, permission, allowDownload, onOpenAsset }: RightPanelProps) {
+  const tr = useTranslation()
+
   const [comments, setComments] = React.useState<GuestComment[]>([])
   const [loadingComments, setLoadingComments] = React.useState(false)
   const [commentRefresh, setCommentRefresh] = React.useState(0)
@@ -423,7 +432,7 @@ function RightPanel({ selectedAsset, token, permission, allowDownload, onOpenAss
         <div className="h-14 w-14 rounded-full bg-bg-tertiary flex items-center justify-center mb-3">
           <MessageSquare className="h-7 w-7 text-text-tertiary" />
         </div>
-        <p className="text-sm font-medium text-text-primary">Select an asset to view comments</p>
+        <p className="text-sm font-medium text-text-primary">{tr("Select an asset to view comments")}</p>
       </div>
     )
   }
@@ -438,8 +447,7 @@ function RightPanel({ selectedAsset, token, permission, allowDownload, onOpenAss
       {/* Comments section */}
       <div className="flex-1 overflow-y-auto">
         <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-          <h4 className="text-xs font-semibold text-text-tertiary uppercase tracking-wider">
-            Comments ({comments.length})
+          <h4 className="text-xs font-semibold text-text-tertiary uppercase tracking-wider">{tr("Comments (")}{comments.length})
           </h4>
         </div>
         <ShareCommentList comments={comments} loading={loadingComments} canComment={canComment} />
@@ -471,6 +479,8 @@ interface ShareCommentListProps {
 }
 
 function ShareCommentList({ comments, loading, canComment, onReply }: ShareCommentListProps) {
+  const tr = useTranslation()
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -483,8 +493,8 @@ function ShareCommentList({ comments, loading, canComment, onReply }: ShareComme
     return (
       <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
         <MessageSquare className="h-8 w-8 text-text-tertiary mb-2" />
-        <p className="text-sm font-medium text-text-primary">No comments yet</p>
-        {canComment && <p className="text-xs text-text-tertiary mt-1">Be the first to leave feedback</p>}
+        <p className="text-sm font-medium text-text-primary">{tr("No comments yet")}</p>
+        {canComment && <p className="text-xs text-text-tertiary mt-1">{tr("Be the first to leave feedback")}</p>}
       </div>
     )
   }
@@ -514,9 +524,7 @@ function ShareCommentList({ comments, loading, canComment, onReply }: ShareComme
                   </span>
                 )}
                 {canComment && onReply && (
-                  <button onClick={() => onReply(comment.id)} className="block mt-1.5 text-xs text-text-tertiary hover:text-text-primary transition-colors">
-                    Reply
-                  </button>
+                  <button onClick={() => onReply(comment.id)} className="block mt-1.5 text-xs text-text-tertiary hover:text-text-primary transition-colors">{tr("Reply")}</button>
                 )}
               </div>
             </div>
@@ -560,6 +568,8 @@ interface ShareCommentInputProps {
 }
 
 function ShareCommentInput({ token, assetId, onCommentPosted }: ShareCommentInputProps) {
+  const tr = useTranslation()
+
   const [body, setBody] = React.useState('')
   const [guestName, setGuestName] = React.useState('')
   const [guestEmail, setGuestEmail] = React.useState('')
@@ -615,14 +625,14 @@ function ShareCommentInput({ token, assetId, onCommentPosted }: ShareCommentInpu
             type="text"
             value={guestName}
             onChange={(e) => setGuestName(e.target.value)}
-            placeholder="Your name"
+            placeholder={tr("Your name")}
             className="flex-1 h-8 rounded-md border border-border bg-bg-hover px-2.5 text-xs text-text-primary placeholder:text-text-tertiary outline-none focus:border-accent/50"
           />
           <input
             type="email"
             value={guestEmail}
             onChange={(e) => setGuestEmail(e.target.value)}
-            placeholder="Email"
+            placeholder={tr("Email")}
             className="flex-1 h-8 rounded-md border border-border bg-bg-hover px-2.5 text-xs text-text-primary placeholder:text-text-tertiary outline-none focus:border-accent/50"
           />
         </div>
@@ -633,7 +643,7 @@ function ShareCommentInput({ token, assetId, onCommentPosted }: ShareCommentInpu
           value={body}
           onChange={(e) => setBody(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit() } }}
-          placeholder="Leave a comment…"
+          placeholder={tr("Leave a comment…")}
           disabled={submitting}
           className="flex-1 h-8 rounded-md border border-border bg-bg-hover px-2.5 text-sm text-text-primary placeholder:text-text-tertiary outline-none focus:border-accent/50"
         />
@@ -642,10 +652,10 @@ function ShareCommentInput({ token, assetId, onCommentPosted }: ShareCommentInpu
           disabled={submitting || !body.trim()}
           className="h-8 px-3 rounded-md bg-accent text-text-primary text-xs font-medium hover:bg-accent/90 disabled:opacity-50 transition-colors shrink-0"
         >
-          {submitting ? '...' : 'Post'}
+          {submitting ? '...' : tr("Post")}
         </button>
       </div>
-      {error && <p className="text-2xs text-red-400">{error}</p>}
+      {error && <p className="text-2xs text-red-400">{tr(error)}</p>}
     </div>
   )
 }
@@ -731,6 +741,8 @@ export function FolderShareViewer({
   branding,
   onAssetClick,
 }: FolderShareViewerProps) {
+  const tr = useTranslation()
+
   // Build share_session query param for all API calls
   const sessionParam = shareSession ? `&share_session=${encodeURIComponent(shareSession)}` : ''
   const [currentSubfolderId, setCurrentSubfolderId] = React.useState<string | null>(null)
@@ -897,10 +909,10 @@ export function FolderShareViewer({
   // Summary text
   const summaryParts: string[] = []
   if (subfolders.length > 0) {
-    summaryParts.push(`${subfolders.length} Folder${subfolders.length === 1 ? '' : 's'}`)
+    summaryParts.push(`${subfolders.length} ${tr(subfolders.length === 1 ? 'Folder' : 'Folders')}`)
   }
   if (assets.length > 0) {
-    summaryParts.push(`${assets.length} Asset${assets.length === 1 ? '' : 's'}`)
+    summaryParts.push(`${assets.length} ${tr(assets.length === 1 ? 'Asset' : 'Assets')}`)
   }
   const summaryText = summaryParts.join(', ')
 
@@ -959,9 +971,7 @@ export function FolderShareViewer({
                       }
                     }}
                     className="flex items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-bg-tertiary cursor-pointer outline-none transition-colors"
-                  >
-                    Back to Dashboard
-                  </DropdownMenu.Item>
+                  >{tr("Back to Dashboard")}</DropdownMenu.Item>
                   <DropdownMenu.Item
                     onSelect={() => {
                       if (typeof window !== 'undefined') {
@@ -972,9 +982,7 @@ export function FolderShareViewer({
                       }
                     }}
                     className="flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 cursor-pointer outline-none transition-colors"
-                  >
-                    Log out
-                  </DropdownMenu.Item>
+                  >{tr("Log out")}</DropdownMenu.Item>
                 </DropdownMenu.Content>
               </DropdownMenu.Portal>
             </DropdownMenu.Root>
@@ -1005,14 +1013,12 @@ export function FolderShareViewer({
               className="flex items-center gap-1.5 h-7 px-3 rounded-md text-xs font-medium text-white bg-accent hover:bg-accent-hover transition-colors"
               onClick={() => handleDownloadAll(token, currentSubfolderId ?? null, shareSession)}
             >
-              <Download className="h-3 w-3" />
-              Download All
-            </button>
+              <Download className="h-3 w-3" />{tr("Download All")}</button>
           )}
           <button
             onClick={() => setPanelOpen((v) => !v)}
             className="flex items-center justify-center h-7 w-7 rounded-md text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors"
-            title={panelOpen ? 'Hide panel' : 'Show panel'}
+            title={panelOpen ? tr("Hide panel") : tr("Show panel")}
           >
             {panelOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
           </button>
@@ -1028,8 +1034,8 @@ export function FolderShareViewer({
             <h1 className="text-lg font-bold text-text-primary leading-tight">{title || folderName}</h1>
             {!loading && (
               <p className="mt-0.5 text-sm text-text-tertiary">
-                {createdByName && <>Created by {createdByName} &middot; </>}
-                {summaryText || 'Empty folder'}
+                {createdByName && <>{tr("Created by")}{' '}{createdByName} &middot; </>}
+                {summaryText || tr('Empty folder')}
               </p>
             )}
 
@@ -1042,9 +1048,7 @@ export function FolderShareViewer({
                     breadcrumbs.length === 0 && 'text-text-primary pointer-events-none',
                   )}
                   onClick={() => navigateToBreadcrumb(-1)}
-                >
-                  Root
-                </button>
+                >{tr("Root")}</button>
                 {breadcrumbs.map((crumb, i) => (
                   <React.Fragment key={crumb.id}>
                     <ChevronRight className="h-3.5 w-3.5 shrink-0 text-text-tertiary" />
@@ -1071,7 +1075,7 @@ export function FolderShareViewer({
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search assets…"
+                  placeholder={tr("Search assets…")}
                   className="h-8 w-52 pl-8 pr-3 rounded-md text-sm border bg-bg-tertiary border-border text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-border-focus"
                 />
               </div>
@@ -1086,13 +1090,13 @@ export function FolderShareViewer({
               </div>
             ) : error ? (
               <div className="flex items-center justify-center py-24">
-                <p className="text-sm text-text-tertiary">{error}</p>
+                <p className="text-sm text-text-tertiary">{tr(error)}</p>
               </div>
             ) : filteredSubfolders.length === 0 && filteredAssets.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-24 gap-3">
                 <Folder className="h-12 w-12 text-text-tertiary" />
                 <p className="text-sm text-text-tertiary">
-                  {searchQuery.trim() ? 'No results found' : 'This folder is empty'}
+                  {searchQuery.trim() ? tr("No results found") : tr("This folder is empty")}
                 </p>
               </div>
             ) : (
@@ -1101,7 +1105,7 @@ export function FolderShareViewer({
                 {filteredSubfolders.length > 0 && (
                   <section className="mb-6">
                     <SectionHeader
-                      label={filteredSubfolders.length === 1 ? 'Folder' : 'Folders'}
+                      label={filteredSubfolders.length === 1 ? tr("Folder") : tr("Folders")}
                       count={filteredSubfolders.length}
                       totalSize={totalFolderSize}
                       expanded={foldersExpanded}
@@ -1125,7 +1129,7 @@ export function FolderShareViewer({
                 {filteredAssets.length > 0 && (
                   <section>
                     <SectionHeader
-                      label={filteredAssets.length === 1 ? 'Asset' : 'Assets'}
+                      label={filteredAssets.length === 1 ? tr("Asset") : tr("Assets")}
                       count={filteredAssets.length}
                       totalSize={totalAssetSize}
                       expanded={assetsExpanded}
@@ -1157,9 +1161,9 @@ export function FolderShareViewer({
                             {/* Column headers */}
                             <div className="flex items-center gap-4 px-1 py-2 border-b border-border bg-bg-secondary/50 text-[10px] text-text-tertiary font-medium uppercase tracking-wider">
                               <div className="h-14 w-14 shrink-0" />
-                              <div className="flex-1 min-w-0">Name</div>
-                              <div className="hidden sm:block w-24 text-right shrink-0">Size</div>
-                              <div className="hidden sm:block w-28 shrink-0">Date</div>
+                              <div className="flex-1 min-w-0">{tr("Name")}</div>
+                              <div className="hidden sm:block w-24 text-right shrink-0">{tr("Size")}</div>
+                              <div className="hidden sm:block w-28 shrink-0">{tr("Date")}</div>
                               {allowDownload && <div className="w-7 shrink-0" />}
                             </div>
                             {filteredAssets.map((asset, i) => {
@@ -1182,7 +1186,7 @@ export function FolderShareViewer({
                                     <p className="text-sm font-medium text-text-primary truncate leading-snug">{asset.name}</p>
                                     <p className="text-xs text-text-tertiary mt-0.5 truncate">
                                       {asset.created_by_name && <>{asset.created_by_name} &middot; </>}
-                                      {formatShortDate(asset.created_at)}
+                                      {formatShortDate(asset.created_at, tr.locale)}
                                     </p>
                                   </div>
                                   {/* File size */}
@@ -1191,14 +1195,14 @@ export function FolderShareViewer({
                                   </span>
                                   {/* Date */}
                                   <span className="hidden sm:block w-28 text-xs text-text-tertiary shrink-0">
-                                    {formatDate(asset.created_at)}
+                                    {formatDate(asset.created_at, tr.locale)}
                                   </span>
                                   {/* Download */}
                                   {allowDownload && (
                                     <button
                                       className="w-7 shrink-0 flex items-center justify-center h-7 rounded text-text-tertiary opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:hover:text-text-primary transition-all"
                                       onClick={(e) => { e.stopPropagation(); handleDownload(token, asset.id, shareSession) }}
-                                      title="Download"
+                                      title={tr("Download")}
                                     >
                                       <Download className="h-4 w-4" />
                                     </button>
@@ -1218,7 +1222,7 @@ export function FolderShareViewer({
                               className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium border border-border text-text-primary hover:bg-bg-tertiary hover:border-border-focus disabled:opacity-50 transition-colors"
                             >
                               {loadingMore && <Loader2 className="h-4 w-4 animate-spin" />}
-                              {loadingMore ? 'Loading…' : 'Load more'}
+                              {loadingMore ? tr("Loading…") : tr("Load more")}
                             </button>
                           </div>
                         )}
@@ -1240,7 +1244,7 @@ export function FolderShareViewer({
               )}
               {!loading && (
                 <p className="text-xs tabular-nums text-text-tertiary">
-                  {assets.length + subfolders.length} item{assets.length + subfolders.length === 1 ? '' : 's'}
+                  {assets.length + subfolders.length}{' '}{tr("item")}{assets.length + subfolders.length === 1 ? '' : (tr.locale === 'en' ? 's' : '')}
                 </p>
               )}
             </div>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import React, { useState, useCallback, useMemo, useRef } from 'react'
 import {
   ChevronRight,
@@ -205,6 +206,8 @@ function FolderNode({
   onFileDragOverFolder,
   fileDragTarget,
 }: FolderNodeProps) {
+  const tr = useTranslation()
+
   const [expanded, setExpanded] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [renaming, setRenaming] = useState(false)
@@ -319,8 +322,7 @@ function FolderNode({
               setRenameName(node.name)
             }}
           >
-            <Pencil className="h-3 w-3" /> Rename
-          </button>
+            <Pencil className="h-3 w-3" />{' '}{tr("Rename")}</button>
           <button
             className="flex w-full items-center gap-2 px-3 py-1.5 text-[12px] text-text-secondary hover:bg-bg-hover hover:text-text-primary"
             onClick={() => {
@@ -328,8 +330,7 @@ function FolderNode({
               onCreateFolder('', node.id)
             }}
           >
-            <FolderPlus className="h-3 w-3" /> New Subfolder
-          </button>
+            <FolderPlus className="h-3 w-3" />{' '}{tr("New Subfolder")}</button>
           <div className="my-1 border-t border-border" />
           <button
             className="flex w-full items-center gap-2 px-3 py-1.5 text-[12px] text-red-400 hover:bg-red-500/10"
@@ -340,8 +341,7 @@ function FolderNode({
               }
             }}
           >
-            <Trash className="h-3 w-3" /> Delete
-          </button>
+            <Trash className="h-3 w-3" />{' '}{tr("Delete")}</button>
         </div>
       )}
 
@@ -385,6 +385,8 @@ export function FolderTree({
   onFileDragOverFolder,
   fileDragTarget,
 }: FolderTreeProps) {
+  const tr = useTranslation()
+
   // The root row is a row like any other: same hook, same reporting, so the
   // page's "exactly one frame is lit" holds here too rather than stopping at
   // the folders. `null` as the drop target is what this row means by itself.
@@ -451,7 +453,7 @@ export function FolderTree({
         onClick={onShowTrash}
       >
         <Trash2 className="h-3.5 w-3.5 shrink-0" />
-        <span>Recently Deleted</span>
+        <span>{tr("Recently Deleted")}</span>
       </div>
     </div>
   )

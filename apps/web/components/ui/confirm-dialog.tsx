@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { AlertTriangle } from 'lucide-react'
@@ -32,6 +33,8 @@ export function ConfirmDialog({
   error,
   onConfirm,
 }: ConfirmDialogProps) {
+  const tr = useTranslation()
+
   const [isLoading, setIsLoading] = React.useState(false)
 
   async function handleConfirm() {
@@ -69,18 +72,18 @@ export function ConfirmDialog({
             )}
             <div className="flex-1 min-w-0">
               <Dialog.Title className="text-sm font-semibold text-text-primary">
-                {title}
+                {tr(title)}
               </Dialog.Title>
               {description && (
                 <Dialog.Description className="mt-1.5 text-sm text-text-tertiary leading-relaxed">
-                  {description}
+                  {tr(description)}
                 </Dialog.Description>
               )}
             </div>
           </div>
 
           {error && (
-            <p className="mt-3 text-xs text-status-error">{error}</p>
+            <p className="mt-3 text-xs text-status-error">{tr(error)}</p>
           )}
 
           <div className="flex items-center justify-end gap-2 mt-5">
@@ -90,7 +93,7 @@ export function ConfirmDialog({
               onClick={() => onOpenChange(false)}
               disabled={busy}
             >
-              {cancelLabel}
+              {tr(cancelLabel)}
             </Button>
             <Button
               variant={variant === 'danger' ? 'destructive' : 'primary'}
@@ -98,7 +101,7 @@ export function ConfirmDialog({
               onClick={handleConfirm}
               loading={busy}
             >
-              {confirmLabel}
+              {tr(confirmLabel)}
             </Button>
           </div>
         </Dialog.Content>

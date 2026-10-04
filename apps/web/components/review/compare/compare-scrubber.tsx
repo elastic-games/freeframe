@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import { createPortal } from 'react-dom'
 import { Pause, Play, RotateCcw } from 'lucide-react'
@@ -143,12 +144,14 @@ function OffsetStepper({ side, label, offset, fps, onOffsetChange }: {
   side: 'a' | 'b'; label: string; offset: number; fps?: number | null
   onOffsetChange(side: 'a' | 'b', value: number): void
 }) {
+  const tr = useTranslation()
+
   const f = frameStep(fps)
   const nudge = (delta: number) => onOffsetChange(side, Math.max(0, Number((offset + delta).toFixed(3))))
   const btn = 'rounded border border-border px-1 text-[10px] text-text-tertiary hover:bg-bg-hover'
   return (
     <div className="flex items-center gap-1 text-[11px] text-text-tertiary">
-      <span className={cn('min-w-[1.75rem] text-right font-medium tabular-nums', side === 'a' ? 'text-sky-400' : 'text-emerald-400')}>{label}</span>
+      <span className={cn('min-w-[1.75rem] text-right font-medium tabular-nums', side === 'a' ? 'text-sky-400' : 'text-emerald-400')}>{tr(label)}</span>
       <button type="button" data-testid={`off${side.toUpperCase()}-minus-second`} className={btn} onClick={() => nudge(-1)}>−1s</button>
       <button type="button" data-testid={`off${side.toUpperCase()}-minus-frame`} className={btn} onClick={() => nudge(-f)}>−1f</button>
       <span className="w-12 text-center tabular-nums">{offset.toFixed(2)}s</span>
@@ -159,6 +162,8 @@ function OffsetStepper({ side, label, offset, fps, onOffsetChange }: {
 }
 
 export function CompareScrubber(props: CompareScrubberProps) {
+  const tr = useTranslation()
+
   const { t, total, isPlaying, fps, onToggle, onSeek, markersA, markersB, timingA, timingB, onMarkerClick, onOffsetChange, labelA, labelB, onResetOffsets } = props
   const trackRef = React.useRef<HTMLDivElement>(null)
   const activePointerIdRef = React.useRef<number | null>(null)
@@ -227,7 +232,7 @@ export function CompareScrubber(props: CompareScrubberProps) {
       <button
         type="button"
         onClick={onToggle}
-        aria-label={isPlaying ? 'Pause' : 'Play'}
+        aria-label={isPlaying ? tr("Pause") : tr("Play")}
         className="flex h-8 w-8 items-center justify-center rounded-md text-text-secondary hover:bg-bg-hover hover:text-text-primary"
       >
         {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
@@ -307,13 +312,11 @@ export function CompareScrubber(props: CompareScrubberProps) {
           data-testid="offset-reset"
           onClick={onResetOffsets}
           disabled={timingA.offset === 0 && timingB.offset === 0}
-          title="Reset offsets — re-sync both sides"
-          aria-label="Reset offsets"
+          title={tr("Reset offsets — re-sync both sides")}
+          aria-label={tr("Reset offsets")}
           className="flex items-center gap-1 rounded border border-border px-1.5 py-1 text-[10px] text-text-tertiary hover:bg-bg-hover disabled:cursor-not-allowed disabled:opacity-30"
         >
-          <RotateCcw className="h-3 w-3" />
-          Sync
-        </button>
+          <RotateCcw className="h-3 w-3" />{tr("Sync")}</button>
       </div>
     </div>
   )

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { ChevronRight, Folder as FolderIcon, X, ArrowLeft, FolderInput } from 'lucide-react'
@@ -57,6 +58,8 @@ export function MoveToDialog({
   movingFolderIds = [],
   onMove,
 }: MoveToDialogProps) {
+  const tr = useTranslation()
+
   // The folder we're browsing inside the dialog
   const [browseFolderId, setBrowseFolderId] = React.useState<string | null>(null)
 
@@ -132,7 +135,7 @@ export function MoveToDialog({
           {/* Folder list */}
           <div className="max-h-64 overflow-y-auto py-1">
             {children.length === 0 ? (
-              <p className="px-4 py-6 text-center text-sm text-text-tertiary">No subfolders</p>
+              <p className="px-4 py-6 text-center text-sm text-text-tertiary">{tr("No subfolders")}</p>
             ) : (
               children.map((folder) => {
                 const disabled = movingFolderIds.includes(folder.id)
@@ -160,9 +163,7 @@ export function MoveToDialog({
 
           {/* Footer */}
           <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-border">
-            <Button variant="secondary" size="sm" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
+            <Button variant="secondary" size="sm" onClick={() => onOpenChange(false)}>{tr("Cancel")}</Button>
             <Button
               size="sm"
               disabled={isDisabled(browseFolderId)}
@@ -170,9 +171,7 @@ export function MoveToDialog({
                 onMove(browseFolderId)
                 onOpenChange(false)
               }}
-            >
-              Move here
-            </Button>
+            >{tr("Move here")}</Button>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

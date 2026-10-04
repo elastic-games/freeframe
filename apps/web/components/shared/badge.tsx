@@ -1,3 +1,6 @@
+'use client'
+
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 import type { AssetStatus } from '@/types'
@@ -41,6 +44,7 @@ const statusConfig: Record<AssetStatus, { label: string; dot: string; bg: string
 }
 
 export function Badge({ status, className }: BadgeProps) {
+  const tr = useTranslation()
   const config = statusConfig[status]
   return (
     <span
@@ -52,7 +56,7 @@ export function Badge({ status, className }: BadgeProps) {
       )}
     >
       <span className={cn('h-1.5 w-1.5 rounded-full', config.dot)} />
-      {config.label}
+      {tr(config.label)}
     </span>
   )
 }

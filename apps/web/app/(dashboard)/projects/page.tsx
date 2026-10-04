@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
@@ -40,6 +41,8 @@ function ProjectListRow({
   project: Project;
   showRole?: boolean;
 }) {
+  const tr = useTranslation()
+
   const roleName =
     project.role === "owner"
       ? "Owner"
@@ -65,8 +68,8 @@ function ProjectListRow({
         </span>
         <span className="text-2xs text-text-tertiary">
           {(project.asset_count ?? 0) > 0
-            ? `${project.asset_count} item${(project.asset_count ?? 0) !== 1 ? "s" : ""} · ${formatBytes(project.storage_bytes ?? 0)}`
-            : "No assets yet"}
+            ? tr("{value0} item{value1} · {value2}", { value0: project.asset_count ?? 0, value1: tr.locale === 'en' ? ((project.asset_count ?? 0) !== 1 ? "s" : "") : '', value2: formatBytes(project.storage_bytes ?? 0) })
+            : tr("No assets yet")}
         </span>
       </div>
       <div className="hidden sm:flex items-center gap-1.5 text-xs text-text-tertiary">
@@ -74,7 +77,7 @@ function ProjectListRow({
         {project.member_count ?? 1}
       </div>
       <span className="hidden md:block text-xs text-text-tertiary w-28">
-        {new Date(project.created_at).toLocaleDateString("en-US", {
+        {new Date(project.created_at).toLocaleDateString(tr.locale, {
           month: "short",
           day: "numeric",
           year: "numeric",
@@ -123,6 +126,8 @@ function ProjectSection({
   userId?: string;
   onMutate?: () => void;
 }) {
+  const tr = useTranslation()
+
   if (projects.length === 0 && !showNewButton) {
     return null;
   }
@@ -131,7 +136,7 @@ function ProjectSection({
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         {icon}
-        <h2 className="text-sm font-medium text-text-secondary">{title}</h2>
+        <h2 className="text-sm font-medium text-text-secondary">{tr(title)}</h2>
         <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-bg-tertiary px-1.5 text-[10px] font-medium text-text-tertiary">
           {projects.length}
         </span>
@@ -146,12 +151,8 @@ function ProjectSection({
             <Plus className="h-5 w-5" />
           </div>
           <div className="text-left">
-            <p className="text-sm font-medium text-text-primary">
-              Create your first project
-            </p>
-            <p className="text-xs text-text-tertiary mt-0.5">
-              Organize and review your media assets
-            </p>
+            <p className="text-sm font-medium text-text-primary">{tr("Create your first project")}</p>
+            <p className="text-xs text-text-tertiary mt-0.5">{tr("Organize and review your media assets")}</p>
           </div>
         </button>
       ) : viewMode === "grid" ? (
@@ -173,9 +174,7 @@ function ProjectSection({
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-bg-tertiary text-text-tertiary group-hover:bg-accent group-hover:text-white transition-colors">
                 <Plus className="h-5 w-5" />
               </div>
-              <span className="text-sm text-text-secondary group-hover:text-text-primary transition-colors">
-                New Project
-              </span>
+              <span className="text-sm text-text-secondary group-hover:text-text-primary transition-colors">{tr("New Project")}</span>
             </button>
           )}
         </div>
@@ -196,7 +195,7 @@ function ProjectSection({
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 border-dashed border-border text-text-tertiary">
                 <Plus className="h-3.5 w-3.5" />
               </div>
-              <span className="text-sm text-text-secondary">New Project</span>
+              <span className="text-sm text-text-secondary">{tr("New Project")}</span>
             </button>
           )}
         </div>
@@ -206,6 +205,8 @@ function ProjectSection({
 }
 
 export default function ProjectsPage() {
+  const tr = useTranslation()
+
   usePageTitle("Projects");
   const router = useRouter();
   const { user } = useAuthStore();
@@ -281,10 +282,10 @@ export default function ProjectsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-text-primary">Projects</h1>
+          <h1 className="text-lg font-semibold text-text-primary">{tr("Projects")}</h1>
           {projects && projects.length > 0 && (
             <p className="mt-0.5 text-sm text-text-tertiary">
-              {projects.length} project{projects.length !== 1 ? "s" : ""}
+              {projects.length}{' '}{tr("project")}{projects.length !== 1 ? "s" : ""}
             </p>
           )}
         </div>
@@ -299,7 +300,7 @@ export default function ProjectsPage() {
                   ? "bg-accent-muted text-text-primary"
                   : "text-text-tertiary hover:bg-bg-hover hover:text-text-secondary",
               )}
-              title="Grid view"
+              title={tr("Grid view")}
             >
               <LayoutGrid className="h-4 w-4" />
             </button>
@@ -311,7 +312,7 @@ export default function ProjectsPage() {
                   ? "bg-accent-muted text-text-primary"
                   : "text-text-tertiary hover:bg-bg-hover hover:text-text-secondary",
               )}
-              title="List view"
+              title={tr("List view")}
             >
               <List className="h-4 w-4" />
             </button>
@@ -326,9 +327,7 @@ export default function ProjectsPage() {
           >
             {!STUDIO_MANAGED && <Dialog.Trigger asChild>
               <Button size="sm">
-                <Plus className="h-4 w-4" />
-                New Project
-              </Button>
+                <Plus className="h-4 w-4" />{tr("New Project")}</Button>
             </Dialog.Trigger>}
 
             <Dialog.Portal>
@@ -338,17 +337,13 @@ export default function ProjectsPage() {
                   <X className="h-4 w-4" />
                 </Dialog.Close>
 
-                <Dialog.Title className="text-base font-semibold text-text-primary">
-                  New Project
-                </Dialog.Title>
-                <Dialog.Description className="mt-1 text-sm text-text-secondary">
-                  Create a new project to organize your assets.
-                </Dialog.Description>
+                <Dialog.Title className="text-base font-semibold text-text-primary">{tr("New Project")}</Dialog.Title>
+                <Dialog.Description className="mt-1 text-sm text-text-secondary">{tr("Create a new project to organize your assets.")}</Dialog.Description>
 
                 <form onSubmit={handleCreate} className="mt-5 space-y-4">
                   <Input
-                    label="Project name"
-                    placeholder="e.g. Brand Campaign 2025"
+                    label={tr("Project name")}
+                    placeholder={tr("e.g. Brand Campaign 2025")}
                     value={form.name}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, name: e.target.value }))
@@ -357,12 +352,10 @@ export default function ProjectsPage() {
                   />
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium text-text-secondary">
-                      Description
-                    </label>
+                    <label className="text-sm font-medium text-text-secondary">{tr("Description")}</label>
                     <textarea
                       rows={2}
-                      placeholder="Optional description..."
+                      placeholder={tr("Optional description...")}
                       value={form.description}
                       onChange={(e) =>
                         setForm((f) => ({ ...f, description: e.target.value }))
@@ -377,13 +370,9 @@ export default function ProjectsPage() {
 
                   <div className="flex justify-end gap-2 pt-2">
                     <Dialog.Close asChild>
-                      <Button type="button" variant="secondary" size="sm">
-                        Cancel
-                      </Button>
+                      <Button type="button" variant="secondary" size="sm">{tr("Cancel")}</Button>
                     </Dialog.Close>
-                    <Button type="submit" size="sm" loading={isCreating}>
-                      Create project
-                    </Button>
+                    <Button type="submit" size="sm" loading={isCreating}>{tr("Create project")}</Button>
                   </div>
                 </form>
               </Dialog.Content>
@@ -411,8 +400,8 @@ export default function ProjectsPage() {
         <div className="rounded-xl border border-border bg-bg-secondary">
           <EmptyState
             icon={FolderOpen}
-            title="No projects yet"
-            description={STUDIO_MANAGED ? "Studio project connection is pending. Open Studio to manage projects." : "Create your first project to start organizing assets."}
+            title={tr("No projects yet")}
+            description={STUDIO_MANAGED ? tr("Studio project connection is pending. Open Studio to manage projects.") : tr("Create your first project to start organizing assets.")}
             action={STUDIO_MANAGED ? undefined : {
               label: "New Project",
               onClick: () => setDialogOpen(true),
@@ -422,11 +411,11 @@ export default function ProjectsPage() {
       ) : (
         <div className="space-y-8">
           <ProjectSection
-            title="My Projects"
+            title={tr("My Projects")}
             icon={<FolderOpen className="h-4 w-4 text-text-tertiary" />}
             projects={myProjects}
             viewMode={viewMode}
-            emptyMessage="You haven't created any projects yet."
+            emptyMessage={tr("You haven't created any projects yet.")}
             onNewProject={STUDIO_MANAGED ? undefined : () => setDialogOpen(true)}
             showNewButton={!STUDIO_MANAGED}
             userId={user?.id}
@@ -434,7 +423,7 @@ export default function ProjectsPage() {
           />
           {sharedProjects.length > 0 && (
             <ProjectSection
-              title="Shared with Me"
+              title={tr("Shared with Me")}
               icon={<Share2 className="h-4 w-4 text-text-tertiary" />}
               projects={sharedProjects}
               viewMode={viewMode}
@@ -446,7 +435,7 @@ export default function ProjectsPage() {
           )}
           {publicProjects.length > 0 && (
             <ProjectSection
-              title="Public Projects"
+              title={tr("Public Projects")}
               icon={<Globe className="h-4 w-4 text-text-tertiary" />}
               projects={publicProjects}
               viewMode={viewMode}

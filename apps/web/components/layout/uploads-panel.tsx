@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import { usePathname } from 'next/navigation'
 import {
@@ -48,7 +49,7 @@ function matchesFilter(status: UploadStatus, filter: FilterTab): boolean {
   }
 }
 
-function groupByDate(files: UploadFile[]): { label: string; items: UploadFile[] }[] {
+function groupByDate(files: UploadFile[], locale = 'en'): { label: string; items: UploadFile[] }[] {
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
   const yesterday = today - 86400000
@@ -62,7 +63,7 @@ function groupByDate(files: UploadFile[]): { label: string; items: UploadFile[] 
     } else if (f.createdAt >= yesterday) {
       label = 'Yesterday'
     } else {
-      label = new Date(f.createdAt).toLocaleDateString(undefined, {
+      label = new Date(f.createdAt).toLocaleDateString(locale, {
         month: 'short',
         day: 'numeric',
       })
@@ -77,23 +78,25 @@ function groupByDate(files: UploadFile[]): { label: string; items: UploadFile[] 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: UploadStatus }) {
+  const tr = useTranslation()
+
   switch (status) {
     case 'pending':
-      return <span className="inline-flex items-center rounded-full bg-white/5 px-2 py-0.5 text-[10px] font-medium text-text-tertiary">Queued</span>
+      return <span className="inline-flex items-center rounded-full bg-white/5 px-2 py-0.5 text-[10px] font-medium text-text-tertiary">{tr("Queued")}</span>
     case 'uploading':
-      return <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent"><Loader2 className="h-2.5 w-2.5 animate-spin" />Uploading</span>
+      return <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent"><Loader2 className="h-2.5 w-2.5 animate-spin" />{tr("Uploading")}</span>
     case 'processing':
-      return <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400"><Cog className="h-2.5 w-2.5 animate-spin" />Processing</span>
+      return <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400"><Cog className="h-2.5 w-2.5 animate-spin" />{tr("Processing")}</span>
     case 'complete':
-      return <span className="inline-flex items-center gap-1 rounded-full bg-status-success/10 px-2 py-0.5 text-[10px] font-medium text-status-success"><CheckCircle className="h-2.5 w-2.5" />Ready</span>
+      return <span className="inline-flex items-center gap-1 rounded-full bg-status-success/10 px-2 py-0.5 text-[10px] font-medium text-status-success"><CheckCircle className="h-2.5 w-2.5" />{tr("Ready")}</span>
     case 'failed':
-      return <span className="inline-flex items-center gap-1 rounded-full bg-status-error/10 px-2 py-0.5 text-[10px] font-medium text-status-error"><AlertCircle className="h-2.5 w-2.5" />Failed</span>
+      return <span className="inline-flex items-center gap-1 rounded-full bg-status-error/10 px-2 py-0.5 text-[10px] font-medium text-status-error"><AlertCircle className="h-2.5 w-2.5" />{tr("Failed")}</span>
     case 'cancelled':
-      return <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[10px] font-medium text-text-tertiary"><Ban className="h-2.5 w-2.5" />Cancelled</span>
+      return <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[10px] font-medium text-text-tertiary"><Ban className="h-2.5 w-2.5" />{tr("Cancelled")}</span>
     case 'interrupted':
-      return <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400"><PauseCircle className="h-2.5 w-2.5" />Interrupted</span>
+      return <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400"><PauseCircle className="h-2.5 w-2.5" />{tr("Interrupted")}</span>
     case 'elsewhere':
-      return <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent"><MonitorUp className="h-2.5 w-2.5" />Elsewhere</span>
+      return <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent"><MonitorUp className="h-2.5 w-2.5" />{tr("Elsewhere")}</span>
   }
 }
 
@@ -119,6 +122,8 @@ function UploadName({
    *  beside the status badge, and the row already has a line for errors. */
   onError: (message: string | null) => void
 }) {
+  const tr = useTranslation()
+
   const renameUpload = useUploadStore((s) => s.renameUpload)
   // Offered before the asset exists too: the row is what `/upload/initiate`
   // reads for the name, so an edit made while it still says "Queued" is
@@ -164,7 +169,7 @@ function UploadName({
           if (e.key === 'Enter') void commit()
           if (e.key === 'Escape') cancel()
         }}
-        aria-label="Asset name"
+        aria-label={tr("Asset name")}
         autoFocus
       />
     )
@@ -183,7 +188,7 @@ function UploadName({
       <button
         type="button"
         onClick={open}
-        title="Rename"
+        title={tr("Rename")}
         className="text-sm font-medium text-text-primary truncate flex-1 text-left hover:underline decoration-dotted underline-offset-2"
       >
         {upload.assetName}
@@ -193,8 +198,8 @@ function UploadName({
       <button
         type="button"
         onClick={open}
-        title="Rename"
-        aria-label={`Rename ${upload.assetName}`}
+        title={tr("Rename")}
+        aria-label={tr("Rename {value0}", { value0: upload.assetName })}
         className="shrink-0 h-5 w-5 flex items-center justify-center rounded text-text-tertiary hover:text-text-primary hover:bg-bg-hover opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
       >
         <Pencil className="h-3 w-3" />
@@ -206,6 +211,8 @@ function UploadName({
 // ─── Upload Item ──────────────────────────────────────────────────────────────
 
 function UploadItem({ upload }: { upload: UploadFile }) {
+  const tr = useTranslation()
+
   const { cancelUpload, removeFile, resumeUpload, discardUpload } = useUploadStore()
   const [renameError, setRenameError] = React.useState<string | null>(null)
   const isUploading = upload.status === 'pending' || upload.status === 'uploading'
@@ -271,30 +278,27 @@ function UploadItem({ upload }: { upload: UploadFile }) {
         {/* Detail line */}
         <div className="flex items-center gap-1 mt-1">
           {upload.status === 'uploading' && (
-            <span className="text-[11px] text-text-secondary">
-              Uploading {upload.progress}%
+            <span className="text-[11px] text-text-secondary">{tr("Uploading")}{' '}{upload.progress}%
             </span>
           )}
           {upload.status === 'processing' && (
             <span className="text-[11px] text-amber-400">
-              {upload.processingProgress > 0 ? `Processing ${upload.processingProgress}%` : 'Processing...'}
+              {upload.processingProgress > 0 ? tr("Processing {value0}%", { value0: upload.processingProgress }) : 'Processing...'}
             </span>
           )}
           {upload.status === 'complete' && (
             <span className="text-[11px] text-text-tertiary">
-              {formatRelativeTime(new Date(upload.createdAt).toISOString())}
+              {formatRelativeTime(new Date(upload.createdAt).toISOString(), tr.locale)}
             </span>
           )}
           {upload.status === 'failed' && upload.error && (
-            <span className="text-[11px] text-status-error truncate">{upload.error}</span>
+            <span className="text-[11px] text-status-error truncate">{tr(upload.error)}</span>
           )}
           {upload.status === 'elsewhere' && (
             // Offers nothing. Discard from here would delete the parts under a
             // transfer that is still running, and a resume would send the same
             // parts twice into one upload.
-            <span className="text-[11px] text-text-secondary truncate">
-              Still uploading in another tab or on another device
-            </span>
+            <span className="text-[11px] text-text-secondary truncate">{tr("Still uploading in another tab or on another device")}</span>
           )}
           {upload.status === 'interrupted' && (
             // The reason gets the whole line, and red when there is one. A
@@ -308,7 +312,7 @@ function UploadItem({ upload }: { upload: UploadFile }) {
                 upload.error ? 'text-status-error' : 'text-amber-400/90',
               )}
             >
-              {upload.error ?? 'Transfer stopped \u00b7 resume to send only what is missing'}
+              {tr(upload.error ?? 'Transfer stopped · resume to send only what is missing')}
             </span>
           )}
           {/* The name has already snapped back by the time this shows, which
@@ -338,14 +342,14 @@ function UploadItem({ upload }: { upload: UploadFile }) {
             <button
               onClick={() => filePicker.current?.click()}
               className="h-6 w-6 flex items-center justify-center rounded text-text-tertiary hover:text-accent hover:bg-bg-hover transition-colors"
-              title={`Resume — pick ${upload.fileName} again`}
+              title={tr("Resume — pick {value0} again", { value0: upload.fileName })}
             >
               <RotateCcw className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={() => { setDiscardError(null); setConfirmingDiscard(true) }}
               className="h-6 w-6 flex items-center justify-center rounded text-text-tertiary hover:text-status-error hover:bg-bg-hover transition-colors"
-              title="Discard this upload and free the space it is holding"
+              title={tr("Discard this upload and free the space it is holding")}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>
@@ -354,8 +358,8 @@ function UploadItem({ upload }: { upload: UploadFile }) {
         <ConfirmDialog
           open={confirmingDiscard}
           onOpenChange={setConfirmingDiscard}
-          title={`Discard ${upload.fileName}?`}
-          description="The parts already sent are deleted now and cannot be recovered. To finish this upload instead, resume it."
+          title={tr("Discard {value0}?", { value0: upload.fileName })}
+          description={tr("The parts already sent are deleted now and cannot be recovered. To finish this upload instead, resume it.")}
           confirmLabel="Discard"
           variant="danger"
           error={discardError}
@@ -372,7 +376,7 @@ function UploadItem({ upload }: { upload: UploadFile }) {
           <button
             onClick={() => cancelUpload(upload.id)}
             className="h-6 w-6 flex items-center justify-center rounded text-text-tertiary hover:text-text-primary hover:bg-bg-hover transition-colors"
-            title="Cancel upload"
+            title={tr("Cancel upload")}
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -381,7 +385,7 @@ function UploadItem({ upload }: { upload: UploadFile }) {
           <button
             onClick={() => removeFile(upload.id)}
             className="h-6 w-6 flex items-center justify-center rounded text-text-tertiary hover:text-text-primary hover:bg-bg-hover transition-colors"
-            title="Remove"
+            title={tr("Remove")}
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -390,7 +394,7 @@ function UploadItem({ upload }: { upload: UploadFile }) {
           <button
             onClick={() => removeFile(upload.id)}
             className="h-6 w-6 flex items-center justify-center rounded text-text-tertiary hover:text-text-primary hover:bg-bg-hover transition-colors"
-            title="Dismiss"
+            title={tr("Dismiss")}
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -409,6 +413,8 @@ export function UploadsPanel({
    *  opens against its right edge, so it has to know which. */
   railCollapsed?: boolean
 } = {}) {
+  const tr = useTranslation()
+
   const embedded = useThemeStore((s) => s.hostTheme !== null)
   const pathname = usePathname()
   const managed = process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS === 'true'
@@ -450,7 +456,7 @@ export function UploadsPanel({
   // Sort descending by createdAt
   const sorted = [...visibleFiles].sort((a, b) => b.createdAt - a.createdAt)
   const filtered = sorted.filter((f) => matchesFilter(f.status, filter))
-  const groups = groupByDate(filtered)
+  const groups = groupByDate(filtered, tr.locale)
 
   const counts = {
     all: visibleFiles.length,
@@ -505,12 +511,9 @@ export function UploadsPanel({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 h-12 border-b border-border shrink-0">
-          <h2 className="text-sm font-semibold text-text-primary">
-            Uploads
-            {counts.active > 0 && (
+          <h2 className="text-sm font-semibold text-text-primary">{tr("Uploads")}{counts.active > 0 && (
               <span className="ml-1.5 text-xs font-normal text-accent">
-                {counts.active} active
-              </span>
+                {counts.active}{' '}{tr("active")}</span>
             )}
           </h2>
           <div className="flex items-center gap-1">
@@ -524,9 +527,7 @@ export function UploadsPanel({
                   }
                 }}
                 className="text-xs text-text-tertiary hover:text-text-secondary transition-colors px-2 py-1 rounded hover:bg-bg-hover"
-              >
-                Clear
-              </button>
+              >{tr("Clear")}</button>
             )}
             <button
               onClick={() => setPanelOpen(false)}
@@ -551,7 +552,7 @@ export function UploadsPanel({
                     : 'text-text-tertiary hover:text-text-secondary',
                 )}
               >
-                {tab.label}
+                {tr(tab.label)}
                 {tab.count > 0 && (
                   <span className={cn(
                     'ml-1 text-[10px]',
@@ -573,12 +574,12 @@ export function UploadsPanel({
                 <FileIcon className="h-6 w-6 text-text-tertiary" />
               </div>
               <p className="text-sm text-text-secondary">
-                {filter === 'all' ? 'No uploads yet' : `No ${filter} uploads`}
+                {filter === 'all' ? tr("No uploads yet") : tr("No {value0} uploads", { value0: tr(filter) })}
               </p>
               <p className="text-xs text-text-tertiary mt-1">
                 {filter === 'all'
-                  ? (managed ? 'Uploads for this project appear here.' : 'Upload files from any project to track them here.')
-                  : 'Items will appear here as uploads progress.'}
+                  ? (managed ? tr("Uploads for this project appear here.") : tr("Upload files from any project to track them here."))
+                  : tr("Items will appear here as uploads progress.")}
               </p>
             </div>
           ) : (
@@ -587,7 +588,7 @@ export function UploadsPanel({
                 <div key={group.label}>
                   <div className="px-4 pt-4 pb-1">
                     <span className="text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
-                      {group.label}
+                      {tr(group.label)}
                     </span>
                   </div>
                   {group.items.map((upload) => (

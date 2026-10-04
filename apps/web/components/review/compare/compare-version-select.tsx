@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -19,6 +20,8 @@ interface CompareVersionSelectProps {
 
 /** Controlled version dropdown for the compare overlay — never touches the review store. */
 export function CompareVersionSelect({ versions, value, onChange, accentClass, excludeId, testId }: CompareVersionSelectProps) {
+  const tr = useTranslation()
+
   const [open, setOpen] = React.useState(false)
   const rootRef = React.useRef<HTMLDivElement>(null)
   const sorted = React.useMemo(
@@ -68,7 +71,7 @@ export function CompareVersionSelect({ versions, value, onChange, accentClass, e
                 role="option"
                 aria-selected={v.id === value}
                 disabled={blocked}
-                title={onOtherSide ? 'Shown on the other side' : undefined}
+                title={onOtherSide ? tr("Shown on the other side") : undefined}
                 onClick={() => {
                   if (blocked) return
                   // Re-picking the version already shown is a no-op, not a
@@ -90,14 +93,14 @@ export function CompareVersionSelect({ versions, value, onChange, accentClass, e
               >
                 <span>v{v.version_number}</span>
                 {onOtherSide ? (
-                  <span className="text-[11px] text-text-tertiary">in use</span>
+                  <span className="text-[11px] text-text-tertiary">{tr("in use")}</span>
                 ) : status && !ready ? (
                   <span
                     className={cn('inline-flex items-center gap-1 text-[11px]', status.className)}
-                    title={status.label}
+                    title={tr(status.label)}
                   >
                     {status.icon}
-                    {status.label}
+                    {tr(status.label)}
                   </span>
                 ) : null}
               </button>

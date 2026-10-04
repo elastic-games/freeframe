@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from "react";
 import {
   Pencil,
@@ -116,6 +117,8 @@ function MentionDropdown({
   onSelect: (user: User) => void;
   onClose: () => void;
 }) {
+  const tr = useTranslation()
+
   const [members, setMembers] = React.useState<User[]>([]);
   const [loading, setLoading] = React.useState(false);
 
@@ -155,9 +158,7 @@ function MentionDropdown({
 
   if (filtered.length === 0) {
     return (
-      <div className="py-2 px-4 text-xs text-text-tertiary">
-        No members found
-      </div>
+      <div className="py-2 px-4 text-xs text-text-tertiary">{tr("No members found")}</div>
     );
   }
 
@@ -204,6 +205,8 @@ export function CommentInput({
   onToggleAnnotation,
   className,
 }: CommentInputProps) {
+  const tr = useTranslation()
+
   const {
     isDrawingMode,
     drawingTool,
@@ -457,7 +460,7 @@ export function CommentInput({
       {/* Reply indicator */}
       {replyToId && (
         <div className="flex items-center justify-between px-4 py-2 bg-accent/5 border-b border-accent/10 text-xs text-accent">
-          <span>Replying to comment</span>
+          <span>{tr("Replying to comment")}</span>
           <button
             className="text-text-tertiary hover:text-text-primary"
             onClick={onCancelReply}
@@ -481,7 +484,7 @@ export function CommentInput({
               ref={textareaRef}
               className="flex-1 resize-none bg-transparent px-2.5 py-2.5 text-[16px] [@media(hover:hover)]:text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none min-h-[38px] max-h-[120px]"
               placeholder={
-                replyToId ? "Write a reply..." : "Leave your comment..."
+                replyToId ? tr("Write a reply...") : tr("Leave your comment...")
               }
               value={body}
               onChange={handleTextChange}
@@ -507,7 +510,7 @@ export function CommentInput({
           )}
         </div>
 
-        {error && <p className="mt-1.5 text-xs text-red-400">{error}</p>}
+        {error && <p className="mt-1.5 text-xs text-red-400">{tr(error)}</p>}
       </div>
 
       {/* Bottom toolbar */}
@@ -518,7 +521,7 @@ export function CommentInput({
             <button
               onClick={() => exitDrawingMode()}
               className="h-7 w-7 flex items-center justify-center rounded-md text-text-tertiary hover:bg-bg-tertiary hover:text-text-primary transition-colors"
-              title="Exit drawing"
+              title={tr("Exit drawing")}
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -531,7 +534,7 @@ export function CommentInput({
                 <button
                   key={tool.id}
                   onClick={() => setDrawingTool(tool.id as DrawingTool)}
-                  title={tool.label}
+                  title={tr(tool.label)}
                   className={cn(
                     "h-7 w-7 flex items-center justify-center rounded-md transition-colors",
                     drawingTool === tool.id
@@ -565,18 +568,18 @@ export function CommentInput({
             <button
               onClick={undo}
               className="h-7 w-7 flex items-center justify-center rounded-md text-text-tertiary hover:bg-bg-tertiary hover:text-text-secondary transition-colors"
-              title="Undo"
+              title={tr("Undo")}
             >
               <RotateCcw className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={clear}
               className="h-7 w-7 flex items-center justify-center rounded-md text-text-tertiary hover:bg-bg-tertiary hover:text-text-secondary transition-colors"
-              title="Clear"
+              title={tr("Clear")}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>
-            {assetType === 'model' && <button type="button" title="Send (Enter)" aria-label="Save 3D view and comment" onClick={handleSubmit} disabled={!body.trim() || submitting} className="ml-auto h-7 w-7 shrink-0 rounded-full bg-accent flex items-center justify-center disabled:opacity-30">{submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin"/> : <Send className="h-3.5 w-3.5"/>}</button>}
+            {assetType === 'model' && <button type="button" title={tr("Send (Enter)")} aria-label={tr("Save 3D view and comment")} onClick={handleSubmit} disabled={!body.trim() || submitting} className="ml-auto h-7 w-7 shrink-0 rounded-full bg-accent flex items-center justify-center disabled:opacity-30">{submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin"/> : <Send className="h-3.5 w-3.5"/>}</button>}
           </div>
         ) : (
           /* ─── Default toolbar (Frame.io style) ─── */
@@ -593,7 +596,7 @@ export function CommentInput({
                   )}
                   onClick={() => setTimecodeAttached((p) => !p)}
                   title={
-                    timecodeAttached ? "Detach timecode" : "Attach timecode"
+                    timecodeAttached ? tr("Detach timecode") : tr("Attach timecode")
                   }
                 >
                   <Clock className="h-4 w-4" />
@@ -610,7 +613,7 @@ export function CommentInput({
                       : "text-text-tertiary hover:bg-bg-tertiary hover:text-text-secondary",
                   )}
                   onClick={() => toggleAnnotation()}
-                  title="Draw annotation"
+                  title={tr("Draw annotation")}
                 >
                   <Pencil className="h-4 w-4" />
                 </button>
@@ -620,7 +623,7 @@ export function CommentInput({
               <div className="relative" ref={emojiRef}>
                 <button
                   className="h-7 w-7 flex items-center justify-center rounded-md text-text-tertiary hover:bg-bg-tertiary hover:text-text-secondary transition-colors"
-                  title="Add emoji"
+                  title={tr("Add emoji")}
                   onClick={() => setEmojiOpen((p) => !p)}
                 >
                   <Smile className="h-4 w-4" />
@@ -664,7 +667,7 @@ export function CommentInput({
                   ) : (
                     <Globe className="h-3 w-3" />
                   )}
-                  {commentVisibility === "internal" ? "Internal" : "Public"}
+                  {commentVisibility === "internal" ? tr("Internal") : tr("Public")}
                   <ChevronDown className="h-3 w-3" />
                 </button>
                 {visDropdownOpen && (
@@ -681,9 +684,7 @@ export function CommentInput({
                         setVisDropdownOpen(false);
                       }}
                     >
-                      <Globe className="h-3.5 w-3.5" />
-                      Public
-                    </button>
+                      <Globe className="h-3.5 w-3.5" />{tr("Public")}</button>
                     <button
                       className={cn(
                         "flex w-full items-center gap-2.5 px-3 py-2 text-[13px] transition-colors",
@@ -696,9 +697,7 @@ export function CommentInput({
                         setVisDropdownOpen(false);
                       }}
                     >
-                      <Lock className="h-3.5 w-3.5" />
-                      Internal
-                    </button>
+                      <Lock className="h-3.5 w-3.5" />{tr("Internal")}</button>
                   </div>
                 )}
               </div>
@@ -708,7 +707,7 @@ export function CommentInput({
                 onClick={handleSubmit}
                 disabled={!body.trim() || submitting}
                 className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-accent text-text-primary hover:bg-accent/90 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                title="Send (Enter)"
+                title={tr("Send (Enter)")}
               >
                 {submitting ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import { Filter, Layers } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -26,6 +27,8 @@ export function CollectionCard({
   onClick,
   className,
 }: CollectionCardProps) {
+  const tr = useTranslation()
+
   return (
     <button
       onClick={onClick}
@@ -60,7 +63,7 @@ export function CollectionCard({
         </span>
         <span className="flex items-center gap-1">
           <Layers className="h-3 w-3" />
-          {assetCount} asset{assetCount !== 1 ? 's' : ''}
+          {assetCount}{' '}{tr("asset")}{assetCount !== 1 ? 's' : ''}
         </span>
       </div>
     </button>

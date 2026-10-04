@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Switch from '@radix-ui/react-switch'
@@ -23,6 +24,8 @@ export function ProjectSettingsDialog({
   onOpenChange,
   onUpdated,
 }: ProjectSettingsDialogProps) {
+  const tr = useTranslation()
+
   const [name, setName] = React.useState(project.name)
   const [description, setDescription] = React.useState(project.description || '')
   const [isPublic, setIsPublic] = React.useState(project.is_public ?? false)
@@ -82,9 +85,7 @@ export function ProjectSettingsDialog({
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] rounded-xl border border-border bg-bg-secondary shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-            <Dialog.Title className="text-base font-semibold text-text-primary">
-              Project settings
-            </Dialog.Title>
+            <Dialog.Title className="text-base font-semibold text-text-primary">{tr("Project settings")}</Dialog.Title>
             <Dialog.Close className="text-text-tertiary hover:text-text-primary transition-colors">
               <X className="h-4 w-4" />
             </Dialog.Close>
@@ -103,7 +104,7 @@ export function ProjectSettingsDialog({
                   {posterPreview ? (
                     <>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={posterPreview} alt="Poster" className="h-full w-full object-cover" />
+                      <img src={posterPreview} alt={tr("Poster")} className="h-full w-full object-cover" />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <ImagePlus className="h-6 w-6 text-white" />
                       </div>
@@ -130,7 +131,7 @@ export function ProjectSettingsDialog({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full text-center text-sm font-semibold text-text-primary bg-bg-tertiary rounded-lg px-3 py-2 border border-border focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent transition-colors"
-                  placeholder="Project name"
+                  placeholder={tr("Project name")}
                 />
               </div>
 
@@ -138,12 +139,12 @@ export function ProjectSettingsDialog({
               <div className="flex-1 space-y-5">
                 {/* Description */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-text-tertiary uppercase tracking-wider">Description</label>
+                  <label className="text-xs font-medium text-text-tertiary uppercase tracking-wider">{tr("Description")}</label>
                   <textarea
                     rows={2}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Optional project description..."
+                    placeholder={tr("Optional project description...")}
                     className="w-full rounded-lg border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary resize-none focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors"
                   />
                 </div>
@@ -160,7 +161,7 @@ export function ProjectSettingsDialog({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-text-primary">
-                          {isPublic ? 'Public Project' : 'Private Project'}
+                          {isPublic ? tr("Public Project") : tr("Private Project")}
                         </span>
                         <Switch.Root
                           checked={isPublic}
@@ -179,8 +180,8 @@ export function ProjectSettingsDialog({
                       </div>
                       <p className="text-xs text-text-tertiary mt-0.5">
                         {isPublic
-                          ? 'All users in the system can view this project.'
-                          : 'Only invited members can access this project.'}
+                          ? tr("All users in the system can view this project.")
+                          : tr("Only invited members can access this project.")}
                       </p>
                     </div>
                   </div>
@@ -192,11 +193,9 @@ export function ProjectSettingsDialog({
           {/* Footer */}
           <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-border">
             <Dialog.Close asChild>
-              <Button variant="secondary" size="sm">Cancel</Button>
+              <Button variant="secondary" size="sm">{tr("Cancel")}</Button>
             </Dialog.Close>
-            <Button size="sm" onClick={handleSave} loading={saving} disabled={!name.trim()}>
-              Save
-            </Button>
+            <Button size="sm" onClick={handleSave} loading={saving} disabled={!name.trim()}>{tr("Save")}</Button>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

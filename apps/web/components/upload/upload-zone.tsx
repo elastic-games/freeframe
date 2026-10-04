@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import { CloudUpload, Film, Music, Image as ImageIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -10,6 +11,8 @@ interface UploadZoneProps {
 }
 
 export function UploadZone({ onFilesSelected, className }: UploadZoneProps) {
+  const tr = useTranslation()
+
   const [isDragging, setIsDragging] = React.useState(false)
   const inputRef = React.useRef<HTMLInputElement>(null)
 
@@ -84,16 +87,12 @@ export function UploadZone({ onFilesSelected, className }: UploadZoneProps) {
 
       {/* Text */}
       <div className="flex flex-col items-center gap-2 text-center">
-        <p className="text-sm text-text-secondary">
-          Drag files and folders to upload.
-        </p>
+        <p className="text-sm text-text-secondary">{tr("Drag files and folders to upload.")}</p>
         <button
           type="button"
           className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover transition-colors"
           onClick={(e) => { e.stopPropagation(); inputRef.current?.click() }}
-        >
-          Upload
-        </button>
+        >{tr("Upload")}</button>
       </div>
     </div>
   )

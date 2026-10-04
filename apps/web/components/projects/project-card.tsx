@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import Link from 'next/link'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
@@ -25,6 +26,8 @@ export function ProjectCard({
   className,
   onMutate,
 }: ProjectCardProps) {
+  const tr = useTranslation()
+
   const gradient = getGradientForProject(project.id)
   const assetCount = project.asset_count ?? 0
   const canManage = process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS !== 'true' && (isOwner || project.role === 'owner')
@@ -85,9 +88,7 @@ export function ProjectCard({
             <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
               {project.is_public && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-black/30 backdrop-blur-sm px-2 py-0.5 text-[10px] font-medium text-white/90">
-                  <Globe className="h-2.5 w-2.5" />
-                  Public
-                </span>
+                  <Globe className="h-2.5 w-2.5" />{tr("Public")}</span>
               )}
               {showRole && project.role && project.role !== 'owner' && (
                 <span className="inline-flex items-center rounded-full bg-black/30 backdrop-blur-sm px-2 py-0.5 text-[10px] font-medium text-white/90 capitalize">
@@ -101,8 +102,8 @@ export function ProjectCard({
           <div className={cn('flex min-h-10 items-center justify-between px-3 py-2.5', canManage && 'pr-12')}>
             <span className="text-2xs text-text-tertiary">
               {assetCount > 0
-                ? `${assetCount} item${assetCount !== 1 ? 's' : ''} · ${formatBytes(project.storage_bytes ?? 0)}`
-                : `Updated ${formatRelativeTime(project.created_at)}`}
+                ? tr("{value0} item{value1} · {value2}", { value0: assetCount, value1: tr.locale === 'en' ? (assetCount !== 1 ? 's' : '') : '', value2: formatBytes(project.storage_bytes ?? 0) })
+                : tr("Updated {value0}", { value0: formatRelativeTime(project.created_at, tr.locale) })}
             </span>
           </div>
         </Link>
@@ -113,8 +114,8 @@ export function ProjectCard({
             <DropdownMenu.Trigger asChild>
               <button
                 type="button"
-                aria-label={`Manage ${project.name}`}
-                title="Manage project"
+                aria-label={tr("Manage {value0}", { value0: project.name })}
+                title={tr("Manage project")}
                 className="absolute bottom-1 right-2 flex h-8 w-8 items-center justify-center rounded-md border border-border bg-bg-primary text-text-secondary hover:bg-bg-hover hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
               >
@@ -128,17 +129,13 @@ export function ProjectCard({
                 sideOffset={4}
                 align="end"
               >
-                <DropdownMenu.Label className="px-3 py-1.5 text-[10px] font-semibold text-text-tertiary uppercase tracking-wider">
-                  Project
-                </DropdownMenu.Label>
+                <DropdownMenu.Label className="px-3 py-1.5 text-[10px] font-semibold text-text-tertiary uppercase tracking-wider">{tr("Project")}</DropdownMenu.Label>
 
                 <DropdownMenu.Item
                   className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-text-secondary hover:bg-bg-hover hover:text-text-primary cursor-pointer outline-none transition-colors"
                   onSelect={() => setSettingsOpen(true)}
                 >
-                  <Settings className="h-4 w-4 text-text-tertiary" />
-                  Project Settings
-                </DropdownMenu.Item>
+                  <Settings className="h-4 w-4 text-text-tertiary" />{tr("Project Settings")}</DropdownMenu.Item>
 
                 <DropdownMenu.Separator className="my-1 h-px bg-border" />
 
@@ -147,9 +144,7 @@ export function ProjectCard({
                   onSelect={handleDelete}
                   disabled={deleting}
                 >
-                  <Trash2 className="h-4 w-4" />
-                  Delete
-                </DropdownMenu.Item>
+                  <Trash2 className="h-4 w-4" />{tr("Delete")}</DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu.Portal>
           </DropdownMenu.Root>

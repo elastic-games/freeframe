@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/i18n/locale-provider'
 import * as React from 'react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { X, Download, MoreHorizontal, Layers, Share2, Trash2, FolderInput, FolderIcon, Check, Film, Music, Image as ImageIcon, Images, Link as LinkIcon, Pencil } from 'lucide-react'
@@ -129,6 +130,8 @@ export function AssetGrid({
   onAssetDelete,
   actions,
 }: AssetGridProps) {
+  const tr = useTranslation()
+
   const [selectedAssetIds, setSelectedAssetIds] = React.useState<Set<string>>(new Set())
   const [selectedFolderIds, setSelectedFolderIds] = React.useState<Set<string>>(new Set())
   const [moveDialogOpen, setMoveDialogOpen] = React.useState(false)
@@ -226,9 +229,7 @@ export function AssetGrid({
       {/* ─── Share Selection Mode Bar ──────────────────────────────────── */}
       {shareMode && (
         <div className="flex items-center justify-between rounded-lg border border-accent/30 bg-accent/5 px-4 py-2.5">
-          <span className="text-sm font-medium text-text-primary">
-            Select items to share
-          </span>
+          <span className="text-sm font-medium text-text-primary">{tr("Select items to share")}</span>
           <div className="flex items-center gap-2">
             <Button
               variant="secondary"
@@ -237,9 +238,7 @@ export function AssetGrid({
                 clearSelection()
                 onShareModeChange?.(false)
               }}
-            >
-              Cancel
-            </Button>
+            >{tr("Cancel")}</Button>
             <Button
               size="sm"
               disabled={totalSelected === 0}
@@ -248,16 +247,14 @@ export function AssetGrid({
                 clearSelection()
                 onShareModeChange?.(false)
               }}
-            >
-              Create Share Link
-            </Button>
+            >{tr("Create Share Link")}</Button>
           </div>
         </div>
       )}
 
       {/* ─── Navigator Bar (Frame.io style) ─────────────────────────────── */}
       {!shareMode && (
-        <div className="flex items-center gap-1 border-b border-border pb-2.5">
+        <div className="flex flex-wrap items-center gap-1 gap-y-2 border-b border-border pb-2.5">
           {/* Left group: Appearance + Fields + Sort */}
           <AppearancePopover />
 
@@ -269,7 +266,7 @@ export function AssetGrid({
 
           {/* Right group: action buttons passed from parent */}
           {actions && (
-            <div className="flex items-center gap-2">
+            <div className="ml-auto flex flex-wrap items-center gap-2">
               {actions}
             </div>
           )}
@@ -281,7 +278,7 @@ export function AssetGrid({
         <>
           <div className="flex items-center gap-2">
             <span className="text-xs text-text-tertiary font-medium uppercase tracking-wider">
-              {folders!.length} {folders!.length === 1 ? 'Folder' : 'Folders'}
+              {folders!.length} {folders!.length === 1 ? tr("Folder") : tr("Folders")}
             </span>
           </div>
           <div className={cn('grid gap-3', gridColsMap[cardSize])}>
@@ -325,7 +322,7 @@ export function AssetGrid({
           {filtered.length > 0 && (
             <div className="flex items-center gap-2 mt-2">
               <span className="text-xs text-text-tertiary font-medium uppercase tracking-wider">
-                {filtered.length} {filtered.length === 1 ? 'Asset' : 'Assets'}
+                {filtered.length} {filtered.length === 1 ? tr("Asset") : tr("Assets")}
               </span>
             </div>
           )}
@@ -337,8 +334,8 @@ export function AssetGrid({
         <div className="rounded-lg border border-border bg-bg-secondary">
           <EmptyState
             icon={Layers}
-            title="No assets"
-            description="Upload your first asset to get started."
+            title={tr("No assets")}
+            description={tr("Upload your first asset to get started.")}
             action={onUpload ? { label: 'Upload', onClick: onUpload } : undefined}
           />
         </div>
@@ -394,11 +391,11 @@ export function AssetGrid({
           {/* Column headers */}
           <div className="flex items-center gap-4 px-3 py-2 border-b border-border bg-bg-secondary/50 text-[10px] text-text-tertiary font-medium uppercase tracking-wider">
             <div className="h-10 w-10 shrink-0" />
-            <div className="flex-1 min-w-0">Name</div>
-            {showUploader && <div className="hidden md:block w-32">Uploader</div>}
-            {showFileSize && <div className="hidden sm:block w-24 text-right">Size</div>}
-            <div className="hidden md:block w-10 text-center">Ver.</div>
-            <div className="hidden sm:block w-28">Date</div>
+            <div className="flex-1 min-w-0">{tr("Name")}</div>
+            {showUploader && <div className="hidden md:block w-32">{tr("Uploader")}</div>}
+            {showFileSize && <div className="hidden sm:block w-24 text-right">{tr("Size")}</div>}
+            <div className="hidden md:block w-10 text-center">{tr("Ver.")}</div>
+            <div className="hidden sm:block w-28">{tr("Date")}</div>
             <div className="w-8 shrink-0" />
             <div className="w-8 shrink-0" />
           </div>
@@ -441,7 +438,7 @@ export function AssetGrid({
                 {/* Name */}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-text-primary truncate leading-snug">{folder.name}</p>
-                  <p className="text-xs text-text-tertiary mt-0.5">{folder.item_count ?? 0} item{(folder.item_count ?? 0) !== 1 ? 's' : ''}</p>
+                  <p className="text-xs text-text-tertiary mt-0.5">{folder.item_count ?? 0}{' '}{tr("item")}{(folder.item_count ?? 0) !== 1 ? (tr.locale === 'en' ? 's' : '') : ''}</p>
                 </div>
 
                 {/* Uploader placeholder */}
@@ -455,7 +452,7 @@ export function AssetGrid({
 
                 {/* Date */}
                 <div className="hidden sm:block w-28 text-xs text-text-tertiary shrink-0">
-                  {new Date(folder.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  {new Date(folder.created_at).toLocaleDateString(tr.locale, { month: 'short', day: 'numeric', year: 'numeric' })}
                 </div>
 
                 {/* Assignee placeholder — keeps column alignment */}
@@ -484,27 +481,21 @@ export function AssetGrid({
                             onSelect={() => onFolderShare(folder.id, folder.name)}
                             className="flex items-center gap-2.5 mx-1 px-2.5 py-2 rounded-lg text-sm text-text-secondary hover:bg-bg-hover hover:text-text-primary cursor-pointer outline-none transition-colors"
                           >
-                            <Share2 className="h-3.5 w-3.5 text-text-tertiary" />
-                            Share
-                          </DropdownMenu.Item>
+                            <Share2 className="h-3.5 w-3.5 text-text-tertiary" />{tr("Share")}</DropdownMenu.Item>
                         )}
                         {onFolderRename && (
                           <DropdownMenu.Item
                             onSelect={() => onFolderRename(folder.id, folder.name)}
                             className="flex items-center gap-2.5 mx-1 px-2.5 py-2 rounded-lg text-sm text-text-secondary hover:bg-bg-hover hover:text-text-primary cursor-pointer outline-none transition-colors"
                           >
-                            <Pencil className="h-3.5 w-3.5 text-text-tertiary" />
-                            Rename
-                          </DropdownMenu.Item>
+                            <Pencil className="h-3.5 w-3.5 text-text-tertiary" />{tr("Rename")}</DropdownMenu.Item>
                         )}
                         {onFolderDelete && (
                           <DropdownMenu.Item
                             onSelect={() => onFolderDelete(folder.id)}
                             className="flex items-center gap-2.5 mx-1 px-2.5 py-2 rounded-lg text-sm text-status-error hover:bg-status-error/10 cursor-pointer outline-none transition-colors"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            Delete
-                          </DropdownMenu.Item>
+                            <Trash2 className="h-3.5 w-3.5" />{tr("Delete")}</DropdownMenu.Item>
                         )}
                       </DropdownMenu.Content>
                     </DropdownMenu.Portal>
@@ -578,7 +569,7 @@ export function AssetGrid({
                 </div>
                 {/* Date */}
                 <div className="hidden sm:block w-28 text-xs text-text-tertiary shrink-0">
-                  {new Date(asset.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  {new Date(asset.created_at).toLocaleDateString(tr.locale, { month: 'short', day: 'numeric', year: 'numeric' })}
                 </div>
                 {/* Assignee */}
                 <div className="w-8 shrink-0 flex justify-center">
@@ -606,17 +597,13 @@ export function AssetGrid({
                           onSelect={() => onAssetShare?.(asset)}
                           className="flex items-center gap-2.5 mx-1 px-2.5 py-2 rounded-lg text-sm text-text-secondary hover:bg-bg-hover hover:text-text-primary cursor-pointer outline-none transition-colors"
                         >
-                          <Share2 className="h-3.5 w-3.5 text-text-tertiary" />
-                          Create Share Link
-                        </DropdownMenu.Item>
+                          <Share2 className="h-3.5 w-3.5 text-text-tertiary" />{tr("Create Share Link")}</DropdownMenu.Item>
                         <DropdownMenu.Separator className="my-1 h-px bg-border mx-1" />
                         <DropdownMenu.Item
                           onSelect={() => onAssetDownload?.(asset)}
                           className="flex items-center gap-2.5 mx-1 px-2.5 py-2 rounded-lg text-sm text-text-secondary hover:bg-bg-hover hover:text-text-primary cursor-pointer outline-none transition-colors"
                         >
-                          <Download className="h-3.5 w-3.5 text-text-tertiary" />
-                          Download
-                        </DropdownMenu.Item>
+                          <Download className="h-3.5 w-3.5 text-text-tertiary" />{tr("Download")}</DropdownMenu.Item>
                         <DropdownMenu.Item
                           onSelect={() => {
                             const url = `${window.location.origin}/projects/${asset.project_id}/assets/${asset.id}`
@@ -624,24 +611,18 @@ export function AssetGrid({
                           }}
                           className="flex items-center gap-2.5 mx-1 px-2.5 py-2 rounded-lg text-sm text-text-secondary hover:bg-bg-hover hover:text-text-primary cursor-pointer outline-none transition-colors"
                         >
-                          <LinkIcon className="h-3.5 w-3.5 text-text-tertiary" />
-                          Copy Asset URL
-                        </DropdownMenu.Item>
+                          <LinkIcon className="h-3.5 w-3.5 text-text-tertiary" />{tr("Copy Asset URL")}</DropdownMenu.Item>
                         <DropdownMenu.Separator className="my-1 h-px bg-border mx-1" />
                         <DropdownMenu.Item
                           onSelect={() => onAssetRename?.(asset)}
                           className="flex items-center gap-2.5 mx-1 px-2.5 py-2 rounded-lg text-sm text-text-secondary hover:bg-bg-hover hover:text-text-primary cursor-pointer outline-none transition-colors"
                         >
-                          <Pencil className="h-3.5 w-3.5 text-text-tertiary" />
-                          Rename
-                        </DropdownMenu.Item>
+                          <Pencil className="h-3.5 w-3.5 text-text-tertiary" />{tr("Rename")}</DropdownMenu.Item>
                         <DropdownMenu.Item
                           onSelect={() => onAssetDelete?.(asset)}
                           className="flex items-center gap-2.5 mx-1 px-2.5 py-2 rounded-lg text-sm text-status-error hover:bg-status-error/10 cursor-pointer outline-none transition-colors"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
-                          Delete
-                        </DropdownMenu.Item>
+                          <Trash2 className="h-3.5 w-3.5" />{tr("Delete")}</DropdownMenu.Item>
                       </DropdownMenu.Content>
                     </DropdownMenu.Portal>
                   </DropdownMenu.Root>
@@ -659,8 +640,7 @@ export function AssetGrid({
             <X className="h-4 w-4" />
           </button>
           <span className="text-sm text-text-primary font-medium">
-            {totalSelected} Item{totalSelected !== 1 ? 's' : ''} selected
-          </span>
+            {totalSelected}{' '}{tr("Item")}{totalSelected !== 1 ? (tr.locale === 'en' ? 's' : '') : ''}{' '}{tr("selected")}</span>
           {selectedTotalSize > 0 && (
             <span className="text-xs text-text-tertiary">
               &middot; {formatBytes(selectedTotalSize)}
@@ -673,12 +653,10 @@ export function AssetGrid({
             className="gap-1.5"
             onClick={() => onBulkDelete?.(Array.from(selectedAssetIds), Array.from(selectedFolderIds))}
           >
-            <Trash2 className="h-4 w-4" /> Delete
-          </Button>
+            <Trash2 className="h-4 w-4" />{' '}{tr("Delete")}</Button>
           {onBulkMove && (
             <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setMoveDialogOpen(true)}>
-              <FolderInput className="h-4 w-4" /> Move to
-            </Button>
+              <FolderInput className="h-4 w-4" />{' '}{tr("Move to")}</Button>
           )}
           {onCreateShareLink && (
             <Button
@@ -690,8 +668,7 @@ export function AssetGrid({
                 clearSelection()
               }}
             >
-              <Share2 className="h-4 w-4" /> Share
-            </Button>
+              <Share2 className="h-4 w-4" />{' '}{tr("Share")}</Button>
           )}
           {(selectedAssetIds.size > 0 || selectedFolderIds.size > 0) && (
             <Button
@@ -700,8 +677,7 @@ export function AssetGrid({
               className="gap-1.5"
               onClick={() => onBulkDownload?.(Array.from(selectedAssetIds), Array.from(selectedFolderIds))}
             >
-              <Download className="h-4 w-4" /> Download
-            </Button>
+              <Download className="h-4 w-4" />{' '}{tr("Download")}</Button>
           )}
         </div>
       )}
