@@ -71,9 +71,9 @@ describe('ShareCreateDialog result', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: /^Create$/ }))
     const copy = await screen.findByRole('button', { name: 'Copy Link' })
-    expect(screen.getByText('https://app.elasticlabs.site/share/video-token')).toBeInTheDocument()
+    expect(screen.getByText('https://app.elasticlabs.com/share/video-token')).toBeInTheDocument()
     fireEvent.click(copy)
-    await waitFor(() => expect(mock.copy).toHaveBeenCalledWith('https://app.elasticlabs.site/share/video-token'))
+    await waitFor(() => expect(mock.copy).toHaveBeenCalledWith('https://app.elasticlabs.com/share/video-token'))
     expect(onOpenChange).not.toHaveBeenCalledWith(false)
     expect(onShareCreated).toHaveBeenCalledOnce()
     expect(mock.post).toHaveBeenCalledWith('/assets/asset-1/share', { title: 'FireBreath' })
@@ -99,7 +99,7 @@ describe('ShareCreateDialog result', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Next' }))
     fireEvent.click(await screen.findByRole('button', { name: /^Create$/ }))
-    expect(await screen.findByText('https://app.elasticlabs.site/share/project-token')).toBeInTheDocument()
+    expect(await screen.findByText('https://app.elasticlabs.com/share/project-token')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Copy Link' })).toBeInTheDocument()
     expect(screen.getByText(/some settings could not be saved/i)).toBeInTheDocument()
     expect(onOpenChange).not.toHaveBeenCalledWith(false)

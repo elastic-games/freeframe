@@ -7,7 +7,7 @@ describe('public review links', () => {
   it('uses the portal for Studio SSO reviews', () => {
     vi.stubEnv('NEXT_PUBLIC_STUDIO_SSO_ENABLED', 'true')
     expect(shareUrl('review-token-123456', 'https://reviews.elasticlabs.site')).toBe(
-      'https://app.elasticlabs.site/share/review-token-123456',
+      'https://app.elasticlabs.com/share/review-token-123456',
     )
   })
 

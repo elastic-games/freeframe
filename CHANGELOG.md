@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Embedded Video Reviews accepts appearance updates from the canonical Studio parent at `https://app.elasticlabs.com`, so light and dark modes follow Studio while preserving the standalone preference.
 - Forward managed Studio review transport and parent-origin build arguments into the production web image.
 
 
