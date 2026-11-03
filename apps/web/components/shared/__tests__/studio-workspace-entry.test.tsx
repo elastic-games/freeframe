@@ -1,0 +1,36 @@
+import { cleanup, render, screen } from '@testing-library/react'
+import { afterEach, expect, it, vi } from 'vitest'
+import DashboardLayout from '@/app/(dashboard)/layout'
+const { fetchUser, fetchHistory } = vi.hoisted(() => ({ fetchUser: vi.fn(), fetchHistory: vi.fn() }))
+vi.mock('@/stores/upload-store', () => ({ useUploadStore: () => ({ fetchHistory }) }))
+vi.mock('next/navigation', () => ({ usePathname: () => window.location.pathname, useSearchParams: () => new URLSearchParams(window.location.search) }))
+vi.mock('@/stores/auth-store', () => ({ useAuthStore: () => ({ fetchUser }) }))
+vi.mock('@/components/layout/sidebar', () => ({ Sidebar: () => null }))
+vi.mock('@/components/layout/header', () => ({ Header: () => null }))
+vi.mock('@/components/layout/command-palette', () => ({ CommandPalette: () => null }))
+vi.mock('@/components/layout/uploads-panel', () => ({ UploadsPanel: () => null }))
+vi.mock('@/components/layout/upload-sse-bridge', () => ({ UploadSSEBridge: () => null }))
+vi.mock('@/components/shared/powered-by-badge', () => ({ PoweredByBadge: () => null }))
+const originalParent = window.parent
+afterEach(() => { cleanup(); fetchUser.mockClear(); vi.unstubAllEnvs(); Object.defineProperty(window, 'parent', { configurable: true, value: originalParent }) })
+it('offers the exact Open in Studio bookmark and never mounts review requests standalone', async () => {
+  vi.stubEnv('NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS', 'true')
+  const project = '11111111-1111-4111-8111-111111111111', version = project.replaceAll('1', '2')
+  window.history.replaceState(null, '', `/projects/${project}/assets/${project}?version=${version}&commentId=${project}`)
+  render(<DashboardLayout><span>Private reviews</span></DashboardLayout>)
+  expect(await screen.findByRole('link', { name: 'Open in Studio' })).toHaveAttribute('href', `https://app.elasticlabs.com/apps/reviews/projects/${project}/assets/${project}?version=${version}&commentId=${project}`)
+  expect(screen.queryByText('Private reviews')).not.toBeInTheDocument()
+  expect(fetchUser).not.toHaveBeenCalled()
+})
+it('mounts the existing dashboard within an iframe and retains unmanaged standalone behavior', async () => {
+  vi.stubEnv('NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS', 'true')
+  Object.defineProperty(window, 'parent', { configurable: true, value: { postMessage() {} } })
+  const view = render(<DashboardLayout><span>Private reviews</span></DashboardLayout>)
+  expect(await screen.findByText('Private reviews')).toBeInTheDocument()
+  expect(fetchUser).toHaveBeenCalledTimes(1)
+  view.unmount()
+  Object.defineProperty(window, 'parent', { configurable: true, value: originalParent })
+  vi.stubEnv('NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS', 'false')
+  render(<DashboardLayout><span>Standalone reviews</span></DashboardLayout>)
+  expect(screen.getByText('Standalone reviews')).toBeInTheDocument()
+})

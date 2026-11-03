@@ -1,31 +1,27 @@
+import { studioParentRequest } from './studio-parent-transport'
 import { getAccessToken, refreshAccessToken } from './auth'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 const STUDIO_MANAGED = process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS === 'true'
-const STUDIO_TRANSPORT_URL = process.env.NEXT_PUBLIC_STUDIO_TRANSPORT_URL || 'https://app.elasticlabs.site/api/studio/freeframe-transport'
 
 /** The provider ID in the page URL identifies this tab's project. Studio
  * resolves the exact active canonical binding again for each operation. */
 function managedProject(): string | undefined {
   if (typeof window === 'undefined') return undefined
-  return window.location.pathname.match(/\/projects\/([0-9a-f]{8}-[0-9a-f-]{27,})\b/i)?.[1]
+  return window.location.pathname.match(/^\/projects\/([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})(?:\/|$)/i)?.[1]
 }
 
 async function managedRequest(method: string, path: string, body?: unknown, signal?: AbortSignal): Promise<Response> {
+  // Check the raw path before URL normalization, including dot segments and encoded separators.
+  if (!path.startsWith('/') || path.startsWith('//') || /[\\#\s]/.test(path) ||
+      path.split('?')[0].includes('%') || path.split(/[/?]/).some(p => p === '.' || p === '..'))
+    throw new ApiError(400, 'Invalid review path')
   const url = new URL(path, 'https://reviews.elasticlabs.site')
-  if (url.origin !== 'https://reviews.elasticlabs.site') throw new ApiError(400, 'Invalid review path')
-  const pathProject = url.pathname.match(/^\/projects\/([0-9a-f]{8}-[0-9a-f-]{27,})(?:\/|$)/i)?.[1]
-  return fetch(STUDIO_TRANSPORT_URL, {
-    method: 'POST',
-    credentials: 'include',
-    signal,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      project: managedProject() || pathProject, method, path: url.pathname,
-      query: url.search.slice(1), body,
-    }),
-    cache: 'no-store',
-  })
+  const pathProject = url.pathname.match(/^\/projects\/([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})(?:\/|$)/i)?.[1]
+  return studioParentRequest({
+    project: managedProject() || pathProject, method, path: url.pathname,
+    query: url.search.slice(1), ...(body === undefined ? {} : { body }),
+  }, signal)
 }
 
 export class ApiError extends Error {

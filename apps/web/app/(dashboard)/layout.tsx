@@ -13,6 +13,7 @@ import { PoweredByBadge } from "@/components/shared/powered-by-badge";
 import { refuseFileDrag } from "@/lib/drag";
 import { cn } from "@/lib/utils";
 import { StudioRouteBridge } from "@/components/shared/studio-route-bridge";
+import { StudioWorkspaceEntry } from "@/components/shared/studio-workspace-entry";
 import { useThemeStore } from "@/stores/theme-store";
 
 export default function DashboardLayout({
@@ -21,6 +22,9 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const managed = process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS === "true";
+  const [standalone, setStandalone] = React.useState<boolean | null>(null);
+  React.useEffect(() => { setStandalone(window.parent === window); }, []);
   const embedded = useThemeStore((s) => s.hostTheme !== null);
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(true);
   const [commandOpen, setCommandOpen] = React.useState(false);
@@ -31,9 +35,10 @@ export default function DashboardLayout({
   // and the attribution credit, so the shell supplies neither here.
   const isAssetViewer = /\/projects\/[^/]+\/assets\/[^/]+/.test(pathname);
   React.useEffect(() => {
+    if (managed && window.parent === window) return;
     fetchUser();
     if (process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS !== "true") fetchHistory();
-  }, [fetchUser, fetchHistory]);
+  }, [fetchUser, fetchHistory, managed]);
 
   // Global keyboard shortcut for command palette
   React.useEffect(() => {
@@ -47,6 +52,8 @@ export default function DashboardLayout({
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  if (managed && standalone !== false) return standalone ? <StudioWorkspaceEntry /> : null;
 
   return (
     // The shell refuses a file drag nothing inside it took. Every drop target

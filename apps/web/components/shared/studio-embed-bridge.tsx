@@ -3,10 +3,12 @@
 import { useEffect } from 'react'
 import { useThemeStore } from '@/stores/theme-store'
 import { useLocale } from '@/lib/i18n/locale-provider'
+import { disposeStudioParentTransport } from '@/lib/studio-parent-transport'
 import { STUDIO_ORIGIN } from '@/lib/studio-embed'
 
 export function StudioEmbedBridge() {
   const { setLocale } = useLocale()
+  useEffect(() => () => disposeStudioParentTransport(), [])
   useEffect(() => {
     if (window.parent === window) return
     function receive(event: MessageEvent) {

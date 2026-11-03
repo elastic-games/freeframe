@@ -132,6 +132,7 @@ export default function ProjectDetailPage() {
 
   const {
     tree,
+    treeError,
     mutateTree,
     createFolder,
     renameFolder,
@@ -143,7 +144,7 @@ export default function ProjectDetailPage() {
     restoreFolder,
   } = useFolders(projectId);
 
-  const { trash, mutateTrash } = useTrash(projectId);
+  const { trash, error: trashError, mutateTrash } = useTrash(projectId);
   const {
     shareLinks,
     toggleEnabled,
@@ -162,7 +163,7 @@ export default function ProjectDetailPage() {
     removeReaction,
   } = useComments(selectedAsset?.id || null, selectedVersionId);
 
-  const { data: project, isLoading: loadingProject } = useSWR<Project>(
+  const { data: project, error: projectError, mutate: mutateProject, isLoading: loadingProject } = useSWR<Project>(
     `/projects/${projectId}`,
     () => api.get<Project>(`/projects/${projectId}`),
   );
@@ -206,6 +207,7 @@ export default function ProjectDetailPage() {
     : "folder_id=root";
   const {
     data: assets,
+    error: assetsError,
     isLoading: loadingAssets,
     mutate: mutateAssets,
   } = useSWR<AssetResponse[]>(
@@ -214,7 +216,7 @@ export default function ProjectDetailPage() {
   );
 
   // Subfolders for current view
-  const { data: subfolders, mutate: mutateSubfolders } = useSWR<Folder[]>(
+  const { data: subfolders, error: foldersError, isLoading: loadingFolders, mutate: mutateSubfolders } = useSWR<Folder[]>(
     showTrash
       ? null
       : `/projects/${projectId}/folders?parent_id=${currentFolderId ?? "root"}`,
@@ -430,6 +432,16 @@ export default function ProjectDetailPage() {
       window.history.replaceState(null, "", url);
     },
     [projectId],
+  );
+
+  const readError = projectError || (showTrash ? trashError : assetsError || foldersError || treeError);
+  if (readError) return (
+    <div role="alert" className="p-6 space-y-3 text-sm">
+      <p>{tr('Could not load this project. Check your Studio access and retry.')}</p>
+      <Button variant="secondary" size="sm" onClick={() => {
+        void mutateProject(); void mutateAssets(); void mutateSubfolders(); void mutateTree(); void mutateTrash();
+      }}>{tr('Retry')}</Button>
+    </div>
   );
 
   return (
@@ -749,7 +761,7 @@ export default function ProjectDetailPage() {
               projectId={projectId}
               projectName={project?.name ?? 'Project'}
               folderTree={tree ?? []}
-              isLoading={loadingAssets}
+              isLoading={loadingAssets || loadingFolders || loadingProject}
               assignees={assigneesMap}
               thumbnails={thumbnails}
               versionCounts={versionCounts}

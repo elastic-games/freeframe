@@ -223,6 +223,7 @@ export default function ProjectsPage() {
 
   const {
     data: projects,
+    error,
     isLoading,
     mutate,
   } = useSWR<Project[]>("/projects", () => api.get<Project[]>("/projects"));
@@ -382,7 +383,12 @@ export default function ProjectsPage() {
       </div>
 
       {/* Content */}
-      {isLoading ? (
+      {error ? (
+        <div role="alert" className="space-y-3 text-sm">
+          <p>{tr('Could not load projects. Check your Studio access and retry.')}</p>
+          <Button variant="secondary" size="sm" onClick={() => void mutate()}>{tr('Retry')}</Button>
+        </div>
+      ) : isLoading ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {Array.from({ length: 5 }).map((_, i) => (
             <div

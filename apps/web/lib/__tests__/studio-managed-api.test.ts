@@ -1,56 +1,39 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-
-const PROJECT_A = '11111111-1111-4111-8111-111111111111'
-const PROJECT_B = '22222222-2222-4222-8222-222222222222'
-const ASSET = '33333333-3333-4333-8333-333333333333'
-
+const A = '11111111-1111-4111-8111-111111111111', B = '22222222-2222-4222-8222-222222222222'
+const parentRequest = vi.hoisted(() => vi.fn())
+vi.mock('../studio-parent-transport', () => ({ studioParentRequest: parentRequest }))
 beforeEach(() => {
-  vi.resetModules()
+  vi.resetModules(); parentRequest.mockReset()
   vi.stubEnv('NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS', 'true')
-  vi.stubEnv('NEXT_PUBLIC_STUDIO_TRANSPORT_URL', 'https://app.elasticlabs.site/api/studio/freeframe-transport')
-  window.history.replaceState(null, '', `/projects/${PROJECT_A}/assets/${ASSET}`)
+  window.history.replaceState(null, '', `/projects/${A}/assets/${B}`)
 })
-
-afterEach(() => {
-  vi.unstubAllEnvs()
-  vi.unstubAllGlobals()
-})
-
-it('sends an exact project-scoped request to Studio without a FreeFrame bearer', async () => {
-  const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: ASSET }), {
-    headers: { 'Content-Type': 'application/json' },
-  }))
-  vi.stubGlobal('fetch', fetchMock)
+afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals() })
+it('sends only project envelopes to the parent, including uploads and exports, without cross-site fetch', async () => {
+  parentRequest.mockImplementation(async () => Response.json({ id: B }))
+  const fetchMock = vi.fn(); vi.stubGlobal('fetch', fetchMock)
   const { api } = await import('../api')
-  expect(await api.get(`/assets/${ASSET}/stream?version_id=${ASSET}`)).toEqual({ id: ASSET })
-  const [url, options] = fetchMock.mock.calls[0]
-  expect(url).toBe('https://app.elasticlabs.site/api/studio/freeframe-transport')
-  expect(options.credentials).toBe('include')
-  expect(options.headers.Authorization).toBeUndefined()
-  expect(JSON.parse(options.body)).toEqual({
-    project: PROJECT_A, method: 'GET', path: `/assets/${ASSET}/stream`,
-    query: `version_id=${ASSET}`,
-  })
-})
-
-it('uses the current tab URL for each project and does not refresh a denied request', async () => {
-  const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ detail: 'Review access denied.' }), {
-    status: 403, headers: { 'Content-Type': 'application/json' },
-  }))
-  vi.stubGlobal('fetch', fetchMock)
-  const { api } = await import('../api')
-  await expect(api.get(`/projects/${PROJECT_A}/assets`)).rejects.toMatchObject({ status: 403 })
-  window.history.replaceState(null, '', `/projects/${PROJECT_B}`)
-  await expect(api.get(`/projects/${PROJECT_B}/assets`)).rejects.toMatchObject({ status: 403 })
-  expect(fetchMock).toHaveBeenCalledTimes(2)
-  expect(JSON.parse(fetchMock.mock.calls[0][1].body).project).toBe(PROJECT_A)
-  expect(JSON.parse(fetchMock.mock.calls[1][1].body).project).toBe(PROJECT_B)
-})
-
-it('rejects an off-origin path before sending a request', async () => {
-  const fetchMock = vi.fn()
-  vi.stubGlobal('fetch', fetchMock)
-  const { api } = await import('../api')
-  await expect(api.get('https://evil.invalid/steal')).rejects.toMatchObject({ status: 400 })
+  expect(await api.get(`/assets/${B}/stream?version_id=${B}`)).toEqual({ id: B })
+  expect(parentRequest.mock.calls[0][0]).toEqual({ project: A, method: 'GET', path: `/assets/${B}/stream`, query: `version_id=${B}` })
+  await api.post('/upload/initiate', { project_id: A })
+  expect(parentRequest.mock.calls[1][0].body).toEqual({ project_id: A })
+  parentRequest.mockResolvedValueOnce(Response.json('exact export bytes\n'))
+  expect(await api.get(`/assets/${B}/comments/export?format=csv`)).toBe('exact export bytes\n')
   expect(fetchMock).not.toHaveBeenCalled()
+})
+it('uses the current project and preserves denial without refresh or empty-list fallback', async () => {
+  parentRequest.mockImplementation(async () => Response.json({ detail: 'Review access denied.' }, { status: 403 }))
+  const { api } = await import('../api')
+  await expect(api.get(`/projects/${A}/assets`)).rejects.toMatchObject({ status: 403 })
+  window.history.replaceState(null, '', `/projects/${B}`)
+  await expect(api.get(`/projects/${B}/assets`)).rejects.toMatchObject({ status: 403 })
+  expect(parentRequest).toHaveBeenCalledTimes(2)
+  expect(parentRequest.mock.calls[1][0].project).toBe(B)
+  parentRequest.mockResolvedValueOnce(Response.json([]))
+  expect(await api.get('/projects')).toEqual([])
+})
+it('rejects raw noncanonical paths before URL normalization', async () => {
+  const { api } = await import('../api')
+  for (const path of ['https://evil.invalid', '//evil.invalid', `/projects/${A}/../${B}`, `/assets/${B}%2fstream`, '/assets/../projects', '/projects#fragment', '/projects\\foo'])
+    await expect(api.get(path)).rejects.toMatchObject({ status: 400 })
+  expect(parentRequest).not.toHaveBeenCalled()
 })

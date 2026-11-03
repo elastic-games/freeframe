@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Embedded managed reviews use the signed-in Studio parent for bounded API and live event transport across domains. Standalone bookmarks offer Open in Studio with the selected project, folder, asset and version preserved. Failed project and asset lists show Retry instead of an empty workspace.
+
 - Embedded Video Reviews accepts appearance updates from the canonical Studio parent at `https://app.elasticlabs.com`, so light and dark modes follow Studio while preserving the standalone preference.
 - Forward managed Studio review transport and parent-origin build arguments into the production web image.
 

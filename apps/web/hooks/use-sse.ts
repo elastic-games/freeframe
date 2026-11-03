@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { StudioReviewEvents } from '@/lib/studio-review-events'
 import { getAccessToken } from '@/lib/auth'
 
 // ─── Event payload types ──────────────────────────────────────────────────────
@@ -76,7 +77,6 @@ export interface UseSSEReturn {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 const STUDIO_MANAGED = process.env.NEXT_PUBLIC_STUDIO_MANAGED_REVIEWS === 'true'
-const STUDIO_TRANSPORT_URL = process.env.NEXT_PUBLIC_STUDIO_TRANSPORT_URL || 'https://app.elasticlabs.site/api/studio/freeframe-transport'
 const BACKOFF_STEPS = [1000, 2000, 4000, 8000, 16000, 30000]
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -119,7 +119,7 @@ export function useSSE(projectId: string | null | undefined, options: UseSSEOpti
   React.useEffect(() => {
     if (!enabled || !projectId) return
 
-    let es: EventSource | null = null
+    let es: EventSource | StudioReviewEvents | null = null
     let retryIndex = 0
     let retryTimer: ReturnType<typeof setTimeout> | null = null
     let destroyed = false
@@ -128,10 +128,7 @@ export function useSSE(projectId: string | null | undefined, options: UseSSEOpti
       if (destroyed) return
 
       if (STUDIO_MANAGED) {
-        const url = new URL(STUDIO_TRANSPORT_URL)
-        url.searchParams.set('stream', 'events')
-        url.searchParams.set('project', projectId!)
-        es = new EventSource(url.toString(), { withCredentials: true })
+        es = new StudioReviewEvents(projectId!)
       } else {
       const token = getAccessToken()
       // Use window.location.origin as a base so deployments behind a reverse
@@ -155,8 +152,10 @@ export function useSSE(projectId: string | null | undefined, options: UseSSEOpti
       es.onerror = () => {
         if (destroyed) return
         setIsConnected(false)
+        const denied = es instanceof StudioReviewEvents && es.denied
         es?.close()
         es = null
+        if (denied) return
 
         // Exponential backoff reconnect
         const delay = BACKOFF_STEPS[Math.min(retryIndex, BACKOFF_STEPS.length - 1)]
