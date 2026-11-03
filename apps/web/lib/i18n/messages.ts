@@ -1,5 +1,6 @@
 // UI copy only. User names, asset titles, comments and technical identifiers remain authored.
 export const russianMessages: Readonly<Record<string, string>> = {
+  'Video Reviews': 'Видеорецензии',
   'Open in Studio': 'Открыть в Studio',
   'Open these reviews in Studio to use your signed-in account.': 'Откройте эти материалы в Studio, используя свою учётную запись.',
   'Could not load projects. Check your Studio access and retry.': 'Не удалось загрузить проекты. Проверьте доступ в Studio и повторите попытку.',
